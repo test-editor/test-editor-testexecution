@@ -1,0 +1,38 @@
+### Eclipse ###
+.classpath
+.project
+.settings/
+.metadata/
+bin/
+.odcdb/
+org.testeditor.web.backend.persistence/testeditor/
+org.testeditor.web.backend.xtext/testeditor/
+
+### IntelliJ ###
+*.iml
+*.ipr
+*.iws
+.idea/
+out/
+
+### Gradle ###
+.gradle/
+build/
+!gradle-wrapper.jar
+
+### Xtend ###
+xtend-gen/
+
+### Emacs ###
+*~
+\#*\#
+.\#*
+.projectile
+
+### local configurations
+init.gradle
+config.local.yml
+/org.testeditor.web.backend.xtext/repo/
+
+### test executions ###
+xvfb.error.log
