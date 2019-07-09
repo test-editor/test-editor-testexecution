@@ -1,0 +1,26 @@
+language: nix
+sudo: false
+cache:
+  directories:
+  - "$HOME/nix.store"
+  - "$HOME/.gradle/caches/"
+  - "$HOME/.gradle/wrapper/"
+before_install:
+- sudo mkdir -p /etc/nix
+- echo "substituters = https://cache.nixos.org/ file://$HOME/nix.store" | sudo tee -a /etc/nix/nix.conf > /dev/null
+- echo 'require-sigs = false' | sudo tee -a /etc/nix/nix.conf > /dev/null
+before_cache:
+- mkdir -p $HOME/nix.store
+- nix copy --to file://$HOME/nix.store -f default.nix buildInputs
+script:
+- nix-shell --command "./gradlew assemble check install"
+- nix-shell --command "cd example/ && ./gradlew check && cd .."
+after_success:
+- bash <(curl -s https://codecov.io/bash)
+- nix-shell --command "./.travis-publishOnRelease.sh"
+env:
+  global: 
+    - # Bintray Environment variables for deployment
+    - secure: "tZeQxpMIy0RbaFq+brivks3IRN34SCnSS+/cxYjq/wbUCN/MQaan1BeH1WnW0ShYgecuSeqbG728gmIybvTONcTxNWTfUQ+0dC4KrRtnP06l+roYiZ9ese6mt6DupaEgJfRXMBRV362CfhB4oAfdpfl0h95j+L2doy5CzX5nnJNYX/6C8fb754r1rjDmZEea9CZPSx3YcTeoi5jKctitIzUVoKNwD3QAmw9R3sBt+9M1aGpmjPuomhwKxBjJcrMfPMQk8q8eu4n9gx41yEntXFq7mqQAG9X2wq1trDL8/25TYmKlCL8SFgvnU6j3gEJS8Fpc1XGR2nT75zXgeHX5utGuPQ+6xZG5BMCKZaQiUgIaWzKJFUIDUW9k436fsUZLrcA/bcz8SgbRoxiIHuScSqaH+7kandhHgH396AqJYlZO0xa972w20B7SOnZTIt9og/RETAZ7NdXZ5TLB1ggkUGjNwN1qud2wmUqk8UuTw5+PpfivxQEws3Iq4UZs4CWoqkqUs/V6ADGm/3SsW95PRUT2BXYDLTzbf8Il5SBx8hohQCuFpXiwIJl2NLLIctngszElouu2IZXwfNpOUDS/G12mht0zSE0xTvK/DO0hHsl+/clPJnUPA2xlVCjUinsEckEmkWLqKiaTO7GtKJ3I9Z4jDDJAhmHS3brh1sHNSrc="
+    - secure: "kzf/LWBsDGMr26YfVNDPU/38IPCg6CauOdl+zNX2Pg4bBXDno6B3Vhgx4AAYtWlojJ2JYADtq4/VLXFNbviiNFBrjN4L6jEmE8Fheai31O/tFReelZDaPeq19gGVCQwD3Ok/+5im5Tt1yKUwtx4iDKClBXRzN1EEYILdGX+v8r8tDahI533G5GwMJOfZclT00fbA8dXDciiih1JYLUr1ZrDkr6fzzheD5iWY+Yf7KNg81q63DTBLyKD5WIxCbpqe5x/LY1h0krvZQup9h/kw5z52QXdO4bD3MYQcsfF+vzQaUtr1jcNEAgrtqWxVEwtc6KCznAgGjMogMU2cXjid2Kh5ej3RbLcZY821JrJOg4by4+eLukOpP3mV1CQMUPml7PPl5G8n5y9kmmjOW10Ae0J01kdtFueknSWjV4tRuJdWEAbtTsEqxz8mdHg+vCuCfd/ZXjz+AgPYTIJoyVbILcZcYQIP21BpzFvCGI45iUwbT8ihsXP0RBg6o78u2j7trCGdlTSeshA03wE1yndmU1hNSCcEBuwm4cpGNeVnzUV2G8soFju6UQ1dPapliUcea3rj4qmcyF0QJ4K2gD51xEmH2SY4nR1TEvJ1uDQdQKPPJp+uwJZd50tW0tj5cncE7mcGzML00jDS2ehcBhDbJRV8ELpwU8TKVtbAvnKHdEQ="
+    

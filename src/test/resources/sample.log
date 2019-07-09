@@ -1,0 +1,170 @@
+Picked up _JAVA_OPTIONS: -Djdk.http.auth.tunneling.disabledSchemes=
+Gradle now uses separate output directories for each JVM language, but this build assumes a single directory for all classes from a source set. This behaviour has been deprecated and is scheduled to be removed in Gradle 5.0
+:generateXtext NO-SOURCE
+:compileJava
+:processResources NO-SOURCE
+:classes
+:generateTestXtextWarning: NLS unused message: line_separator_platform_mac_os_9 in: org.eclipse.core.internal.runtime.messages
+Warning: NLS missing message: auth_alreadySpecified in: org.eclipse.core.internal.runtime.messages
+Warning: NLS missing message: plugin_unableToGetActivator in: org.eclipse.core.internal.runtime.messages
+
+:compileTestJava
+:processTestResources
+:testClasses
+:testTask1Picked up _JAVA_OPTIONS: -Djdk.http.auth.tunneling.disabledSchemes=
+
+
+sample.LoginTest STANDARD_ERROR
+    SLF4J: Class path contains multiple SLF4J bindings.
+    SLF4J: Found binding in [jar:file:/home/sampleUser/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-slf4j-impl/2.5/d1e34a4525e08873703fdaad6c6284f944f8ca8f/log4j-slf4j-impl-2.5.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+    SLF4J: Found binding in [jar:file:/home/sampleUser/.gradle/caches/modules-2/files-2.1/ch.qos.logback/logback-classic/1.2.3/7c4f3c474fb2c041d8028740440937705ebb473a/logback-classic-1.2.3.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+    SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+    SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
+Starting test for the following test class: sample.LoginTest with id 0.0.0
+@TESTRUN:ENTER:0.0.0
+
+sample.LoginTest > execute STANDARD_OUT
+    11:16:32 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase @TEST:ENTER:94995925:IDROOT
+    11:16:32 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase ****************************************************
+    11:16:32 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase Running test for sample.LoginTest
+    11:16:32 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase ****************************************************
+    11:16:32 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase   @SPECIFICATION_STEP:ENTER:6869117e:ID1
+    11:16:32 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase     @COMPONENT:ENTER:b4602d54:ID2
+    11:16:32 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:ENTER:ea856e83:ID3
+    11:16:32 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Starting browser: firefox
+    11:16:34 WARN  [Test worker]  [TE-Test: LoginTest] WebDriverManager Network not available. Forcing the use of cache
+    11:16:34 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverManager Found geckodriver in cache: /home/sampleUser/.m2/repository/webdriver/geckodriver/linux64/0.21.0/geckodriver 
+    11:16:34 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverManager Exporting webdriver.gecko.driver as /home/sampleUser/.m2/repository/webdriver/geckodriver/linux64/0.21.0/geckodriver
+    11:16:34 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture The file with the name browserSetup.json can not be found in the resource folder.
+
+sample.LoginTest > execute STANDARD_ERROR
+    1531732594957	geckodriver	INFO	geckodriver 0.21.0
+    1531732594971	geckodriver	INFO	Listening on 127.0.0.1:18515
+    1531732595519	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "-marionette" "-foreground" "-no-remote" "-profile" "/tmp/rust_mozprofile.FqR43PRTftn3"
+    1531732595922	addons.xpi	WARN	Can't get modified time of /usr/lib64/firefox/browser/features/aushelper@mozilla.org.xpi
+    1531732596091	addons.xpi-utils	WARN	addMetadata: Add-on aushelper@mozilla.org is invalid: [Exception... "Component returned failure code: 0x80520006 (NS_ERROR_FILE_TARGET_DOES_NOT_EXIST) [nsIFile.isFile]"  nsresult: "0x80520006 (NS_ERROR_FILE_TARGET_DOES_NOT_EXIST)"  location: "JS frame :: resource://gre/modules/addons/XPIInstall.jsm :: this.loadManifestFromFile :: line 971"  data: no] Stack trace: this.loadManifestFromFile()@resource://gre/modules/addons/XPIInstall.jsm:971 < syncLoadManifestFromFile()@resource://gre/modules/addons/XPIProvider.jsm:947 < addMetadata()@resource://gre/modules/addons/XPIProvider.jsm -> resource://gre/modules/addons/XPIProviderUtils.js:1231 < processFileChanges()@resource://gre/modules/addons/XPIProvider.jsm -> resource://gre/modules/addons/XPIProviderUtils.js:1578 < checkForChanges()@resource://gre/modules/addons/XPIProvider.jsm:3278 < startup()@resource://gre/modules/addons/XPIProvider.jsm:2182 < callProvider()@resource://gre/modules/AddonManager.jsm:263 < _startProvider()@resource://gre/modules/AddonManager.jsm:730 < startup()@resource://gre/modules/AddonManager.jsm:897 < startup()@resource://gre/modules/AddonManager.jsm:3081 < observe()@jar:file:///usr/lib64/firefox/omni.ja!/components/addonManager.js:65
+    1531732596093	addons.xpi-utils	WARN	Could not uninstall invalid item from locked install location
+    1531732596301	Marionette	INFO	Enabled via --marionette
+    1531732598041	addons.xpi	WARN	Can't get modified time of /usr/lib64/firefox/browser/features/aushelper@mozilla.org.xpi
+    1531732598322	Marionette	INFO	Listening on port 42923
+    1531732598366	Marionette	WARN	TLS certificate errors will be ignored for this session
+    1531732598435	Marionette	DEBUG	Register listener.js for window 2147483649
+    Jul 16, 2018 11:16:38 AM org.openqa.selenium.remote.ProtocolHandshake createSession
+    INFO: Detected dialect: W3C
+
+sample.LoginTest > execute STANDARD_OUT
+    11:16:38 DEBUG [Test worker]  [TE-Test: LoginTest] WebDriverFixture Screen-Width: 1920 Screen-Height: 1080
+    11:16:38 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:LEAVE:ea856e83:ID3
+    11:16:38 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111638.751-Start_Firefox.LEAVE.png'.
+    11:16:38 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:ENTER:179a2507:ID4
+
+sample.LoginTest > execute STANDARD_ERROR
+    1531732598799	Marionette	DEBUG	Received DOM event "beforeunload" for "about:blank"
+    1531732598895	Marionette	DEBUG	Received DOM event "pagehide" for "about:blank"
+    1531732598896	Marionette	DEBUG	Received DOM event "unload" for "about:blank"
+    1531732599855	Marionette	DEBUG	Received DOM event "DOMContentLoaded" for "http://example.org/Dashboard"
+    1531732599938	Marionette	DEBUG	Received DOM event "pageshow" for "http://example.org/Dashboard"
+
+sample.LoginTest > execute STANDARD_OUT
+    11:16:39 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:LEAVE:179a2507:ID4
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111639.947-Browse_http_example.org.LEAVE.png'.
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase     @COMPONENT:LEAVE:b4602d54:ID2
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111640.127-WebBrowser.LEAVE.png'.
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase   @SPECIFICATION_STEP:LEAVE:6869117e:ID1
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111640.221-_ffnen_eines_Browsers_und_auf_EXAMPLE-Test_navigieren.LEAVE.png'.
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase   @SPECIFICATION_STEP:ENTER:301cf2a0:ID5
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase     @COMPONENT:ENTER:10f60978:ID6
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:ENTER:9f3ce1d0:ID7
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Lookup element login-form-username type ID
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:LEAVE:9f3ce1d0:ID7
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111640.485-Enter_test_into_UserName.LEAVE.png'.
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:ENTER:54a5d8cb:ID8
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Lookup element login-form-password type ID
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:LEAVE:54a5d8cb:ID8
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111640.758-Enter_test_into_Password.LEAVE.png'.
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:ENTER:c93d3d47:ID9
+    11:16:40 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Lookup element login type ID
+
+sample.LoginTest > execute STANDARD_ERROR
+    1531732601110	Marionette	DEBUG	Received DOM event "beforeunload" for "http://example.org/Dashboard"
+    1531732601249	Marionette	DEBUG	Received DOM event "pagehide" for "http://example.org/Dashboard"
+    1531732601255	Marionette	DEBUG	Received DOM event "unload" for "http://example.org/Dashboard"
+    1531732602097	Marionette	DEBUG	Received DOM event "DOMContentLoaded" for "http://example.org/Dashboard"
+    1531732602899	Marionette	DEBUG	Received DOM event "pageshow" for "http://example.org/Dashboard"
+
+sample.LoginTest > execute STANDARD_OUT
+    11:16:42 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:LEAVE:c93d3d47:ID9
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111642.902-Click_LoginButton.LEAVE.png'.
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase     @COMPONENT:LEAVE:10f60978:ID6
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111643.056-LoginPage.LEAVE.png'.
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase   @SPECIFICATION_STEP:LEAVE:301cf2a0:ID5
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111643.194-Einloggen_als_user_test_pwd_test.LEAVE.png'.
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase   @SPECIFICATION_STEP:ENTER:98770614:ID10
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase     @COMPONENT:ENTER:38fd0a74:ID11
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:ENTER:e5de5f1b:ID12
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Lookup element //div[@id = 'dashboard']//h1 type XPATH
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:LEAVE:e5de5f1b:ID12
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111643.367-titel_Read_Header_java.lang.String.LEAVE.png'.
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:ENTER:ca05a249:ID13
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:LEAVE:ca05a249:ID13
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111643.501-assert_titel_System_Dashboard.LEAVE.png'.
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase     @COMPONENT:LEAVE:38fd0a74:ID11
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111643.643-Dashboard.LEAVE.png'.
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase   @SPECIFICATION_STEP:LEAVE:98770614:ID10
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111643.788-Dashboard-Titel_sollte_System_Dashboard_sein..LEAVE.png'.
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase   @SPECIFICATION_STEP:ENTER:747bf8aa:ID14
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase     @COMPONENT:ENTER:95a7329e:ID15
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:ENTER:41553dcb:ID16
+    11:16:43 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Lookup element header-details-user-fullname type ID
+
+sample.LoginTest > execute STANDARD_ERROR
+    1531732604229	Marionette	DEBUG	Canceled page load listener because no navigation has been detected
+
+sample.LoginTest > execute STANDARD_OUT
+    11:16:44 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:LEAVE:41553dcb:ID16
+    11:16:44 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111644.232-Click_UserProfileIcon.LEAVE.png'.
+    11:16:44 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:ENTER:e7d6393e:ID17
+    11:16:44 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Lookup element log_out type ID
+
+sample.LoginTest > execute STANDARD_ERROR
+    1531732604418	Marionette	DEBUG	Received DOM event "beforeunload" for "http://example.org/Dashboard"
+    1531732604497	Marionette	DEBUG	Received DOM event "pagehide" for "http://example.org/Dashboard"
+    1531732604498	Marionette	DEBUG	Received DOM event "unload" for "http://example.org/Dashboard"
+    1531732605135	Marionette	DEBUG	Received DOM event "DOMContentLoaded" for "http://example.org/Logout"
+    1531732605170	Marionette	DEBUG	Received DOM event "pageshow" for "http://example.org/Logout"
+
+sample.LoginTest > execute STANDARD_OUT
+    11:16:45 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:LEAVE:e7d6393e:ID17
+    11:16:45 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111645.185-Click_LogoutButton.LEAVE.png'.
+    11:16:45 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase     @COMPONENT:LEAVE:95a7329e:ID15
+    11:16:45 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111645.507-TopBar.LEAVE.png'.
+    11:16:45 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase   @SPECIFICATION_STEP:LEAVE:747bf8aa:ID14
+    11:16:45 INFO  [Test worker]  [TE-Test: LoginTest] WebDriverFixture Wrote screenshot to file='screenshots/sample.LoginTest/20180716/111645.655-Ausloggen_aus_EXAMPLE..LEAVE.png'.
+    11:16:45 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase   @SPECIFICATION_STEP:ENTER:caae86ad:ID18
+    11:16:45 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase     @COMPONENT:ENTER:b4602d54:ID19
+    11:16:45 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:ENTER:7b885ce0:ID20
+
+sample.LoginTest > execute STANDARD_ERROR
+    JavaScript error: jar:file:///usr/lib64/firefox/omni.ja!/components/captivedetect.js, line 343: TypeError: this._runningRequest is null
+
+    ###!!! [Parent][MessageChannel] Error: (msgtype=0x150083,name=PBrowser::Msg_Destroy) Closed channel: cannot send/recv
+
+
+    ###!!! [Child][MessageChannel] Error: (msgtype=0x150001,name=PBrowser::Msg_AsyncMessage) Closed channel: cannot send/recv
+
+    JavaScript error: chrome://global/content/browser-child.js, line 125: NS_ERROR_UNEXPECTED: Component returned failure code: 0x8000ffff (NS_ERROR_UNEXPECTED) [nsIMessageSender.sendAsyncMessage]
+    *** UTM:SVC TimerManager:registerTimer called after profile-before-change notification. Ignoring timer registration for id: telemetry_modules_ping
+
+sample.LoginTest > execute STANDARD_OUT
+    11:16:50 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase       @STEP:LEAVE:7b885ce0:ID20
+    11:16:50 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase     @COMPONENT:LEAVE:b4602d54:ID19
+    11:16:50 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase   @SPECIFICATION_STEP:LEAVE:caae86ad:ID18
+    11:16:50 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase ****************************************************
+    11:16:50 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase Test sample.LoginTest finished with 17 sec. duration.
+    11:16:50 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase ****************************************************
+    11:16:50 INFO  [Test worker]  [TE-Test: LoginTest] AbstractTestCase @TEST:LEAVE:94995925:IDROOT
+@TESTRUN:LEAVE:0.0.0
+:testSuite
+
+BUILD SUCCESSFUL in 37s
+5 actionable tasks: 5 executed

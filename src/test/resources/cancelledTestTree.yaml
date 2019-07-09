@@ -1,0 +1,214 @@
+"started": "2019-05-22T11:22:53.720882Z"
+"testSuiteId": "0"
+"testSuiteRunId": "0"
+"resourcePaths": [ "src/test/java/org/testeditor/parameterized/Juice.tcl" ]
+"testRuns":
+- "source": "org/testeditor/parameterized/Juice"
+  "testRunId": "0*0"
+  "commitId": "null"
+  "started": "2019-05-22T11:23:13.218686Z"
+  "children":
+  - "node": "TEST"
+    "message": "org.testeditor.parameterized.Juice"
+    "id": "IDROOT"
+    "enter": "179207614829703"
+    "preVariables":
+    "children":
+    - "node": "SPECIFICATION_STEP"
+      "message": "Given I am on the Juice Shop front page"
+      "id": "ID-1-0"
+      "enter": "179207628424390"
+      "preVariables":
+        "@": "org/testeditor/parameterized/Juice.tcl:12-15"
+      "children":
+      - "node": "COMPONENT"
+        "message": "WebBrowser"
+        "id": "ID-1-1"
+        "enter": "179207630404292"
+        "preVariables":
+          "@": "org/testeditor/parameterized/Juice.tcl:13-15"
+        "children":
+        - "node": "STEP"
+          "message": "Start <Firefox>"
+          "id": "ID-1-2"
+          "enter": "179207631492969"
+          "preVariables":
+            "@": "org/testeditor/parameterized/Juice.tcl:14"
+            "<Firefox>": "Locator: firefox, Strategy: org.testeditor.fixture.web.LocatorStrategy.ID in archive:file:/home/u141675/.gradle/caches/modules-2/files-2.1/org.testeditor.fixture/web-fixture/4.2.1/9ddb39426cef04b12221766fbcff262b0cc63a4f/web-fixture-4.2.1.jar!/org/testeditor/fixture/web/WebDriverFixture.aml:151"
+          "children":
+          "leave": "179211854411628"
+          "status": "OK"
+          "postVariables":
+            "@": "org/testeditor/parameterized/Juice.tcl:14"
+            "<Firefox>": "Locator: firefox, Strategy: org.testeditor.fixture.web.LocatorStrategy.ID in archive:file:/home/u141675/.gradle/caches/modules-2/files-2.1/org.testeditor.fixture/web-fixture/4.2.1/9ddb39426cef04b12221766fbcff262b0cc63a4f/web-fixture-4.2.1.jar!/org/testeditor/fixture/web/WebDriverFixture.aml:151"
+        - "node": "STEP"
+          "message": "Browse \"https://juice-shop.herokuapp.com\""
+          "id": "ID-1-3"
+          "enter": "179211908758896"
+          "preVariables":
+            "@": "org/testeditor/parameterized/Juice.tcl:15"
+          "children":
+          "exception": "Reached error page: about:neterror?e=connectionFailure&u=https%3A//juice-shop.herokuapp.com/&c=UTF-8&f=regular&d=Firefox%20can%E2%80%99t%20establish%20a%20connection%20to%20the%20server%20at%20juice-shop.herokuapp.com.\nBuild info: version: '3.14.0', revision: 'aacccce0', time: '2018-08-02T20:19:58.91Z'\nSystem info: host: 'DevelopmentBox', ip: '127.0.0.1', os.name: 'Linux', os.arch: 'amd64', os.version: '4.16.11-100.fc26.x86_64', java.version: '10.0.2'\nDriver info: org.openqa.selenium.firefox.FirefoxDriver\nCapabilities {acceptInsecureCerts: true, browserName: firefox, browserVersion: 60.0, javascriptEnabled: true, moz:accessibilityChecks: false, moz:headless: false, moz:processID: 17159, moz:profile: /run/user/1002/rust_mozprof..., moz:useNonSpecCompliantPointerOrigin: false, moz:webdriverClick: true, pageLoadStrategy: normal, platform: LINUX, platformName: LINUX, platformVersion: 4.16.11-100.fc26.x86_64, rotatable: false, timeouts: {implicit: 0, pageLoad: 300000, script: 30000}}\nSession ID: 93c228f9-e751-47bb-bb63-877673ac0f84"
+          "leave": "179220141795498"
+          "status": "ERROR"
+          "postVariables":
+        "leave": "179220141929263"
+        "status": "ERROR"
+        "postVariables":
+      "leave": "179220141978767"
+      "status": "ERROR"
+      "postVariables":
+    "leave": "179220305203362"
+    "status": "ABORTED"
+    "postVariables":
+- "source": "org/testeditor/parameterized/Juice"
+  "testRunId": "0*1"
+  "commitId": "null"
+  "started": "2019-05-22T11:23:26.071406Z"
+  "children":
+  - "node": "TEST"
+    "message": "org.testeditor.parameterized.Juice"
+    "id": "IDROOT"
+    "enter": "179220444412696"
+    "preVariables":
+    "children":
+    - "node": "SPECIFICATION_STEP"
+      "message": "Given I am on the Juice Shop front page"
+      "id": "ID-1-0"
+      "enter": "179220444967121"
+      "preVariables":
+        "@": "org/testeditor/parameterized/Juice.tcl:12-15"
+      "children":
+      - "node": "COMPONENT"
+        "message": "WebBrowser"
+        "id": "ID-1-1"
+        "enter": "179220451622243"
+        "preVariables":
+          "@": "org/testeditor/parameterized/Juice.tcl:13-15"
+        "children":
+        - "node": "STEP"
+          "message": "Start <Firefox>"
+          "id": "ID-1-2"
+          "enter": "179220452448205"
+          "preVariables":
+            "@": "org/testeditor/parameterized/Juice.tcl:14"
+            "<Firefox>": "Locator: firefox, Strategy: org.testeditor.fixture.web.LocatorStrategy.ID in archive:file:/home/u141675/.gradle/caches/modules-2/files-2.1/org.testeditor.fixture/web-fixture/4.2.1/9ddb39426cef04b12221766fbcff262b0cc63a4f/web-fixture-4.2.1.jar!/org/testeditor/fixture/web/WebDriverFixture.aml:151"
+          "children":
+          "leave": "179223826955600"
+          "status": "OK"
+          "postVariables":
+            "@": "org/testeditor/parameterized/Juice.tcl:14"
+            "<Firefox>": "Locator: firefox, Strategy: org.testeditor.fixture.web.LocatorStrategy.ID in archive:file:/home/u141675/.gradle/caches/modules-2/files-2.1/org.testeditor.fixture/web-fixture/4.2.1/9ddb39426cef04b12221766fbcff262b0cc63a4f/web-fixture-4.2.1.jar!/org/testeditor/fixture/web/WebDriverFixture.aml:151"
+        - "node": "STEP"
+          "message": "Browse \"https://juice-shop.herokuapp.com\""
+          "id": "ID-1-3"
+          "enter": "179223844161814"
+          "preVariables":
+            "@": "org/testeditor/parameterized/Juice.tcl:15"
+          "children":
+          "exception": "Reached error page: about:neterror?e=connectionFailure&u=https%3A//juice-shop.herokuapp.com/&c=UTF-8&f=regular&d=Firefox%20can%E2%80%99t%20establish%20a%20connection%20to%20the%20server%20at%20juice-shop.herokuapp.com.\nBuild info: version: '3.14.0', revision: 'aacccce0', time: '2018-08-02T20:19:58.91Z'\nSystem info: host: 'DevelopmentBox', ip: '127.0.0.1', os.name: 'Linux', os.arch: 'amd64', os.version: '4.16.11-100.fc26.x86_64', java.version: '10.0.2'\nDriver info: org.openqa.selenium.firefox.FirefoxDriver\nCapabilities {acceptInsecureCerts: true, browserName: firefox, browserVersion: 60.0, javascriptEnabled: true, moz:accessibilityChecks: false, moz:headless: false, moz:processID: 17448, moz:profile: /run/user/1002/rust_mozprof..., moz:useNonSpecCompliantPointerOrigin: false, moz:webdriverClick: true, pageLoadStrategy: normal, platform: LINUX, platformName: LINUX, platformVersion: 4.16.11-100.fc26.x86_64, rotatable: false, timeouts: {implicit: 0, pageLoad: 300000, script: 30000}}\nSession ID: 023981ba-8e18-464c-aad3-8629b57027dd"
+          "leave": "179232010617112"
+          "status": "ERROR"
+          "postVariables":
+        "leave": "179232010674263"
+        "status": "ERROR"
+        "postVariables":
+      "leave": "179232010704681"
+      "status": "ERROR"
+      "postVariables":
+    "leave": "179232126533504"
+    "status": "ABORTED"
+    "postVariables":
+- "source": "org/testeditor/parameterized/Juice"
+  "testRunId": "0*2"
+  "commitId": "null"
+  "started": "2019-05-22T11:23:37.873252Z"
+  "children":
+  - "node": "TEST"
+    "message": "org.testeditor.parameterized.Juice"
+    "id": "IDROOT"
+    "enter": "179232246255785"
+    "preVariables":
+    "children":
+    - "node": "SPECIFICATION_STEP"
+      "message": "Given I am on the Juice Shop front page"
+      "id": "ID-1-0"
+      "enter": "179232246821642"
+      "preVariables":
+        "@": "org/testeditor/parameterized/Juice.tcl:12-15"
+      "children":
+      - "node": "COMPONENT"
+        "message": "WebBrowser"
+        "id": "ID-1-1"
+        "enter": "179232247381167"
+        "preVariables":
+          "@": "org/testeditor/parameterized/Juice.tcl:13-15"
+        "children":
+        - "node": "STEP"
+          "message": "Start <Firefox>"
+          "id": "ID-1-2"
+          "enter": "179232247988866"
+          "preVariables":
+            "@": "org/testeditor/parameterized/Juice.tcl:14"
+            "<Firefox>": "Locator: firefox, Strategy: org.testeditor.fixture.web.LocatorStrategy.ID in archive:file:/home/u141675/.gradle/caches/modules-2/files-2.1/org.testeditor.fixture/web-fixture/4.2.1/9ddb39426cef04b12221766fbcff262b0cc63a4f/web-fixture-4.2.1.jar!/org/testeditor/fixture/web/WebDriverFixture.aml:151"
+          "children":
+          "leave": "179235632235585"
+          "status": "OK"
+          "postVariables":
+            "@": "org/testeditor/parameterized/Juice.tcl:14"
+            "<Firefox>": "Locator: firefox, Strategy: org.testeditor.fixture.web.LocatorStrategy.ID in archive:file:/home/u141675/.gradle/caches/modules-2/files-2.1/org.testeditor.fixture/web-fixture/4.2.1/9ddb39426cef04b12221766fbcff262b0cc63a4f/web-fixture-4.2.1.jar!/org/testeditor/fixture/web/WebDriverFixture.aml:151"
+        - "node": "STEP"
+          "message": "Browse \"https://juice-shop.herokuapp.com\""
+          "id": "ID-1-3"
+          "enter": "179235663846850"
+          "preVariables":
+            "@": "org/testeditor/parameterized/Juice.tcl:15"
+          "children":
+"status": "FAILED"
+"status": "FAILED"
+          "exception": "java.net.ConnectException: Failed to connect to localhost/0:0:0:0:0:0:0:1:1594\nBuild info: version: '3.14.0', revision: 'aacccce0', time: '2018-08-02T20:19:58.91Z'\nSystem info: host: 'DevelopmentBox', ip: '127.0.0.1', os.name: 'Linux', os.arch: 'amd64', os.version: '4.16.11-100.fc26.x86_64', java.version: '10.0.2'\nDriver info: driver.version: RemoteWebDriver"
+          "leave": "179241825196283"
+          "status": "ERROR"
+          "postVariables":
+        "leave": "179241825259311"
+        "status": "ERROR"
+        "postVariables":
+      "leave": "179241825283529"
+      "status": "ERROR"
+      "postVariables":
+    "leave": "179241839006383"
+    "status": "ABORTED"
+    "postVariables":
+- "source": "org/testeditor/parameterized/Juice"
+  "testRunId": "0*3"
+  "commitId": "null"
+  "started": "2019-05-22T11:23:47.614639Z"
+  "children":
+  - "node": "TEST"
+    "message": "org.testeditor.parameterized.Juice"
+    "id": "IDROOT"
+    "enter": "179241987647607"
+    "preVariables":
+    "children":
+    - "node": "SPECIFICATION_STEP"
+      "message": "Given I am on the Juice Shop front page"
+      "id": "ID-1-0"
+      "enter": "179241987872852"
+      "preVariables":
+        "@": "org/testeditor/parameterized/Juice.tcl:12-15"
+      "children":
+      - "node": "COMPONENT"
+        "message": "WebBrowser"
+        "id": "ID-1-1"
+        "enter": "179241988002930"
+        "preVariables":
+          "@": "org/testeditor/parameterized/Juice.tcl:13-15"
+        "children":
+        - "node": "STEP"
+          "message": "Start <Firefox>"
+          "id": "ID-1-2"
+          "enter": "179241988135940"
+          "preVariables":
+            "@": "org/testeditor/parameterized/Juice.tcl:14"
+            "<Firefox>": "Locator: firefox, Strategy: org.testeditor.fixture.web.LocatorStrategy.ID in archive:file:/home/u141675/.gradle/caches/modules-2/files-2.1/org.testeditor.fixture/web-fixture/4.2.1/9ddb39426cef04b12221766fbcff262b0cc63a4f/web-fixture-4.2.1.jar!/org/testeditor/fixture/web/WebDriverFixture.aml:151"
+          "children":
