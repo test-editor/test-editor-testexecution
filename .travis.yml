@@ -13,7 +13,7 @@ before_cache:
 - mkdir -p $HOME/nix.store
 - nix copy --to file://$HOME/nix.store -f default.nix buildInputs
 script:
-- nix-shell --command "./gradlew assemble check install -x checkstyleMain -x checkstyleTest -x checkThatCodeStyleIsUpToDate"
+- nix-shell --command "./gradlew assemble check install"
 after_success:
 - bash <(curl -s https://codecov.io/bash)
 - nix-shell --command "./.travis-publishOnRelease.sh"
