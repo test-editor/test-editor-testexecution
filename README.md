@@ -1,5 +1,5 @@
 [![License](http://img.shields.io/badge/license-EPL-blue.svg?style=flat)](https://www.eclipse.org/legal/epl-v10.html)
-[![Build Status](https://api.travis-ci.org/test-editor/test-editor-testexecution.svg?branch=master)](https://api.travis-ci.org/test-editor/test-editor-testexecution)
+[![Build Status](https://api.travis-ci.org/test-editor/test-editor-testexecution.svg?branch=master)](https://travis-ci.org/test-editor/test-editor-testexecution)
 
 Manages test execution requests from the Test-Editor.
 
