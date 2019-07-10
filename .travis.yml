@@ -14,7 +14,6 @@ before_cache:
 - nix copy --to file://$HOME/nix.store -f default.nix buildInputs
 script:
 - nix-shell --command "./gradlew assemble check install -x checkstyleMain -x checkstyleTest -x checkThatCodeStyleIsUpToDate"
-- nix-shell --command "cd example/ && ./gradlew check && cd .."
 after_success:
 - bash <(curl -s https://codecov.io/bash)
 - nix-shell --command "./.travis-publishOnRelease.sh"
