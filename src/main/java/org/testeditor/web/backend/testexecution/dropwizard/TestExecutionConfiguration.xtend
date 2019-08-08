@@ -1,4 +1,4 @@
-package org.testeditor.web.backend.testexecution
+package org.testeditor.web.backend.testexecution.dropwizard
 
 interface TestExecutionConfiguration {
 	def String getXvfbrunPath()

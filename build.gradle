@@ -50,9 +50,11 @@ dependencies {
     implementation "org.eclipse.xtend:org.eclipse.xtend.lib:$versions.xtext"
     implementation "org.testeditor.web:org.testeditor.web.dropwizard:$versions.testEditorDropwizard"
     //implementation "io.dropwizard:dropwizard-core:$versions.dropwizard"
-    compile "commons-io:commons-io:2.6"
-    compile "org.apache.commons:commons-text:1.4"
-
+    implementation "commons-io:commons-io:2.6"
+    implementation "org.apache.commons:commons-text:1.4"
+	implementation "org.testeditor.web:org.testeditor.web.dropwizard:$versions.testEditorDropwizard"
+	implementation 'org.eclipse.jgit:org.eclipse.jgit:5.1.2.201810061102-r'
+	
 //    implementation "org.apache.commons:commons-lang3:3.4"
 //    implementation "org.gradle:gradle-tooling-api:2.14.1"
 //    implementation "org.eclipse.xtend:org.eclipse.xtend.core:$versions.xtext"
@@ -63,6 +65,8 @@ dependencies {
     testImplementation "org.mockito:mockito-core:2.11.0"
     testImplementation "org.eclipse.xtext:org.eclipse.xtext.testing:$versions.xtext"
 	testImplementation "org.testeditor.web:org.testeditor.web.dropwizard.testing:$versions.testEditorDropwizard"
+	testImplementation 'org.eclipse.jgit:org.eclipse.jgit.junit:5.1.2.201810061102-r'
+
 }
 
 test {
