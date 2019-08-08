@@ -35,7 +35,7 @@ class TestExecutionDropwizardConfiguration extends DropwizardApplicationConfigur
 	@Accessors
 	String shPath	
 	
-	@Accessors
-	Boolean filterTestSubStepsFromLogs
+    @Accessors
+    Boolean filterTestSubStepsFromLogs = false
 
 }
