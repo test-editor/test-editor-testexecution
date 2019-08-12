@@ -1,10 +1,13 @@
 language: nix
-sudo: false
+sudo: required
+services:
+- docker
 cache:
   directories:
   - "$HOME/nix.store"
   - "$HOME/.gradle/caches/"
   - "$HOME/.gradle/wrapper/"
+  - "./.owasp-dependency-check-db"
 before_install:
 - sudo mkdir -p /etc/nix
 - echo "substituters = https://cache.nixos.org/ file://$HOME/nix.store" | sudo tee -a /etc/nix/nix.conf > /dev/null
@@ -14,11 +17,24 @@ before_cache:
 - nix copy --to file://$HOME/nix.store -f default.nix buildInputs
 script:
 - nix-shell --command "./gradlew assemble check install"
+- nix-shell --command "timeout 300 ./.travis-cat_owasp_depcheck_reports.sh || true"
+- nix-shell --command "./gradlew docker"
+- if [[ ( "$TRAVIS_PULL_REQUEST" = "false" ) && (( "$TRAVIS_BRANCH" = "master" ) || ( "$TRAVIS_TAG" != "" )) ]]; then export TE_DEPLOY=true; fi
 after_success:
 - bash <(curl -s https://codecov.io/bash)
 - nix-shell --command "./.travis-publishOnRelease.sh"
+deploy:
+  provider: script
+  script: nix-shell --command "bash docker_push"
+  on:
+    condition: "$TE_DEPLOY != ''"
+    all_branches: true
 env:
-  global: 
+  global:
+    - # Environment variables for Docker 
+    - secure: "W0pZh0w+FdL8I6iWxcZuYbpowtHMjeMyTz5HwwrA2FyglPu3ybI7+0VQ88YTQa9Si0sghKl1hFz49dK+0y7ve9Pcwbfs90R/MlM7x/WYjR90dr4lfvWAGdheWGdhwfM60knVjrGbspJ7YBikfZRzOI8jWvhkjLsWoHR8arSdVp2O3kkpoaqvXL48rraeFrx/zCXqRIYw6dTpdVw+BJHbZZcvExTD/LdgEwVd6ctiRFKsBgfJ4ozgHTJL6xDK8CxwJFeaJZWyDjYE7+hJTPz2l9EATGnxGmnU26SItOzrk5/pKVy9reNL6khXwbvW91VVQj9aaDvMcZrW+sAPqpOF7LLtwy1kycBNV11WC3Xvy+n+KJl2Vy9EAEYDZ5E4QqZEUEPxAfU/dfn4WO17mtfco2WlYRUdovxgA7IOcQFTVUg+kMFnwlZskjgpp4O6oXyLUHHTrAFD+IkD8+7+G9BQxVKVBRWevooIaXGbCXGytVtLZBfTIR5U67OgNmVM7xHj/Hcwt767hBo7PMySnUukIYwMliRWMwBR7oiCqSuO4wTCZf2PQWdaalGTQ2C/O406U5ERXzgiXI4vTo9VkteJj8wixqYr7Oy2xwZuzQLnX61Ol5Z8aLhU+PDiiqRRoccbjr52s3xme4wiG/Qbge27+MjZL72liY+j4Vb0aBroS8s="
+    - secure: "aBN3bWs5YcOUc12XpCejIq2Oydmcd1m3tD2YSafhD5BnZdXnR3acdmxS0Pe/SBgzGYcv38gY9o5P8vQat+nIi9j0m4u5pSfy8bRX5yHndaVKJV/tFQrADJ4qyqGNizrJM8d6MUX3gaP8tD8/4qQh8ElErtPe7wCJL6OvJGu+414R/WAgmDuay3+yhMI8rIt7AiKj1j/k1H+yZIoPkjzLgK4IbK7dI0ZR18RX0K+Z0neBZ4mlXkPdVjod6erEdJcD+/cIJKIbVQgs98ryJLIhoaaCA/m9riINkaUODk33Sc2ZDNuIyIttcvAzhpXQx+eWT1Kb8bZBJBKrEY64XKfQoI2rzuj6QomP5Ffzsir8xV4anPMJ80sEwhL9Yh9PxwdCptqvCc+8xHwlPRunBWJl2yb7CpLAI7/hMuhgzCGiBmLFQYiq7LugetVtCXJ96IhUhjwMpX6ZdwgVO+i+wLMm3Er4VV3diCfIB1yzxS6bEJI2vufUdgzXN9xXG27qaYfqAZ5q+AJGMbpGvj59sJSVWNZu5dgWapq2Q1elXpBRGxPpMndHZMxvpoUgrz9eRwhNNlMHIHN4h89NVhdDCf6O1SwmfY5WUIVGizXYFwnCN8Qe1zQN5m5KCG458x3tWvQMDsxp+NSdY7zy8FWQPJ/a0hMg+4ZHRtt+Ghc0si2PgL4="
     - # Bintray Environment variables for deployment
     - secure: "qhozVkZCG5IZH67pHBpZuFRYpOB/Nlm5kO9grodBwpVHQ/tYCu2cChDVRGUqCroOtqCCm3V35gC1C0EKcsqO3YXlDnb5F6IbgoLpZtW76EcJz1rIB1a+K0cP3Uy3smLUS98R9YGTVjcBl1eZCQ6yiM4X8pS4vlq1ctBjbHUpXDCa1/q8tQlPQB5Krjka1Sthg5fGUeYfuY+7NNDObI4hVw6CzVBB09e0pNv+rSzHGcsbtjS2R/Q9rm+gSTIgSYrwwrIRnTOBsJLfwEH4cHoR9JjKGr/X51d3kQgjbAWc1evZha+fbaA4Stga8r84iDCa2iCig7uW/opSBBuSQzq9RuNozQz7ml742qeqR4RsqpeFaTaoyJrzZphXupjjzq712NZ4WO9vrqfg8f1kO+7Ot21ge1r0D0rJYiSRXyCRQwTEsFJmaHK0EeAcDAuOwCbC6lpO6lOmRGFXnumvgDRZRGU0+L8Eqd/rxdLt4rr0RBt4L70WDUe+DR4wqVxz+LBiJgYCQGDnrq8+b1qxdXgRs6YDxDbpb+m4lUuRwCFVvmsRi7y/5zwmjAgY2gmfpm2fMWrZTXNO2IHXefJSQQZRQL9zZO81lnRfRrVxPlyiPpXRPcRA5rRhlWE3Scd4fEljFkj93srM2g/cVKSyEsJ7Jxf9gT1KER750fNCRNzQpoA="
     - secure: "Mi32Pbs6izQ2dXk7Dsbp1GPc5YAymkfaB+tIsSxtueNepwvnIMtdRFKMvnEzXnZQklCnyLyN58z+4gK6Iwm67WWS2lIT5EFZprnO/gFTmlHSWi2kqr84C3+jwIzZbpNIZrYKly/smG2nWy4tHswded3Im3s0TnMJPW9u6VhQSFUks76Ow2xssn/YdsOEos1HIK4BLeOEUVDssqT+DguI6ir37frGRi0LKYKoypSjS2u/uDHTbo4iN/ndsBS/6ptVgBmiZ0AM+oEdfQkbc0iJnqaCXEwXOC2116OhqafkwAHwnGT9zR0EXxzVRvEa74BBAEuf2nm6BwFSGBQDjA0kGH6rr+TbfEvxbBm/9axGCQ9lGVfmQqyS06I4I2WOyLENp/D/qMgN+5Yl0qjOshcvu/AR0pityuYfe7xiIjz05L8rdjUOILBMnLCRyieiQ/DXv5I2rCzWZAS63VkaighkGSm/25hgafIlb5l0EdUpRl2wYTH5ZqJ4UNEqmOGRVzWCfujGQ6vKEPO0dpJv5eKw9F/djmTkPtnSPpkqIzcfAc1MiSjnLbu6QHqOyQcPiQU0e5ps02EYmPThZKcAswj2ouoAkD9T9unD+eT9xo+WRhCjOtAoXSZTz7M2nbaBzzU0QJoUD7XzY5NYlhVy0xIaat70APO+PxK/s+5eSg0vxaI="
+
