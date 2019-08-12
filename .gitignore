@@ -37,3 +37,6 @@ config.local.yml
 
 ### test executions ###
 xvfb.error.log
+
+### Docker build ###
+testeditor
