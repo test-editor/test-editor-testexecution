@@ -11,7 +11,7 @@ buildscript {
     }
 }
 
-apply plugin: 'java-library'
+apply plugin: 'application'
 apply plugin: 'org.xtext.xtend'
 apply plugin: 'net.researchgate.release'
 apply plugin: 'com.jfrog.bintray'
@@ -41,6 +41,13 @@ ext.versions = [
 	testEditorDropwizard: '0.19.+'
 ]
 
+ext.configPath = "./"
+if (project.hasProperty('localconfig')) {
+    ext.configFile = 'config.local.yml'
+} else {
+    ext.configFile = 'config.yml'
+}
+
 sourceSets {
     main.xtendOutputDir = 'src/main/xtend-gen'
     test.xtendOutputDir = 'src/test/xtend-gen'
@@ -49,15 +56,10 @@ sourceSets {
 dependencies {
     implementation "org.eclipse.xtend:org.eclipse.xtend.lib:$versions.xtext"
     implementation "org.testeditor.web:org.testeditor.web.dropwizard:$versions.testEditorDropwizard"
-    //implementation "io.dropwizard:dropwizard-core:$versions.dropwizard"
     implementation "commons-io:commons-io:2.6"
     implementation "org.apache.commons:commons-text:1.4"
 	implementation "org.testeditor.web:org.testeditor.web.dropwizard:$versions.testEditorDropwizard"
 	implementation 'org.eclipse.jgit:org.eclipse.jgit:5.1.2.201810061102-r'
-	
-//    implementation "org.apache.commons:commons-lang3:3.4"
-//    implementation "org.gradle:gradle-tooling-api:2.14.1"
-//    implementation "org.eclipse.xtend:org.eclipse.xtend.core:$versions.xtext"
 
     testImplementation "junit:junit:4.12"
     testImplementation "io.dropwizard:dropwizard-testing:$versions.dropwizard"
@@ -69,12 +71,34 @@ dependencies {
 
 }
 
+mainClassName = 'org.testeditor.web.backend.testexecution.dropwizard.TestExecutionApplication'
+
+run {
+    main mainClassName
+    args 'server', configPath + configFile
+}
+
 test {
     testLogging {
         showStandardStreams = true
         exceptionFormat = 'full'
         events "standardOut", "started", "passed", "skipped", "failed"
     }
+}
+
+task docker(type:Exec) {
+    dependsOn(assemble)
+    executable 'sh'
+    args '-c', """
+      (([ -d testeditor ] && rm -Rf testeditor) || true) &&
+      cd build/distributions && (rm testexecution.tar || true) &&
+      rm test-editor-testexecution-*.zip &&
+      mv test-editor-testexecution-*.tar testexecution.tar &&
+      tar -xf testexecution.tar &&
+      mv test-editor-testexecution-* ../../testeditor &&
+      cd ../.. &&
+      docker build -t testeditor/testexecution:snapshot .
+    """
 }
 
 /*
