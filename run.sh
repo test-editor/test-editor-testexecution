@@ -89,4 +89,4 @@ export HOME=/opt/testeditor
 export DISPLAY=:99.0
 
 cd $WORK_DIR
-exec $PROG_DIR/bin/org.testeditor.web.backend.persistence server $WORK_DIR/config.yml
+exec $PROG_DIR/bin/test-editor-testexecution server $WORK_DIR/config.yml
