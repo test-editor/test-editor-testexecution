@@ -17,7 +17,6 @@ import org.eclipse.jgit.transport.SshTransport
 import org.eclipse.jgit.util.FS
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.dropwizard.GitConfiguration
-import org.testeditor.web.backend.testexecution.workspace.WorkspaceProvider
 
 import static java.util.concurrent.TimeUnit.MINUTES
 import static org.eclipse.jgit.lib.Constants.DOT_GIT
@@ -32,13 +31,11 @@ class GitProvider {
 	]
 
 	@Inject GitConfiguration config
-	@Inject WorkspaceProvider workspaceProvider
 
 	/**
 	 * @return the potentially cached {@link Git} instance for the current workspace.
 	 */
-	def Git getGit() {
-		val workspace = workspaceProvider.get
+	def Git getGit(File workspace) {
 		return workspaceToGitCache.get(workspace)
 	}
 	
