@@ -14,8 +14,6 @@ import javax.ws.rs.core.MediaType
 import org.assertj.core.api.SoftAssertions
 import org.eclipse.jgit.junit.JGitTestUtil
 import org.junit.Test
-import org.testeditor.web.backend.testexecution.TestExecutionKey
-import org.testeditor.web.backend.testexecution.TestExecutorProvider
 
 import static javax.ws.rs.core.Response.Status.*
 import static org.assertj.core.api.Assertions.*
@@ -24,9 +22,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 
 	@Test
 	def void testThatCallTreeIsNotFoundIfNotExistent() {
-		workspaceRoot.newFile('SomeTest.tcl')
-		workspaceRoot.newFolder(TestExecutorProvider.LOG_FOLDER)
-		workspaceRoot.newFile(TestExecutorProvider.LOG_FOLDER + '/testrun.1-1--.200001011200123.yaml')
+		remoteGitFolder.newFile('SomeTest.tcl').commitInRemoteRepository
+		remoteGitFolder.newFolder(TestExecutorProvider.LOG_FOLDER)
+		remoteGitFolder.newFile(TestExecutorProvider.LOG_FOLDER + '/testrun.1-1--.200001011200123.yaml').commitInRemoteRepository
 
 		// when
 		val response = createCallTreeRequest(TestExecutionKey.valueOf('1-2')).get
@@ -39,31 +37,33 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	def void testThatCallTreeOfLastRunReturnsLatestJson() {
 		// given
 		val mapper = new ObjectMapper(new JsonFactory)
-				workspaceRoot.newFile('SomeTest.tcl')
-		workspaceRoot.newFolder(TestExecutorProvider.LOG_FOLDER)
+		remoteGitFolder.newFile('SomeTest.tcl').commitInRemoteRepository
+		remoteGitFolder.newFolder(TestExecutorProvider.LOG_FOLDER)
 		// latest (12 o'clock)
 		val latestCommitID = 'abcd'
 		val previousCommitID = '1234'
-		workspaceRoot.newFile(TestExecutorProvider.LOG_FOLDER + '/testrun.0-0--.200001011200123.yaml') => [
+		remoteGitFolder.newFile(TestExecutorProvider.LOG_FOLDER + '/testrun.0-0--.200001011200123.yaml') => [
 			JGitTestUtil.write(it, '''
-					"started": "on some instant"
-					"resourcePaths": [ "o'ne/two/three", "two/three.tcl" ]
-					"testRuns":
-					- "source": "SomeTest"
-					  "commitId": "«latestCommitID»"
-					  "children":
-				''')
+				"started": "on some instant"
+				"resourcePaths": [ "o'ne/two/three", "two/three.tcl" ]
+				"testRuns":
+				- "source": "SomeTest"
+				  "commitId": "«latestCommitID»"
+				  "children":
+			''')
+			commitInRemoteRepository
 		]
 		// previous (11 o'clock)
-		workspaceRoot.newFile(TestExecutorProvider.LOG_FOLDER + '/testrun.0-0--.200001011100123.yaml') => [
+		remoteGitFolder.newFile(TestExecutorProvider.LOG_FOLDER + '/testrun.0-0--.200001011100123.yaml') => [
 			JGitTestUtil.write(it, '''
-					"started": "on some instant"
-					"resourcePaths": [ "one", "two" ]
-					"testRuns":
-					- "source": "SomeTest"
-					  "commitId": "«previousCommitID»"
-					  "children":
-				''')
+				"started": "on some instant"
+				"resourcePaths": [ "one", "two" ]
+				"testRuns":
+				- "source": "SomeTest"
+				  "commitId": "«previousCommitID»"
+				  "children":
+			''')
+			commitInRemoteRepository
 		]
 
 		// when
@@ -85,27 +85,28 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	def void testThatCallTreeOfLastRunReturnsExpectedJSON() {
 		// given
 		val mapper = new ObjectMapper(new JsonFactory)
-				workspaceRoot.newFile('SomeTest.tcl')
-		workspaceRoot.newFolder(TestExecutorProvider.LOG_FOLDER)
-		workspaceRoot.newFile(TestExecutorProvider.LOG_FOLDER + '/testrun.0-0--.200001011200123.yaml') => [
+		remoteGitFolder.newFile('SomeTest.tcl').commitInRemoteRepository
+		remoteGitFolder.newFolder(TestExecutorProvider.LOG_FOLDER)
+		remoteGitFolder.newFile(TestExecutorProvider.LOG_FOLDER + '/testrun.0-0--.200001011200123.yaml') => [
 			JGitTestUtil.write(it, '''
-					"started": "on some instant"
-					"resourcePaths": [ "one", "two" ]
-					"testRuns":
-					- "source": "SomeTest"
-					  "commitId": 
-					  "children":
-					  - "node": "Test"
-					    "message": "test"
-					    "id": 4711
-					    "preVariables":
-					    - { "b": "7" }
-					    - { "c[1].\"key with spaces\"": "5" }
-					    "children":
-					    "status": "OK"
-					    "postVariables":
-					    - { "a": "some" }
-				''')
+				"started": "on some instant"
+				"resourcePaths": [ "one", "two" ]
+				"testRuns":
+				- "source": "SomeTest"
+				  "commitId": 
+				  "children":
+				  - "node": "Test"
+				    "message": "test"
+				    "id": 4711
+				    "preVariables":
+				    - { "b": "7" }
+				    - { "c[1].\"key with spaces\"": "5" }
+				    "children":
+				    "status": "OK"
+				    "postVariables":
+				    - { "a": "some" }
+			''')
+			commitInRemoteRepository
 		]
 
 		// when
@@ -138,14 +139,15 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		// given
 		val workspaceRootPath = workspaceRoot.root.toPath
 		val testFile = 'test.tcl'
-				workspaceRoot.newFile(testFile)
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
 				echo "Hello stdout!"
 				echo "test was run" > test.ok.txt
 			''')
+			commitInRemoteRepository
 		]
 
 		// when
@@ -165,14 +167,15 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	def void testThatRunningsReturned() {
 		// given
 		val testFile = 'test.tcl'
-				workspaceRoot.newFile(testFile)
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
 				sleep 7 # ensure test reads process's status while still running
 				echo "test was run" > test.ok.txt
 			''')
+			commitInRemoteRepository
 		]
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
 		assertThat(response.status).isEqualTo(CREATED.statusCode)
@@ -189,13 +192,14 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	def void testThatSuccessIsReturned() {
 		// given
 		val testFile = 'test.tcl'
-				workspaceRoot.newFile(testFile)
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
 				echo "test was run" > test.ok.txt
 			''')
+			commitInRemoteRepository
 		]
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
 		assertThat(response.status).isEqualTo(CREATED.statusCode)
@@ -212,13 +216,14 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	def void testThatFailuresReturned() {
 		// given
 		val testFile = 'test.tcl'
-				workspaceRoot.newFile(testFile)
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
 				exit 1 # signal error/failure
 			''')
+			commitInRemoteRepository
 		]
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
 		assertThat(response.status).isEqualTo(CREATED.statusCode)
@@ -235,9 +240,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	def void testThatNodeDetailsAreProvided() {
 		val testKey = TestExecutionKey.valueOf('1-5')
 		val testFile = 'test.tcl'
-				workspaceRoot.newFile(testFile)
-		workspaceRoot.newFolder('logs')
-		workspaceRoot.newFile('''logs/testrun.«testKey».200000000000.yaml''') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFolder('logs')
+		remoteGitFolder.newFile('''logs/testrun.«testKey».200000000000.yaml''') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				"testRuns":
@@ -257,8 +262,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				    - "node": "SPECIFICATION"
 				      "id": "ID3"
 			''')
+			commitInRemoteRepository
 		]
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
@@ -297,6 +303,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase @TEST:LEAVE:2e86865c:IDROOT"
 				echo ":testTask2Picked up _JAVA_OPTIONS: -Djdk.http.auth.tunneling.disabledSchemes="
 			''')
+			commitInRemoteRepository
 		]
 
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
@@ -321,14 +328,15 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		val mapper = new ObjectMapper(new JsonFactory)
 		val testKey = TestExecutionKey.valueOf('0-0')
 		val testFile = 'test.tcl'
-				workspaceRoot.newFile(testFile)
-		workspaceRoot.newFolder('logs')
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFolder('logs')
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
 				echo "Dummy test execution"
 			''')
+			commitInRemoteRepository
 		]
 
 		val launchResponse = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
@@ -347,9 +355,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		val testKey = TestExecutionKey.valueOf('0-0')
 		val screenshotPath = 'screenshots/test/hello.png'
 		val testFile = 'test.tcl'
-		workspaceRoot.newFile(testFile)
-		workspaceRoot.newFolder('logs')
-		workspaceRoot.newFile('''logs/testrun.«testKey».299900000000.yaml''') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFolder('logs')
+		remoteGitFolder.newFile('''logs/testrun.«testKey».299900000000.yaml''') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				"testRuns":
@@ -369,8 +377,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				    - "node": "SPECIFICATION"
 				      "id": "ID3"
 			''')
+			commitInRemoteRepository
 		]
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
@@ -380,6 +389,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				mkdir -p ${targetDir}
 				printf '"screenshot": "«screenshotPath»"\n' > ${targetDir}/ID2.yaml
 			''')
+			commitInRemoteRepository
 		]
 
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
@@ -404,9 +414,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		val testKey = TestExecutionKey.valueOf('0-0')
 		val childKeys = #['IDXY', 'IDXZ', 'IDYZ']
 		val testFile = 'test.tcl'
-		workspaceRoot.newFile(testFile)
-		workspaceRoot.newFolder('logs')
-		workspaceRoot.newFile('''logs/testrun.«testKey».299900000000.yaml''') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFolder('logs')
+		remoteGitFolder.newFile('''logs/testrun.«testKey».299900000000.yaml''') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				"testRuns":
@@ -426,8 +436,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				    - "node": "SPECIFICATION"
 				      "id": "ID3"
 			''')
+			commitInRemoteRepository
 		]
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
@@ -439,6 +450,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 					printf '"screenshot": "screenshots/test/«id».png"\n' > ${targetDir}/«id».yaml
 				«ENDFOR»
 			''')
+			commitInRemoteRepository
 		]
 
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
@@ -466,9 +478,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	def void testThatLogLinesAreProvided() {
 		val testKey = TestExecutionKey.valueOf('0-0')
 		val testFile = 'test.tcl'
-				workspaceRoot.newFile(testFile)
-		workspaceRoot.newFolder('logs')
-		workspaceRoot.newFile('''logs/testrun.«testKey».299900000000.yaml''') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFolder('logs')
+		remoteGitFolder.newFile('''logs/testrun.«testKey».299900000000.yaml''') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				"testRuns":
@@ -488,8 +500,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				    - "node": "SPECIFICATION"
 				      "id": "ID9"
 			''')
+			commitInRemoteRepository
 		]
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
@@ -529,6 +542,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase @TEST:LEAVE:2e86865c:IDROOT"
 				echo "@TESTRUN:LEAVE:0.0.1"
 			''')
+			commitInRemoteRepository
 		]
 
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
@@ -550,9 +564,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	def void testThatLogLinesAreFilteredToTheSpecifiedLogLevel() {
 		val testKey = TestExecutionKey.valueOf('0-0')
 		val testFile = 'test.tcl'
-		workspaceRoot.newFile(testFile)
-		workspaceRoot.newFolder('logs')
-		workspaceRoot.newFile('''logs/testrun.«testKey».299900000000.yaml''') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFolder('logs')
+		remoteGitFolder.newFile('''logs/testrun.«testKey».299900000000.yaml''') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				"testRuns":
@@ -572,8 +586,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				    - "node": "SPECIFICATION"
 				      "id": "ID9"
 			''')
+			commitInRemoteRepository
 		]
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
@@ -623,6 +638,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase @TEST:LEAVE:2e86865c:IDROOT"
 				echo "@TESTRUN:LEAVE:0.0.1"
 			''')
+			commitInRemoteRepository
 		]
 
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
@@ -646,9 +662,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		val testKey = TestExecutionKey.valueOf('0-0')
 		val screenshotPath = 'screenshots/test/hello.png'
 		val testFile = 'test.tcl'
-		workspaceRoot.newFile(testFile)
-		workspaceRoot.newFolder('logs')
-		workspaceRoot.newFile('''logs/testrun.«testKey».299900000000.yaml''') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFolder('logs')
+		remoteGitFolder.newFile('''logs/testrun.«testKey».299900000000.yaml''') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				"testRuns":
@@ -668,8 +684,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				      "id": "ID9"
 				      "message": "hello"
 			''')
+			commitInRemoteRepository
 		]
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
@@ -713,6 +730,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase @TEST:LEAVE:2e86865c:IDROOT"
 				echo "@TESTRUN:LEAVE:0.0.1"
 			''')
+			commitInRemoteRepository
 		]
 
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
@@ -737,9 +755,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		val testKey = TestExecutionKey.valueOf('0-0')
 		val screenshotPath = 'screenshots/test/hello.png'
 		val testFile = 'test.tcl'
-		workspaceRoot.newFile(testFile)
-		workspaceRoot.newFolder('logs')
-		workspaceRoot.newFile('''logs/testrun.«testKey».299900000000.yaml''') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFolder('logs')
+		remoteGitFolder.newFile('''logs/testrun.«testKey».299900000000.yaml''') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				"testRuns":
@@ -759,8 +777,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				      "id": "ID9"
 				      "message": "hello"
 			''')
+			commitInRemoteRepository
 		]
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
@@ -803,6 +822,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase @TEST:LEAVE:2e86865c:IDROOT"
 				echo ":testTask2Picked up _JAVA_OPTIONS: -Djdk.http.auth.tunneling.disabledSchemes="
 			''')
+			commitInRemoteRepository
 		]
 
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
@@ -840,8 +860,8 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	def void testThatRequestIsReturnedEventuallyForLongRunningTests() {
 		// given
 		val testFile = 'test.tcl'
-				workspaceRoot.newFile(testFile)
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
@@ -855,6 +875,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				echo "ok" > test.ok.txt
 				exit 0
 			''')
+			commitInRemoteRepository
 		]
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
 		assertThat(response.status).isEqualTo(CREATED.statusCode)
@@ -884,8 +905,8 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	@Test
 	def void testThatfAllRunningAndTerminatedTestsIsReturned() {
 		// given
-				new File(workspaceRoot.root, '''calledCount.txt''').delete
-		workspaceRoot.newFile('''gradlew''') => [
+		new File(workspaceRoot.root, '''calledCount.txt''').delete
+		remoteGitFolder.newFile('''gradlew''') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
@@ -903,10 +924,11 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				  exit 1
 				fi
 			''')
+			commitInRemoteRepository
 		]
 		val expectedap = #['FAILED', 'SUCCESS', 'RUNNING']
 		expectedap.map [ name |
-			workspaceRoot.newFile('''Test«name».tcl''')
+			remoteGitFolder.newFile('''Test«name».tcl''').commitInRemoteRepository
 			return '''Test«name».tcl'''
 		].forEach [ name, index |
 			new File(workspaceRoot.root, '''finished.txt''').delete
@@ -937,7 +959,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		})
 		assertThat(actuals).size.isEqualTo(3)
 	}
-	
+
 	@Test
 	def void testThatDeletingNonExistingTestRunRespondsWith404() {
 		// given
@@ -955,19 +977,20 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	def void testThatDeletingPreviouslyStartedTestRespondsWith200() {
 		// given
 		val testFile = 'test.tcl'
-				workspaceRoot.newFile(testFile)
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
 				echo "I will run forever!"
 				while true; do sleep 1; done
 			''')
+			commitInRemoteRepository
 		]
 		val launchResponse = createLaunchNewRequest().buildPost(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE)).submit.get
-		val testRunIdMatcher = Pattern.compile("\\[http://localhost:[0-9]+/test-suite/(\\d+)/(\\d+)\\]")
-				.matcher(launchResponse.headers.get("Location").toString)
-		testRunIdMatcher.find.assertTrue		
+		val testRunIdMatcher = Pattern.compile("\\[http://localhost:[0-9]+/test-suite/(\\d+)/(\\d+)\\]").matcher(
+			launchResponse.headers.get("Location").toString)
+		testRunIdMatcher.find.assertTrue
 		val testRun = TestExecutionKey.valueOf('''«testRunIdMatcher.group(1)»-«testRunIdMatcher.group(2)»''')
 
 		// when
@@ -976,25 +999,26 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		// then
 		assertThat(response.status).isEqualTo(OK.statusCode)
 	}
-	
+
 	@Test
 	def void testThatTestRunIsIdleAfterBeingDeleted() {
 		// given
 		val testFile = 'test.tcl'
-				workspaceRoot.newFile(testFile)
-		workspaceRoot.newFile('gradlew') => [
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
 				echo "I will run forever!"
 				while true; do sleep 1; done
 			''')
+			commitInRemoteRepository
 		]
 		val launchResponse = createLaunchNewRequest().buildPost(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE)).submit.get
-		val testRunIdMatcher = Pattern.compile("\\[http://localhost:[0-9]+/test-suite/(\\d+)/(\\d+)\\]")
-				.matcher(launchResponse.headers.get("Location").toString)
-		testRunIdMatcher.find.assertTrue		
-		val testRun = TestExecutionKey.valueOf('''«testRunIdMatcher.group(1)»-«testRunIdMatcher.group(2)»''')		
+		val testRunIdMatcher = Pattern.compile("\\[http://localhost:[0-9]+/test-suite/(\\d+)/(\\d+)\\]").matcher(
+			launchResponse.headers.get("Location").toString)
+		testRunIdMatcher.find.assertTrue
+		val testRun = TestExecutionKey.valueOf('''«testRunIdMatcher.group(1)»-«testRunIdMatcher.group(2)»''')
 
 		// when
 		createCallTreeRequest(testRun).delete

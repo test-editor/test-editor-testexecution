@@ -6,7 +6,6 @@ import com.jcraft.jsch.JSchException
 import com.jcraft.jsch.Session
 import java.io.File
 import javax.inject.Inject
-import javax.inject.Singleton
 import org.eclipse.jgit.api.CreateBranchCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.GitCommand
@@ -21,7 +20,6 @@ import org.testeditor.web.backend.testexecution.dropwizard.GitConfiguration
 import static java.util.concurrent.TimeUnit.MINUTES
 import static org.eclipse.jgit.lib.Constants.DOT_GIT
 
-@Singleton
 class GitProvider {
 	
 	static val logger = LoggerFactory.getLogger(GitProvider)

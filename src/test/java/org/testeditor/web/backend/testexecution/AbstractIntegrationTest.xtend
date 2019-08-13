@@ -23,6 +23,8 @@ import org.testeditor.web.backend.testexecution.TestExecutionKey
 import static io.dropwizard.testing.ConfigOverride.config
 import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionDropwizardConfiguration
 import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionApplication
+import java.io.File
+import java.nio.file.Path
 
 abstract class AbstractIntegrationTest {
 
@@ -84,6 +86,14 @@ abstract class AbstractIntegrationTest {
 		val git = Git.open(remoteGitFolder.root)
 		git.add.addFilepattern(pathToCommit).call
 		return git.commit.setMessage("pre-existing commit in remote repository").call
+	}
+	
+	protected def void commitInRemoteRepository(Path pathToCommit) {
+		commitInRemoteRepository(remoteGitFolder.root.toPath.relativize(pathToCommit).toString)
+	}
+	
+	protected def void commitInRemoteRepository(File fileToCommit) {
+		commitInRemoteRepository(fileToCommit.toPath)
 	}
 
 	@Before
