@@ -1,5 +1,6 @@
 package org.testeditor.web.backend.testexecution.worker
 
+import java.util.Set
 import javax.ws.rs.DELETE
 import javax.ws.rs.GET
 import javax.ws.rs.PUT
@@ -16,7 +17,7 @@ class WorkerResource {
     
     @GET
     @Path('capabilities')
-    def WorkerCapabilities getWorkerCapabilities() {
+    def Set<String> getWorkerCapabilities() {
         
     }
     
