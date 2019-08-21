@@ -6,6 +6,9 @@ import java.util.List
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.servlet.FilterRegistration.Dynamic
+import io.dropwizard.client.JerseyClientBuilder
+import org.glassfish.jersey.client.rx.RxClient
+import org.glassfish.jersey.client.rx.java8.RxCompletionStageInvoker
 import org.testeditor.web.backend.testexecution.TestArtifactResource
 import org.testeditor.web.backend.testexecution.TestExecutionExceptionMapper
 import org.testeditor.web.backend.testexecution.TestSuiteResource
@@ -28,6 +31,7 @@ class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwi
 
 	override run(TestExecutionDropwizardConfiguration configuration, Environment environment) throws Exception {
 		super.run(configuration, environment)
+		
 		environment.jersey => [
 			register(TestExecutionExceptionMapper)
 			register(TestSuiteResource)
@@ -35,6 +39,7 @@ class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwi
 		]
 
 		environment.healthChecks.register('execution', executionHealthCheckProvider.get)
+		
 	}
 
 	override Dynamic configureCorsFilter(TestExecutionDropwizardConfiguration configuration, Environment environment) {
