@@ -1,19 +1,29 @@
 package org.testeditor.web.backend.testexecution.manager
 
-import java.net.URL
+import java.net.URI
 import javax.ws.rs.core.Response
 import org.testeditor.web.backend.testexecution.worker.Worker
 
 import static org.hamcrest.CoreMatchers.*
 import static org.junit.Assert.assertThat
+import static org.mockito.Mockito.mock
 
 abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
+	
+	TestExecutionManager manager
+	
+	protected def TestExecutionManager getManager() {
+		if (manager === null) {
+			manager = mock(TestExecutionManager)
+		}
+		return manager
+	}
 		
 	@org.junit.Test
 	def void workersCanRegisterThemselves() {
 		// given
 		val worker = new Worker => [ 
-			url = new URL('http://worker.example.org')
+			uri = new URI('http://worker.example.org')
 			capabilities = emptySet
 			job = TestJob.NONE
 		]
@@ -30,12 +40,12 @@ abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
 	def void onlyOneWorkerPerUrlIsAllowed() {
 		// given
 		val firstWorker = new Worker => [ 
-			url = new URL('http://worker.example.org')
+			uri = new URI('http://worker.example.org')
 			capabilities = emptySet
 			job = TestJob.NONE
 		]
 		val secondWorker = new Worker => [ 
-			url = new URL('http://worker.example.org')
+			uri = new URI('http://worker.example.org')
 			capabilities = #{'linux', 'chrome76'}
 			job = TestJob.NONE
 		]
@@ -55,7 +65,7 @@ abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
 	def void registeredWorkersCanBeUnregistered() {
 		// given
 		val worker = new Worker => [ 
-			url = new URL('http://worker.example.org')
+			uri = new URI('http://worker.example.org')
 			capabilities = emptySet
 			job = TestJob.NONE
 		]
@@ -89,7 +99,7 @@ abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
 	def void workersCannotBeDeletedTwice() {// Note: DELETE should be idempotent, and it is (deleting multiple times does not change the server state).
 		// given							//       The response is _not_ considered for idempotency, see 
 		val worker = new Worker => [		//       https://stackoverflow.com/questions/24713945/does-idempotency-include-response-codes/24713946#24713946
-			url = new URL('http://worker.example.org')
+			uri = new URI('http://worker.example.org')
 			capabilities = emptySet
 			job = TestJob.NONE
 		]

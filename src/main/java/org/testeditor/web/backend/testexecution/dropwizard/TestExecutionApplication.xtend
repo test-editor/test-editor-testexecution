@@ -12,6 +12,7 @@ import org.glassfish.jersey.client.rx.java8.RxCompletionStageInvoker
 import org.testeditor.web.backend.testexecution.TestArtifactResource
 import org.testeditor.web.backend.testexecution.TestExecutionExceptionMapper
 import org.testeditor.web.backend.testexecution.TestSuiteResource
+import org.testeditor.web.backend.testexecution.manager.WorkersResource
 import org.testeditor.web.dropwizard.DropwizardApplication
 
 import static org.eclipse.jetty.servlets.CrossOriginFilter.EXPOSED_HEADERS_PARAM
@@ -36,6 +37,7 @@ class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwi
 			register(TestExecutionExceptionMapper)
 			register(TestSuiteResource)
 			register(TestArtifactResource)
+			register(WorkersResource)
 		]
 
 		environment.healthChecks.register('execution', executionHealthCheckProvider.get)

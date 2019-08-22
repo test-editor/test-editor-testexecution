@@ -1,6 +1,6 @@
 package org.testeditor.web.backend.testexecution.manager
 
-import java.net.URL
+import java.net.URI
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import javax.ws.rs.core.Response
@@ -41,7 +41,7 @@ class TestExecutionManagerTest {
 		// given
 		val expectedId = 'http://workers.example.com/1'
 		val worker = new Worker => [
-			url = new URL(expectedId)
+			uri = new URI(expectedId)
 			capabilities = emptySet
 			job = TestJob.NONE
 		]
@@ -73,7 +73,7 @@ class TestExecutionManagerTest {
 	def void canAddAndRemoveIdleWorker() {
 		// given
 		val worker = new Worker => [
-			url = new URL('http://workers.example.com/1')
+			uri = new URI('http://workers.example.com/1')
 			capabilities = emptySet
 			job = TestJob.NONE
 		]
@@ -90,7 +90,7 @@ class TestExecutionManagerTest {
 	def void canReAddWorkerAfterRemoval() {
 		// given
 		val worker = new Worker => [
-			url = new URL('http://workers.example.com/1')
+			uri = new URI('http://workers.example.com/1')
 			capabilities = emptySet
 			job = TestJob.NONE
 		]
@@ -128,7 +128,7 @@ class TestExecutionManagerTest {
 	def void canAddJobWithMatchingWorker() {
 		// given		
 		val worker = new Worker => [
-			url = new URL('http://workers.example.com/1')
+			uri = new URI('http://workers.example.com/1')
 			capabilities = emptySet
 			job = TestJob.NONE
 		]
@@ -140,7 +140,7 @@ class TestExecutionManagerTest {
 			capabilities = emptySet
 		]
 		
-		when(mockClient.post(worker.url, job)).thenReturn(CompletableFuture.completedFuture(Response.ok.build))
+		when(mockClient.post(worker.uri, job)).thenReturn(CompletableFuture.completedFuture(Response.ok.build))
 		
 		// when
 		managerUnderTest.addJob(job)
@@ -153,12 +153,12 @@ class TestExecutionManagerTest {
 	def void addsJobToMatchingWorker() {
 		// given		
 		val incapableWorker = new Worker => [
-			url = new URL('http://workers.example.com/incapable')
+			uri = new URI('http://workers.example.com/incapable')
 			capabilities = emptySet
 			job = TestJob.NONE
 		]
 		val capableWorker = new Worker => [
-			url = new URL('http://workers.example.com/capable')
+			uri = new URI('http://workers.example.com/capable')
 			capabilities = #{'firefox'}
 			job = TestJob.NONE
 		]
@@ -172,7 +172,7 @@ class TestExecutionManagerTest {
 			capabilities = #{'firefox'}
 		]
 		
-		when(mockClient.post(any(URL), any(TestJob))).thenReturn(CompletableFuture.completedFuture(Response.ok.build))
+		when(mockClient.post(any(URI), any(TestJob))).thenReturn(CompletableFuture.completedFuture(Response.ok.build))
 		
 		// when
 		managerUnderTest.addJob(job)
@@ -180,6 +180,39 @@ class TestExecutionManagerTest {
 		// then
 		assertThat(managerUnderTest.jobOf(capableWorker).id, is(job.id))
 		assertThat(managerUnderTest.jobOf(incapableWorker), is(nullValue))
+	}
+	
+	@org.junit.Test
+	def void addsJobToOnlyOneMatchingWorker() {
+		// given		
+		val worker1 = new Worker => [
+			uri = new URI('http://workers.example.com/1')
+			capabilities = #{'firefox'}
+			job = TestJob.NONE
+		]
+		val worker2 = new Worker => [
+			uri = new URI('http://workers.example.com/2')
+			capabilities = #{'firefox'}
+			job = TestJob.NONE
+		]
+		
+		managerUnderTest.addWorker(worker1)
+		managerUnderTest.addWorker(worker2)
+		
+		val job = new TestJob => [
+			id = 'the-test-job'
+			status = 0
+			capabilities = #{'firefox'}
+		]
+		
+		when(mockClient.post(any(URI), any(TestJob))).thenReturn(CompletableFuture.completedFuture(Response.ok.build))
+		
+		// when
+		managerUnderTest.addJob(job)
+
+		// then
+		assertThat(managerUnderTest.jobOf(worker1).id, is(job.id))
+		assertThat(managerUnderTest.jobOf(worker2), is(nullValue))
 	}
 	
 }

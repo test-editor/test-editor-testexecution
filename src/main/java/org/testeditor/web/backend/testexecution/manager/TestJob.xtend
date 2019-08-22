@@ -1,6 +1,7 @@
 package org.testeditor.web.backend.testexecution.manager
 
 import java.util.HashSet
+import java.util.List
 import java.util.Set
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.EqualsHashCode
@@ -13,6 +14,7 @@ class TestJob {
     String id
     int status
     Set<String> capabilities
+    List<String> resourcePaths
 	
 	def TestJob copy() {
 		return new TestJob => [

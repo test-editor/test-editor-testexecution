@@ -2,12 +2,14 @@ package org.testeditor.web.backend.testexecution.dropwizard
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.dropwizard.client.JerseyClientConfiguration
+import java.net.URI
 import javax.inject.Singleton
 import javax.validation.Valid
 import javax.validation.constraints.NotNull
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.hibernate.validator.constraints.NotEmpty
 import org.testeditor.web.dropwizard.DropwizardApplicationConfiguration
+import java.net.URL
 
 @Singleton
 class TestExecutionDropwizardConfiguration extends DropwizardApplicationConfiguration implements TestExecutionConfiguration, GitConfiguration {
@@ -55,5 +57,19 @@ class TestExecutionDropwizardConfiguration extends DropwizardApplicationConfigur
 	
     @Accessors
     Boolean filterTestSubStepsFromLogs = false
-
+    
+    
+    //TODO create a separate worker configuration class
+    
+    @Accessors
+    int registrationRetryIntervalSecs = 30
+    
+    @Accessors
+    int registrationMaxRetries = 10
+    
+    @Accessors
+    URI testExecutionManagerUrl
+    
+    @Accessors
+    URL workerUrl = new URL('http://localhost')
 }

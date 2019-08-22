@@ -7,12 +7,12 @@ import java.io.FileNotFoundException
 import java.net.URI
 import java.net.URLEncoder
 import java.nio.file.Files
-import java.time.Instant
 import java.util.List
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.ws.rs.Consumes
+import javax.ws.rs.DELETE
 import javax.ws.rs.DefaultValue
 import javax.ws.rs.GET
 import javax.ws.rs.POST
@@ -29,13 +29,14 @@ import javax.ws.rs.core.UriBuilder
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.loglines.LogFinder
 import org.testeditor.web.backend.testexecution.loglines.LogLevel
+import org.testeditor.web.backend.testexecution.manager.TestExecutionManager
+import org.testeditor.web.backend.testexecution.manager.TestJob
 import org.testeditor.web.backend.testexecution.screenshots.ScreenshotFinder
 
 import static java.nio.charset.StandardCharsets.UTF_8
 import static java.nio.file.StandardOpenOption.*
 
 import static extension com.fasterxml.jackson.core.util.BufferRecyclers.quoteAsJsonText
-import javax.ws.rs.DELETE
 
 @Path("/test-suite")
 @Consumes(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN)
@@ -51,6 +52,7 @@ class TestSuiteResource {
 	@Inject TestExecutionCallTree testExecutionCallTree
 	@Inject ScreenshotFinder screenshotFinder
 	@Inject LogFinder logFinder
+	@Inject TestExecutionManager manager
 
 	@GET
 	@Path("{suiteId}/{suiteRunId}/{caseRunId : ([^?/]+)?}/{callTreeId : ([^?/]+)?}")
@@ -167,16 +169,11 @@ class TestSuiteResource {
 	def Response launchNewSuiteWith(List<String> resourcePaths) {
 		val suiteKey = new TestExecutionKey("0") // default suite
 		val executionKey = statusMapper.deriveFreshRunId(suiteKey)
-		val builder = executorProvider.testExecutionBuilder(executionKey, resourcePaths, '') // commit id unknown
-		val logFile = builder.environment.get(TestExecutorProvider.LOGFILE_ENV_KEY)
-		val callTreeFileName = builder.environment.get(TestExecutorProvider.CALL_TREE_YAML_FILE)
-		logger.
-			info('''Starting test for resourcePaths='«resourcePaths.join(',')»' logging into logFile='«logFile»', callTreeFile='«callTreeFileName»'.''')
-		val callTreeFile = new File(callTreeFileName)
-		callTreeFile.writeCallTreeYamlPrefix(executorProvider.yamlFileHeader(executionKey, Instant.now, resourcePaths))
-		val testProcess = builder.start
-		statusMapper.addTestSuiteRun(executionKey, testProcess)[status|callTreeFile.writeCallTreeYamlSuffix(status)]
-		testProcess.logToStandardOutAndIntoFile(new File(logFile))
+		manager.addJob(new TestJob => [
+			id = executionKey.toString
+			it.resourcePaths = resourcePaths
+			capabilities = emptySet
+		])
 		val uri = new URI(UriBuilder.fromResource(TestSuiteResource).build.toString +
 			'''/«URLEncoder.encode(executionKey.suiteId, "UTF-8")»/«URLEncoder.encode(executionKey.suiteRunId,"UTF-8")»''')
 		return Response.created(uri).build

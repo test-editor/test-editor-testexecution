@@ -25,6 +25,7 @@ class TestExecutionModule extends AbstractModule {
 	override protected configure() {
 		binder => [
 			bind(Executor).toInstance(ForkJoinPool.commonPool)
+			bind(Executor).annotatedWith(named("TestExecutionManagerExecutor")).toInstance(ForkJoinPool.commonPool)
 			bind(ScreenshotFinder).to(SubStepAggregatingScreenshotFinder)
 			bind(LogFinder).to(ScanningLogFinder)
 			bind(HierarchicalLineSkipper).to(RecursiveHierarchicalLineSkipper)
@@ -32,6 +33,7 @@ class TestExecutionModule extends AbstractModule {
 			bind(File).annotatedWith(named("workspace")).toProvider(WorkspaceProvider)
 			bind(TestExecutionConfiguration).to(TestExecutionDropwizardConfiguration)
 			bind(GitConfiguration).to(TestExecutionDropwizardConfiguration)
+			bind(RestClient).to(JerseyBasedRestClient)
 		]
 	}
 

@@ -6,10 +6,22 @@ import javax.ws.rs.core.Response
 import org.junit.Rule
 import org.testeditor.web.backend.testexecution.worker.Worker
 
+import org.glassfish.hk2.utilities.binding.AbstractBinder
+
 class WorkersResourceRESTTest extends WorkersAPITest implements WorkersAPI {
+	
 
 	@Rule
-	public val ResourceTestRule resources = ResourceTestRule.builder().addResource(new WorkersResource).build()
+	public val ResourceTestRule resources = ResourceTestRule.builder()
+		.addResource(new WorkersResource)
+		.addResource(new AbstractBinder() {
+			
+			override protected configure() {
+				bind(manager).to(TestExecutionManager)
+			}
+			
+		})
+		.build()
 
 	override getSystemUnderTest() {
 		return this

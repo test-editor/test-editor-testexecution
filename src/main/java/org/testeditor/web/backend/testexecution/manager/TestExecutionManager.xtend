@@ -8,6 +8,7 @@ import java.util.concurrent.Executor
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
+import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import org.testeditor.web.backend.testexecution.dropwizard.RestClient
 import org.testeditor.web.backend.testexecution.worker.Worker
@@ -20,13 +21,12 @@ class TestExecutionManager {
 	val ConcurrentNavigableMap<String, TestJob> pendingJobs = new ConcurrentSkipListMap
 	val ConcurrentNavigableMap<String, TestJob> assignedJobs = new ConcurrentSkipListMap
 	val dispatcher = new Dispatcher(this)
-	
+
 	@Inject
 	RestClient client
-	 
+
 	@Inject @Named('TestExecutionManagerExecutor')
 	Executor executor
-	
 
 	/**
 	 * Adds a new worker.
@@ -37,7 +37,7 @@ class TestExecutionManager {
 	 */
 	def String addWorker(Worker worker) {
 		if (worker.isRegistered) {
-			throw new IllegalStateException('worker already registered')
+			throw new AlreadyRegisteredException(worker.id)
 		}
 		idleWorkers.put(worker.id, worker.copy)
 		return worker.id
@@ -58,7 +58,7 @@ class TestExecutionManager {
 		} else if (busyWorkers.containsKey(id)) {
 			busyWorkers.remove(id)
 		} else {
-			throw new IllegalStateException('''no worker with id "«id»"''')
+			throw new NoSuchWorkerException(id)
 		}
 
 	}
@@ -79,7 +79,7 @@ class TestExecutionManager {
 			pendingJobs.put(job.id, job)
 			dispatcher.jobAdded(job)
 		} else {
-			throw new IllegalStateException('no registered worker can accept this job, or no workers registered')
+			throw new NoEligibleWorkerException
 		}
 	}
 
@@ -95,7 +95,7 @@ class TestExecutionManager {
 
 	def TestJob getJob(String id) {
 	}
-	
+
 	def TestJob jobOf(Worker worker) {
 		return busyWorkers.get(worker.id)?.job?.copy
 	}
@@ -109,31 +109,31 @@ class TestExecutionManager {
 	}
 
 	private def String id(Worker worker) {
-		return worker.url.toString
+		return worker.uri.toString
 	}
 
 	@FinalFieldsConstructor
 	private static class Dispatcher {
+
 		extension val TestExecutionManager
-		
+
 		def void workerAvailable(Worker worker) {}
 
 		def void jobAdded(TestJob job) {
-			idleWorkers.values
-				.findFirst[ worker |
-					job.capabilities.forall [ requiredCapability |
-						worker.capabilities.contains(requiredCapability)
-					]
-				]?.assign(job)
+			idleWorkers.values.findFirst [ worker |
+				job.capabilities.forall [ requiredCapability |
+					worker.capabilities.contains(requiredCapability)
+				]
+			]?.assign(job)
 		}
-		
+
 		private synchronized def void assign(Worker worker, TestJob job) {
 			idleWorkers.remove(worker.id)
 			busyWorkers.put(worker.id, worker)
 			pendingJobs.remove(job.id)
 			assignedJobs.put(job.id, job)
-			
-			client.post(worker.url, job).whenCompleteAsync([response, error |
+
+			client.post(worker.uri, job).whenCompleteAsync([ response, error |
 				if (error !== null) {
 					assignmentFailed(worker, job)
 				} else {
@@ -141,12 +141,56 @@ class TestExecutionManager {
 				}
 			], executor)
 		}
-		
+
 		private synchronized def void assignmentFailed(Worker worker, TestJob job) {
 			assignedJobs.remove(job.id)
 			pendingJobs.put(job.id, job)
 			busyWorkers.remove(worker.id)
 			idleWorkers.put(worker.id, worker)
+		}
+
+	}
+
+	static abstract class TestExecutionManagerException extends IllegalStateException {
+
+		new(String message) {
+			super(message)
+		}
+
+	}
+
+	static abstract class WorkerException extends TestExecutionManagerException {
+
+		@Accessors(PUBLIC_GETTER)
+		val String workerId
+
+		new(String workerId, String message) {
+			super(message)
+			this.workerId = workerId
+		}
+
+	}
+
+	static class AlreadyRegisteredException extends WorkerException {
+
+		new(String workerId) {
+			super(workerId, 'worker already registered')
+		}
+
+	}
+
+	static class NoSuchWorkerException extends WorkerException {
+
+		new(String missingWorkerId) {
+			super(missingWorkerId, '''no worker with id "«missingWorkerId»"''')
+		}
+
+	}
+
+	static class NoEligibleWorkerException extends TestExecutionManagerException {
+
+		new() {
+			super('no registered worker can accept this job, or no workers registered')
 		}
 
 	}

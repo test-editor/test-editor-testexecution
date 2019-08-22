@@ -6,6 +6,10 @@ import de.xtendutils.junit.AssertionHelper
 import io.dropwizard.testing.ConfigOverride
 import io.dropwizard.testing.ResourceHelpers
 import io.dropwizard.testing.junit.DropwizardAppRule
+import java.io.File
+import java.io.IOException
+import java.net.ServerSocket
+import java.nio.file.Path
 import java.util.List
 import javax.ws.rs.client.Entity
 import javax.ws.rs.client.Invocation.Builder
@@ -18,17 +22,20 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import org.testeditor.web.backend.testexecution.TestExecutionKey
+import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionApplication
+import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionDropwizardConfiguration
 
 import static io.dropwizard.testing.ConfigOverride.config
-import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionDropwizardConfiguration
-import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionApplication
-import java.io.File
-import java.nio.file.Path
 
 abstract class AbstractIntegrationTest {
 
 	protected static val String userId = 'john.doe'
+	protected static val String serverPort = {
+		val socket = new ServerSocket(0)
+		val port = socket.localPort.toString
+		try { socket.close } catch (IOException ex) {}
+		return port
+	}
 	protected val String token = createToken
 
 	// cannot use @Rule as we need to use it within another rule		
@@ -40,7 +47,7 @@ abstract class AbstractIntegrationTest {
 
 	protected def List<ConfigOverride> getConfigs() {
 		return #[
-			config('server.applicationConnectors[0].port', '0'),
+			config('server.applicationConnectors[0].port', serverPort),
 			config('localRepoFileRoot', workspaceRoot.root.path),
 			config('remoteRepoUrl', setupRemoteGitRepository)
 		]
@@ -69,10 +76,12 @@ abstract class AbstractIntegrationTest {
 	protected extension val AssertionHelper = AssertionHelper.instance
 
 	def String setupRemoteGitRepository() {
-		remoteGitFolder = new TemporaryFolder => [create]
+		if (remoteGitFolder === null) {
+			remoteGitFolder = new TemporaryFolder => [create]
 
-		val git = Git.init.setDirectory(remoteGitFolder.root).call
-		git.populatedRemoteGit
+			val git = Git.init.setDirectory(remoteGitFolder.root).call
+			git.populatedRemoteGit
+		}
 		return "file://" + remoteGitFolder.root.absolutePath
 	}
 
