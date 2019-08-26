@@ -13,8 +13,8 @@ import javax.ws.rs.DELETE
 import javax.ws.rs.GET
 import javax.ws.rs.POST
 import javax.ws.rs.Path
+import javax.ws.rs.QueryParam
 import javax.ws.rs.core.Response
-import javax.ws.rs.core.Response.Status
 import javax.ws.rs.core.UriBuilder
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import org.slf4j.Logger
@@ -23,7 +23,6 @@ import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.TestExecutorProvider
 import org.testeditor.web.backend.testexecution.TestLogWriter
 import org.testeditor.web.backend.testexecution.TestStatus
-import org.testeditor.web.backend.testexecution.TestStatusMapper
 import org.testeditor.web.backend.testexecution.TestSuiteResource
 import org.testeditor.web.backend.testexecution.manager.TestJob
 
@@ -31,6 +30,8 @@ import static java.nio.charset.StandardCharsets.UTF_8
 import static java.nio.file.StandardOpenOption.APPEND
 import static java.nio.file.StandardOpenOption.CREATE
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
+import static javax.ws.rs.core.Response.Status.CONFLICT
+import static javax.ws.rs.core.Response.Status.NOT_FOUND
 import static org.testeditor.web.backend.testexecution.worker.WorkerState.*
 
 @Path('/worker')
@@ -41,10 +42,10 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 	var WorkerAPI state
 
 	@Inject
-	new(TestExecutorProvider executorProvider, TestStatusMapper statusMapper, TestLogWriter logWriter) {
+	new(TestExecutorProvider executorProvider, WorkerStatusManager statusManager, TestLogWriter logWriter) {
 		states = #{
-			IDLE -> new IdleWorker(this, logWriter, executorProvider, statusMapper),
-			BUSY -> new BusyWorker(this)
+			IDLE -> new IdleWorker(this, logWriter, executorProvider, statusManager),
+			BUSY -> new BusyWorker(this, statusManager)
 		}
 		state = states.get(IDLE)
 	}
@@ -68,18 +69,20 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 
 	@GET
 	@Path('job')
-	def TestJob getTestJobState() {
+	override synchronized Response getTestJobState(@QueryParam('wait') Boolean wait) {
+		return state.getTestJobState(wait)
 	}
 
 	@POST
 	@Path('job')
-	override executeTestJob(TestJob job) {
+	override synchronized executeTestJob(TestJob job) {
 		return state.executeTestJob(job)
 	}
 
 	@DELETE
 	@Path('job')
-	def Worker cancelTestJob() {
+	override synchronized Response cancelTestJob() {
+		return state.cancelTestJob
 	}
 
 }
@@ -105,11 +108,11 @@ class IdleWorker implements WorkerAPI {
 	val extension WorkerStateContext
 	val extension TestLogWriter logWriter
 	val TestExecutorProvider executorProvider
-	val TestStatusMapper statusMapper
+	val WorkerStatusManager statusManager
 
 	override Response executeTestJob(TestJob job) {
 		val suiteKey = new TestExecutionKey("0") // default suite
-		val executionKey = statusMapper.deriveFreshRunId(suiteKey)
+		val executionKey = statusManager.deriveFreshRunId(suiteKey)
 		val builder = executorProvider.testExecutionBuilder(executionKey, job.resourcePaths, '') // commit id unknown
 		val logFile = builder.environment.get(TestExecutorProvider.LOGFILE_ENV_KEY)
 		val callTreeFileName = builder.environment.get(TestExecutorProvider.CALL_TREE_YAML_FILE)
@@ -118,11 +121,22 @@ class IdleWorker implements WorkerAPI {
 		val callTreeFile = new File(callTreeFileName)
 		callTreeFile.writeCallTreeYamlPrefix(executorProvider.yamlFileHeader(executionKey, Instant.now, job.resourcePaths))
 		val testProcess = builder.start
-		statusMapper.addTestSuiteRun(executionKey, testProcess)[status|callTreeFile.writeCallTreeYamlSuffix(status)]
+		statusManager.addTestSuiteRun(testProcess)[status|callTreeFile.writeCallTreeYamlSuffix(status)]
 		testProcess.logToStandardOutAndIntoFile(new File(logFile))
 		val uri = new URI(UriBuilder.fromResource(TestSuiteResource).build.toString +
 			'''/«URLEncoder.encode(executionKey.suiteId, "UTF-8")»/«URLEncoder.encode(executionKey.suiteRunId,"UTF-8")»''')
+
+		state = BUSY
+
 		return Response.created(uri).build
+	}
+
+	override cancelTestJob() {
+		return Response.status(NOT_FOUND).entity('worker is idle').build
+	}
+
+	override getTestJobState(Boolean wait) {
+		return Response.ok(TestStatus.IDLE).build
 	}
 
 	private def File writeCallTreeYamlPrefix(File callTreeYamlFile, String fileHeader) {
@@ -141,9 +155,30 @@ class IdleWorker implements WorkerAPI {
 class BusyWorker implements WorkerAPI {
 
 	extension val WorkerStateContext context
+	val WorkerStatusManager statusManager
 
 	override executeTestJob(TestJob job) {
-		return Response.status(Status.CONFLICT).entity('worker is busy').build
+		return Response.status(CONFLICT).entity('worker is busy').build
+	}
+
+	override cancelTestJob() {
+		statusManager.terminateTestSuiteRun
+		state = IDLE
+		return Response.ok.build
+	}
+
+	override getTestJobState(Boolean wait) {
+		val status = if (wait) {
+				statusManager.waitForStatus
+			} else {
+				statusManager.getStatus
+			}
+
+		if (status !== TestStatus.RUNNING) {
+			state = IDLE
+		}
+
+		return Response.ok(status).build
 	}
 
 }

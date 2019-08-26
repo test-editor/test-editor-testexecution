@@ -19,28 +19,60 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
  */
 interface RestClient {
 
-	def <T> CompletionStage<Response> post(URI uri, T body)
+	def <T> CompletionStage<Response> postAsync(URI uri, T body)
+
+	def <T> CompletionStage<Response> getAsync(URI uri)
+
+	def <T> CompletionStage<Response> deleteAsync(URI uri)
+
+	def <T> Response post(URI uri, T body)
+
+	def <T> Response get(URI uri)
+
+	def <T> Response delete(URI uri)
+
+}
+
+abstract class AbstractRestClient implements RestClient {
+
+	override <T> post(URI uri, T body) {
+		return uri.postAsync(body).toCompletableFuture.join
+	}
+
+	override <T> get(URI uri) {
+		return uri.getAsync.toCompletableFuture.join
+	}
+	
+	override <T> delete(URI uri) {
+		return uri.deleteAsync.toCompletableFuture.join
+	}
 
 }
 
 @Singleton
-class JerseyBasedRestClient implements RestClient {
+class JerseyBasedRestClient extends AbstractRestClient {
 
 	@Inject
 	Provider<RxClient<RxCompletionStageInvoker>> httpClientProvider
 
-	override <T> CompletionStage<Response> post(URI uri, T body) {
-		
-		return httpClientProvider.get
-			.target(uri)
-			.request(APPLICATION_JSON_TYPE)
-			.header('Authorization', '''Bearer «dummyToken»''')
-			.rx
-			.post(Entity.entity(body, APPLICATION_JSON_TYPE))
+	override <T> CompletionStage<Response> postAsync(URI uri, T body) {
+		return uri.invoker.post(Entity.entity(body, APPLICATION_JSON_TYPE))
 	}
-	
-	val static String dummyToken = createToken('test.execution','Test Execution User', 'testeditor.eng@gmail.com') 
-	
+
+	override <T> CompletionStage<Response> getAsync(URI uri) {
+		return uri.invoker.get
+	}
+
+	override <T> deleteAsync(URI uri) {
+		return uri.invoker.delete
+	}
+
+	private def getInvoker(URI uri) {
+		return httpClientProvider.get.target(uri).request(APPLICATION_JSON_TYPE).header('Authorization', '''Bearer «dummyToken»''').rx
+	}
+
+	val static String dummyToken = createToken('test.execution', 'Test Execution User', 'testeditor.eng@gmail.com')
+
 	static def String createToken(String id, String name, String eMail) {
 		val builder = JWT.create => [
 			withClaim('id', id)

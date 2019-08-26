@@ -23,7 +23,7 @@ import static org.testeditor.web.backend.testexecution.TestStatus.*
  *    it terminated, the only value that can be written as status is its
  *    exit value, which is fixed at that point. 
  */
-class TestProcess {
+class TestProcess implements RunningTest {
 
 	static val logger = LoggerFactory.getLogger(TestProcess)
 
@@ -61,7 +61,7 @@ class TestProcess {
 	 * subprocesses have all terminated, and if so, updates the status
 	 * accordingly, before returning it.
 	 */
-	def TestStatus checkStatus() {
+	override TestStatus checkStatus() {
 		updateStatusIfAllProcessesTerminated
 		return status
 	}
@@ -71,7 +71,7 @@ class TestProcess {
 	 * longer than {@link #WAIT_TIMEOUT_SECONDS}. Returns {@link #checkStatus()}
 	 * as soon as the test process terminates, or after the timeout.
 	 */
-	def TestStatus waitForStatus() {
+	override TestStatus waitForStatus() {
 		if (process !== null && testIsAlive) {
 			waitForAll(WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
 		}
@@ -88,7 +88,7 @@ class TestProcess {
 	 * no descendants, even though some sub-processes that were sent into the
 	 * background are still running.
 	 */
-	def void kill() {
+	override void kill() {
 		val processRef = this.process
 		if (processRef !== null) {
 			val descendants = synchronized (descendantsBeforeKill) {

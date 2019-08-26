@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import org.junit.Test
+import org.testeditor.web.backend.testexecution.manager.TestStatusManager
 
 import static org.assertj.core.api.Assertions.*
 import static org.mockito.ArgumentMatchers.*
@@ -15,7 +16,7 @@ class TestStatusMapperTest {
 	static val EXIT_SUCCESS = 0;
 	static val EXIT_FAILURE = 1;
 
-	TestStatusMapper statusMapperUnderTest = new TestStatusMapper
+	TestStatusMapper statusMapperUnderTest = new TestStatusManager
 	
 	extension TestProcessMocking = new TestProcessMocking
 

@@ -140,7 +140,7 @@ class TestExecutionManagerTest {
 			capabilities = emptySet
 		]
 		
-		when(mockClient.post(worker.uri, job)).thenReturn(CompletableFuture.completedFuture(Response.ok.build))
+		when(mockClient.postAsync(worker.uri, job)).thenReturn(CompletableFuture.completedFuture(Response.ok.build))
 		
 		// when
 		managerUnderTest.addJob(job)
@@ -172,7 +172,7 @@ class TestExecutionManagerTest {
 			capabilities = #{'firefox'}
 		]
 		
-		when(mockClient.post(any(URI), any(TestJob))).thenReturn(CompletableFuture.completedFuture(Response.ok.build))
+		when(mockClient.postAsync(any(URI), any(TestJob))).thenReturn(CompletableFuture.completedFuture(Response.ok.build))
 		
 		// when
 		managerUnderTest.addJob(job)
@@ -205,7 +205,7 @@ class TestExecutionManagerTest {
 			capabilities = #{'firefox'}
 		]
 		
-		when(mockClient.post(any(URI), any(TestJob))).thenReturn(CompletableFuture.completedFuture(Response.ok.build))
+		when(mockClient.postAsync(any(URI), any(TestJob))).thenReturn(CompletableFuture.completedFuture(Response.ok.build))
 		
 		// when
 		managerUnderTest.addJob(job)

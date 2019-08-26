@@ -9,10 +9,12 @@ import java.util.concurrent.Executor
 import java.util.concurrent.ForkJoinPool
 import org.glassfish.jersey.client.rx.RxClient
 import org.glassfish.jersey.client.rx.java8.RxCompletionStageInvoker
+import org.testeditor.web.backend.testexecution.TestStatusMapper
 import org.testeditor.web.backend.testexecution.loglines.Log4JDefaultFilter
 import org.testeditor.web.backend.testexecution.loglines.LogFilter
 import org.testeditor.web.backend.testexecution.loglines.LogFinder
 import org.testeditor.web.backend.testexecution.loglines.ScanningLogFinder
+import org.testeditor.web.backend.testexecution.manager.TestStatusManager
 import org.testeditor.web.backend.testexecution.screenshots.ScreenshotFinder
 import org.testeditor.web.backend.testexecution.screenshots.SubStepAggregatingScreenshotFinder
 import org.testeditor.web.backend.testexecution.util.HierarchicalLineSkipper
@@ -22,6 +24,7 @@ import org.testeditor.web.backend.testexecution.workspace.WorkspaceProvider
 import static com.google.inject.name.Names.named
 
 class TestExecutionModule extends AbstractModule {
+
 	override protected configure() {
 		binder => [
 			bind(Executor).toInstance(ForkJoinPool.commonPool)
@@ -34,6 +37,7 @@ class TestExecutionModule extends AbstractModule {
 			bind(TestExecutionConfiguration).to(TestExecutionDropwizardConfiguration)
 			bind(GitConfiguration).to(TestExecutionDropwizardConfiguration)
 			bind(RestClient).to(JerseyBasedRestClient)
+			bind(TestStatusMapper).to(TestStatusManager)
 		]
 	}
 
@@ -46,11 +50,11 @@ class TestExecutionModule extends AbstractModule {
 	def ProcessBuilder provideProcessBuilder() {
 		return new ProcessBuilder
 	}
-	
+
 	@Provides
 	def RxClient<RxCompletionStageInvoker> provideRxClient(TestExecutionDropwizardConfiguration configuration, Environment environment) {
-		return new JerseyClientBuilder(environment)
-	            .using(configuration.jerseyClientConfiguration)
-	            .buildRx(TestExecutionApplication.simpleName, RxCompletionStageInvoker)
+		return new JerseyClientBuilder(environment).using(configuration.jerseyClientConfiguration).buildRx(TestExecutionApplication.simpleName,
+			RxCompletionStageInvoker)
 	}
+
 }

@@ -63,6 +63,8 @@ class GitProvider {
 	}
 
 	private def Git initializeNew(File workspace) {
+	    logger.info('remote repo url: ' + config.remoteRepoUrl)
+	    logger.info('workspace: ' + workspace.absolutePath)
 		val command = Git.cloneRepository => [
 			setURI(config.remoteRepoUrl)
 			setSshSessionFactory
@@ -70,7 +72,9 @@ class GitProvider {
 		]
 		val git = command.call
 		git.checkout => [
-			if (!git.branchList.call.exists[
+		    val branchlist = git.branchList.call
+		    logger.info('branch list: ' + branchlist)
+			if (!branchlist.exists[
 				val existingBranchName = name.replaceFirst('^refs/heads/', '') 
 				return existingBranchName == config.branchName
 			]) {

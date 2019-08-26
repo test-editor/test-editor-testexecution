@@ -10,16 +10,19 @@ import javax.inject.Named
 import javax.inject.Singleton
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
+import org.slf4j.LoggerFactory
+import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.dropwizard.RestClient
 import org.testeditor.web.backend.testexecution.worker.Worker
 
 @Singleton
 class TestExecutionManager {
+    static val logger = LoggerFactory.getLogger(TestExecutionManager)
 
 	val ConcurrentMap<String, Worker> idleWorkers = new ConcurrentHashMap
 	val ConcurrentMap<String, Worker> busyWorkers = new ConcurrentHashMap
-	val ConcurrentNavigableMap<String, TestJob> pendingJobs = new ConcurrentSkipListMap
-	val ConcurrentNavigableMap<String, TestJob> assignedJobs = new ConcurrentSkipListMap
+	val ConcurrentNavigableMap<TestExecutionKey, TestJob> pendingJobs = new ConcurrentSkipListMap
+	val ConcurrentNavigableMap<TestExecutionKey, TestJob> assignedJobs = new ConcurrentSkipListMap
 	val dispatcher = new Dispatcher(this)
 
 	@Inject
@@ -96,7 +99,7 @@ class TestExecutionManager {
 	def TestJob getJob(String id) {
 	}
 
-	def TestJob jobOf(Worker worker) {
+	def TestExecutionKey jobOf(Worker worker) {
 		return busyWorkers.get(worker.id)?.job?.copy
 	}
 
@@ -133,16 +136,20 @@ class TestExecutionManager {
 			pendingJobs.remove(job.id)
 			assignedJobs.put(job.id, job)
 
-			client.post(worker.uri, job).whenCompleteAsync([ response, error |
+			logger.info('''trying to assign job «job.id» to worker «worker.id»''')
+
+			client.postAsync(worker.uri, job).whenCompleteAsync([ response, error |
 				if (error !== null) {
 					assignmentFailed(worker, job)
 				} else {
-					worker.job = job
+					worker.job = job.id
+					logger.info('''assignment of job «job.id» to worker «worker.id» was successful''')
 				}
 			], executor)
 		}
 
 		private synchronized def void assignmentFailed(Worker worker, TestJob job) {
+			logger.info('''assignment of job «job.id» to worker «worker.id» has failed''')
 			assignedJobs.remove(job.id)
 			pendingJobs.put(job.id, job)
 			busyWorkers.remove(worker.id)

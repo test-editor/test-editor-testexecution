@@ -62,7 +62,7 @@ class WorkerApplication extends DropwizardApplication<TestExecutionDropwizardCon
 //		val workerUri = uriInfo.get.baseUriBuilder.path(WorkerResource).path('job').build
 		if (registrationRetries++ < config.registrationMaxRetries) {
 			logger.info('''trying to register with test execution manager at "«config.testExecutionManagerUrl»"''')
-			val response = client.get.post(config.testExecutionManagerUrl, new Worker => [uri = workerUri]).toCompletableFuture.join
+			val response = client.get.postAsync(config.testExecutionManagerUrl, new Worker => [uri = workerUri]).toCompletableFuture.join
 			if (response.statusInfo == Status.CREATED) {
 				logger.info('''successfully registered at "«response.location.toString»"''')
 				registrationTask.cancel(false)

@@ -42,6 +42,10 @@ class TestExecutionKey {
 		this.callTreeId = callTreeId
 	}
 	
+	def TestExecutionKey copy() {
+		return new TestExecutionKey(suiteId, suiteRunId, caseRunId, callTreeId)
+	}
+	
 	def boolean isDerivedOf(TestExecutionKey parent) {
 		return (parent !== null)
 			&& (this.suiteId == parent.suiteId)
