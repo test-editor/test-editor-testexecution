@@ -10,14 +10,17 @@ import org.eclipse.xtend.lib.annotations.EqualsHashCode
 import org.slf4j.LoggerFactory
 
 import static extension java.nio.file.Files.list
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
 
 @EqualsHashCode
 @Data
 class TestExecutionKey {
+
 	static val logger = LoggerFactory.getLogger(TestExecutionKey)
 
 	static val PATTERN = Pattern.compile('([^-\\s]+)(-([^-\\s]*)(-([^-\\s]*)(-([^-\\s]*))?)?)?')
-	
+
 	val String suiteId
 	val String suiteRunId
 	val String caseRunId
@@ -35,36 +38,41 @@ class TestExecutionKey {
 		this(suiteId, suiteRunId, caseRunId, "")
 	}
 
-	new(String suiteId, String suiteRunId, String caseRunId, String callTreeId) {
+	@JsonCreator
+	new(
+		@JsonProperty('suiteId') String suiteId,
+		@JsonProperty('suiteRunId') String suiteRunId,
+		@JsonProperty('caseRunId') String caseRunId,
+		@JsonProperty('callTreeId') String callTreeId
+	) {
 		this.suiteId = suiteId
 		this.suiteRunId = suiteRunId
 		this.caseRunId = caseRunId
 		this.callTreeId = callTreeId
 	}
-	
+
 	def TestExecutionKey copy() {
 		return new TestExecutionKey(suiteId, suiteRunId, caseRunId, callTreeId)
 	}
-	
+
 	def boolean isDerivedOf(TestExecutionKey parent) {
-		return (parent !== null)
-			&& (this.suiteId == parent.suiteId)
-			&& ((this.suiteRunId.nullOrEmpty && this.caseRunId.nullOrEmpty && this.callTreeId.nullOrEmpty) || this.suiteRunId == parent.suiteRunId)
-			&& ((this.caseRunId.nullOrEmpty && this.callTreeId.nullOrEmpty) || this.caseRunId == parent.caseRunId)
-			&& (this.callTreeId.nullOrEmpty || this.callTreeId == parent.callTreeId)
+		return (parent !== null) && (this.suiteId == parent.suiteId) &&
+			((this.suiteRunId.nullOrEmpty && this.caseRunId.nullOrEmpty && this.callTreeId.nullOrEmpty) || this.suiteRunId == parent.suiteRunId) &&
+			((this.caseRunId.nullOrEmpty && this.callTreeId.nullOrEmpty) || this.caseRunId == parent.caseRunId) &&
+			(this.callTreeId.nullOrEmpty || this.callTreeId == parent.callTreeId)
 	}
-	
+
 	def TestExecutionKey deriveWithSuiteRunId(String suiteRunId) {
 		return new TestExecutionKey(this.suiteId, suiteRunId, "", "")
 	}
-	
+
 	def TestExecutionKey deriveWithCaseRunId(String caseRunId) {
 		if (this.suiteRunId.nullOrEmpty) {
 			throw new IllegalStateException('cannot derive case run key of a key that has no suiteRunId specified')
 		}
 		return new TestExecutionKey(this.suiteId, this.suiteRunId, caseRunId, "")
 	}
-	
+
 	def TestExecutionKey deriveWithCallTreeId(String callTreeId) {
 		if (this.suiteRunId.nullOrEmpty || this.caseRunId.nullOrEmpty) {
 			throw new IllegalStateException('cannot derive call tree key of a key that has no suiteRunId and caseRunId specified')
@@ -75,7 +83,7 @@ class TestExecutionKey {
 	override toString() {
 		return '''«this.suiteId»-«this.suiteRunId»-«this.caseRunId»-«this.callTreeId»'''
 	}
-	
+
 	def static TestExecutionKey valueOf(String keyAsString) {
 		if (keyAsString === null) {
 			throw new IllegalArgumentException('key may not be NULL')
@@ -85,12 +93,9 @@ class TestExecutionKey {
 		if (!matched) {
 			throw new IllegalArgumentException('''key = '«keyAsString»' does not match expected pattern = '«PATTERN.pattern»'. ''')
 		}
-		return new TestExecutionKey(matcher.group(1),
-			matcher.group(3)?:"",
-			matcher.group(5)?:"",
-			matcher.group(7)?:"")
+		return new TestExecutionKey(matcher.group(1), matcher.group(3) ?: "", matcher.group(5) ?: "", matcher.group(7) ?: "")
 	}
-	
+
 	def Path getLogFile(File workspace) {
 		val keyName = this.toString
 		logger.debug('getting log file for test execution key "{}".', keyName)
@@ -107,4 +112,5 @@ class TestExecutionKey {
 
 		return logFile
 	}
+
 }
