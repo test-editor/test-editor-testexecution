@@ -22,6 +22,7 @@ import org.testeditor.web.backend.testexecution.util.RecursiveHierarchicalLineSk
 import org.testeditor.web.backend.testexecution.workspace.WorkspaceProvider
 
 import static com.google.inject.name.Names.named
+import org.glassfish.jersey.logging.LoggingFeature
 
 class TestExecutionModule extends AbstractModule {
 
@@ -53,8 +54,10 @@ class TestExecutionModule extends AbstractModule {
 
 	@Provides
 	def RxClient<RxCompletionStageInvoker> provideRxClient(TestExecutionDropwizardConfiguration configuration, Environment environment) {
-		return new JerseyClientBuilder(environment).using(configuration.jerseyClientConfiguration).buildRx(TestExecutionApplication.simpleName,
-			RxCompletionStageInvoker)
+		return new JerseyClientBuilder(environment) //
+		.using(configuration.jerseyClientConfiguration) //
+		.withProperty(LoggingFeature.LOGGING_FEATURE_VERBOSITY_CLIENT, LoggingFeature.Verbosity.PAYLOAD_TEXT) //
+		.buildRx(TestExecutionApplication.simpleName, RxCompletionStageInvoker)
 	}
 
 }

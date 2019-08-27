@@ -1,5 +1,6 @@
 package org.testeditor.web.backend.testexecution.worker
 
+import java.util.Optional
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Singleton
 import org.testeditor.web.backend.testexecution.RunningTest
@@ -7,7 +8,6 @@ import org.testeditor.web.backend.testexecution.TestExecutionException
 import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.TestProcess
 import org.testeditor.web.backend.testexecution.TestStatus
-import org.testeditor.web.backend.testexecution.TestStatusMapper
 import org.testeditor.web.backend.testexecution.TestSuiteStatusInfo
 import org.testeditor.web.backend.testexecution.UnresponsiveTestProcessException
 
@@ -45,26 +45,26 @@ class WorkerStatusManager {
 
 	var AtomicLong runningTestSuiteRunId = new AtomicLong(0)
 
-	var RunningTest currentJob
+	var RunningTest _currentJob
 
 	def TestExecutionKey deriveFreshRunId(TestExecutionKey suiteKey) {
 		return suiteKey.deriveWithSuiteRunId(Long.toString(runningTestSuiteRunId.andIncrement))
 	}
+	
+	private def Optional<RunningTest> getCurrentJob() {
+		return Optional.ofNullable(_currentJob)
+	}
+	
+	private def void setCurrentJob(RunningTest job) {
+		this._currentJob = job
+	}
 
 	def TestStatus getStatus() {
-		if (currentJob !== null) {
-			return currentJob.checkStatus
-		} else {
-			return IDLE
-		}
+		return currentJob.map[checkStatus].orElse(IDLE)
 	}
 
 	def TestStatus waitForStatus() {
-		if (currentJob !== null) {
-			return currentJob.waitForStatus
-		} else {
-			return IDLE
-		}
+		return currentJob.map[waitForStatus].orElse(IDLE)
 	}
 
 	def void addTestSuiteRun(Process runningTestSuite) {
@@ -72,25 +72,25 @@ class WorkerStatusManager {
 	}
 
 	def void addTestSuiteRun(Process runningTestSuite, (TestStatus)=>void onCompleted) {
-		if (currentJob.checkStatus === RUNNING) {
+		currentJob.map[checkStatus].filter[it === RUNNING].ifPresentOrElse([
 			throw new IllegalStateException('''Worker is busy.''')
-		} else {
+		],[
 			currentJob = new TestProcess(runningTestSuite, onCompleted)
-		}
+		])
 	}
 
 	def Iterable<TestSuiteStatusInfo> getAllTestSuites() {
 		return #[
 			new TestSuiteStatusInfo => [
 				key = null
-				status = currentJob.checkStatus.name
+				status = currentJob.map[checkStatus.name].orElse(IDLE.name)
 			]
 		]
 	}
 	
 	def void terminateTestSuiteRun() {
 		try {
-			currentJob.kill
+			currentJob.ifPresent[kill]
 		} catch (UnresponsiveTestProcessException ex) {
 			throw new TestExecutionException('Failed to terminate test execution', ex, null) // TODO adapt exception!
 		}

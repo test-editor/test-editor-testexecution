@@ -17,8 +17,12 @@ import org.junit.Test
 
 import static javax.ws.rs.core.Response.Status.*
 import static org.assertj.core.api.Assertions.*
+import org.junit.Rule
 
 class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
+	
+	@Rule
+	val dropwizardServer = dropwizardAppRule
 
 	@Test
 	def void testThatCallTreeIsNotFoundIfNotExistent() {

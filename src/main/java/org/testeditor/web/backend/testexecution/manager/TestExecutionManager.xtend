@@ -2,8 +2,8 @@ package org.testeditor.web.backend.testexecution.manager
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.ConcurrentNavigableMap
 import java.util.concurrent.ConcurrentSkipListMap
+import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.Executor
 import javax.inject.Inject
 import javax.inject.Named
@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.dropwizard.RestClient
 import org.testeditor.web.backend.testexecution.worker.Worker
+import java.util.concurrent.ConcurrentLinkedQueue
+import javax.ws.rs.core.Response.Status
 
 @Singleton
 class TestExecutionManager {
@@ -21,8 +23,8 @@ class TestExecutionManager {
 
 	val ConcurrentMap<String, Worker> idleWorkers = new ConcurrentHashMap
 	val ConcurrentMap<String, Worker> busyWorkers = new ConcurrentHashMap
-	val ConcurrentNavigableMap<TestExecutionKey, TestJob> pendingJobs = new ConcurrentSkipListMap
-	val ConcurrentNavigableMap<TestExecutionKey, TestJob> assignedJobs = new ConcurrentSkipListMap
+	val ConcurrentLinkedQueue<TestJob> pendingJobs = new ConcurrentLinkedQueue 
+	val ConcurrentLinkedQueue<TestJob> assignedJobs = new ConcurrentLinkedQueue
 	val dispatcher = new Dispatcher(this)
 
 	@Inject
@@ -79,7 +81,7 @@ class TestExecutionManager {
 	 */
 	def void addJob(TestJob job) {
 		if (job.canBeAccepted) {
-			pendingJobs.put(job.id, job)
+			pendingJobs.offer(job)
 			dispatcher.jobAdded(job)
 		} else {
 			throw new NoEligibleWorkerException
@@ -133,13 +135,18 @@ class TestExecutionManager {
 		private synchronized def void assign(Worker worker, TestJob job) {
 			idleWorkers.remove(worker.id)
 			busyWorkers.put(worker.id, worker)
-			pendingJobs.remove(job.id)
-			assignedJobs.put(job.id, job)
+			pendingJobs.remove(job)
+			assignedJobs.offer(job)
 
 			logger.info('''trying to assign job «job.id» to worker «worker.id»''')
 
 			client.postAsync(worker.uri, job).whenCompleteAsync([ response, error |
 				if (error !== null) {
+					logger.error(error.message)
+					error.printStackTrace
+					assignmentFailed(worker, job)
+				} else if (response.status !== Status.CREATED.statusCode) {
+					logger.error(response.readEntity(String))
 					assignmentFailed(worker, job)
 				} else {
 					worker.job = job.id
@@ -150,8 +157,8 @@ class TestExecutionManager {
 
 		private synchronized def void assignmentFailed(Worker worker, TestJob job) {
 			logger.info('''assignment of job «job.id» to worker «worker.id» has failed''')
-			assignedJobs.remove(job.id)
-			pendingJobs.put(job.id, job)
+			assignedJobs.remove(job)
+			pendingJobs.offer(job)
 			busyWorkers.remove(worker.id)
 			idleWorkers.put(worker.id, worker)
 		}

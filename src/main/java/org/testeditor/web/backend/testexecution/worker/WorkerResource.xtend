@@ -111,24 +111,31 @@ class IdleWorker implements WorkerAPI {
 	val WorkerStatusManager statusManager
 
 	override Response executeTestJob(TestJob job) {
-		val suiteKey = new TestExecutionKey("0") // default suite
-		val executionKey = statusManager.deriveFreshRunId(suiteKey)
-		val builder = executorProvider.testExecutionBuilder(executionKey, job.resourcePaths, '') // commit id unknown
-		val logFile = builder.environment.get(TestExecutorProvider.LOGFILE_ENV_KEY)
-		val callTreeFileName = builder.environment.get(TestExecutorProvider.CALL_TREE_YAML_FILE)
-		logger.
-			info('''Starting test for resourcePaths='«job.resourcePaths.join(',')»' logging into logFile='«logFile»', callTreeFile='«callTreeFileName»'.''')
-		val callTreeFile = new File(callTreeFileName)
-		callTreeFile.writeCallTreeYamlPrefix(executorProvider.yamlFileHeader(executionKey, Instant.now, job.resourcePaths))
-		val testProcess = builder.start
-		statusManager.addTestSuiteRun(testProcess)[status|callTreeFile.writeCallTreeYamlSuffix(status)]
-		testProcess.logToStandardOutAndIntoFile(new File(logFile))
-		val uri = new URI(UriBuilder.fromResource(TestSuiteResource).build.toString +
-			'''/«URLEncoder.encode(executionKey.suiteId, "UTF-8")»/«URLEncoder.encode(executionKey.suiteRunId,"UTF-8")»''')
+		try {
+			val suiteKey = new TestExecutionKey("0") // default suite
+			val executionKey = statusManager.deriveFreshRunId(suiteKey)
+			val builder = executorProvider.testExecutionBuilder(executionKey, job.resourcePaths, '') // commit id unknown
+			val logFile = builder.environment.get(TestExecutorProvider.LOGFILE_ENV_KEY)
+			val callTreeFileName = builder.environment.get(TestExecutorProvider.CALL_TREE_YAML_FILE)
+			logger.
+				info('''Starting test for resourcePaths='«job.resourcePaths.join(',')»' logging into logFile='«logFile»', callTreeFile='«callTreeFileName»'.''')
+			val callTreeFile = new File(callTreeFileName)
+			callTreeFile.writeCallTreeYamlPrefix(executorProvider.yamlFileHeader(executionKey, Instant.now, job.resourcePaths))
+			val testProcess = builder.start
+			statusManager.addTestSuiteRun(testProcess)[status|callTreeFile.writeCallTreeYamlSuffix(status)]
+			testProcess.logToStandardOutAndIntoFile(new File(logFile))
+			val uri = new URI(UriBuilder.fromResource(TestSuiteResource).build.toString +
+				'''/«URLEncoder.encode(executionKey.suiteId, "UTF-8")»/«URLEncoder.encode(executionKey.suiteRunId,"UTF-8")»''')
 
-		state = BUSY
+			state = BUSY
 
-		return Response.created(uri).build
+			return Response.created(uri).build
+		} catch (Exception ex) {
+			logger.error(ex.message)
+			ex.printStackTrace
+			return Response.serverError.entity(ex.message).build
+		}
+
 	}
 
 	override cancelTestJob() {

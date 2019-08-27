@@ -170,7 +170,7 @@ class TestSuiteResource {
 		val suiteKey = new TestExecutionKey("0") // default suite
 		val executionKey = statusMapper.deriveFreshRunId(suiteKey)
 		manager.addJob(new TestJob => [
-			id = executionKey.toString
+			id = executionKey
 			it.resourcePaths = resourcePaths
 			capabilities = emptySet
 		])

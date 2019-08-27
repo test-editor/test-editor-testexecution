@@ -7,12 +7,13 @@ import java.util.concurrent.CompletionStage
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
-import javax.ws.rs.client.Entity
+import static javax.ws.rs.client.Entity.json
 import javax.ws.rs.core.Response
 import org.glassfish.jersey.client.rx.RxClient
 import org.glassfish.jersey.client.rx.java8.RxCompletionStageInvoker
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
+import org.slf4j.LoggerFactory
 
 /**
  * Abstraction around an HTTP client for easy mocking
@@ -51,12 +52,15 @@ abstract class AbstractRestClient implements RestClient {
 
 @Singleton
 class JerseyBasedRestClient extends AbstractRestClient {
+	static val logger = LoggerFactory.getLogger(JerseyBasedRestClient)
 
 	@Inject
 	Provider<RxClient<RxCompletionStageInvoker>> httpClientProvider
 
 	override <T> CompletionStage<Response> postAsync(URI uri, T body) {
-		return uri.invoker.post(Entity.entity(body, APPLICATION_JSON_TYPE))
+		val entity = json(body)
+		logger.info('''sending POST request to «uri.toString» with body:\n«entity.toString»''')
+		return uri.invoker.post(entity)
 	}
 
 	override <T> CompletionStage<Response> getAsync(URI uri) {

@@ -41,6 +41,7 @@ import org.testeditor.web.backend.testexecution.worker.Worker
  */
 @Singleton
 class TestStatusManager implements TestStatusMapper {
+	private static val TIMEOUT_MILLIS = 2000
 
 	public static val TEST_STATUS_MAP_NAME = "testStatusMap"
 
@@ -61,7 +62,7 @@ class TestStatusManager implements TestStatusMapper {
 	}
 
 	override TestStatus waitForStatus(TestExecutionKey executionKey) {
-		if (suiteStatusMap.containsKey(executionKey)) {
+		if (executionKey.presentOrGetsInsertedBeforeTimeout) {
 			return suiteStatusMap.get(executionKey).waitForStatus
 		} else {
 			return IDLE
@@ -75,8 +76,9 @@ class TestStatusManager implements TestStatusMapper {
 	override void addTestSuiteRun(Worker worker, Process runningTestSuite, (TestStatus)=>void onCompleted) {
 		if (worker.job.isRunning) {
 			throw new IllegalStateException('''TestSuite "«worker.job»" is still running.''')
-		} else {
+		} else synchronized (this) {
 			suiteStatusMap.put(worker.job, worker)
+			notifyAll
 		}
 	}
 
@@ -104,6 +106,20 @@ class TestStatusManager implements TestStatusMapper {
 	private def boolean isRunning(TestExecutionKey executionKey) {
 		val worker = suiteStatusMap.get(executionKey)
 		return worker?.checkStatus == RUNNING
+	}
+	
+	private def synchronized boolean isPresentOrGetsInsertedBeforeTimeout(TestExecutionKey key) {
+		var timeElapsed = 0L
+		val startTime = System.currentTimeMillis
+		while (!suiteStatusMap.containsKey(key) && timeElapsed < TIMEOUT_MILLIS) {
+			try {
+				wait(TIMEOUT_MILLIS-timeElapsed)
+				timeElapsed = System.currentTimeMillis - startTime
+			} catch (InterruptedException ex) {
+				Thread.currentThread.interrupt
+			}
+		}
+		return suiteStatusMap.containsKey(key)
 	}
 
 }

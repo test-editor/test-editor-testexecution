@@ -8,55 +8,69 @@ import java.io.InputStreamReader
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.io.PrintStream
+import java.util.LinkedList
 import java.util.List
 import javax.ws.rs.client.Entity
 import javax.ws.rs.core.MediaType
 import org.apache.commons.io.output.TeeOutputStream
 import org.eclipse.jgit.junit.JGitTestUtil
-import org.junit.AfterClass
-import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.RuleChain
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
 import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionDropwizardConfiguration
 import org.testeditor.web.backend.testexecution.dropwizard.WorkerApplication
 import org.testeditor.web.backend.testexecution.worker.WorkerResource
 
 import static io.dropwizard.testing.ConfigOverride.config
-import static javax.ws.rs.core.Response.Status.*
-import static org.assertj.core.api.Assertions.*
 import static java.util.concurrent.CompletableFuture.runAsync
 import static java.util.concurrent.TimeUnit.SECONDS
+import static javax.ws.rs.core.Response.Status.CREATED
+import static org.assertj.core.api.Assertions.*
 
 class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 
 	static var PrintStream systemOut
-	static val sysioPipe = new PipedInputStream
+	static var PipedInputStream sysioPipe
 
-	@BeforeClass
-	def static void setupSystemOut() {
-		systemOut = System.out
-		val tee = new TeeOutputStream(systemOut, new PipedOutputStream(sysioPipe))
-		System.setOut(new PrintStream(tee))
+	val createSysIoPipe = new TestWatcher() {
+
+		override protected starting(Description description) {
+			sysioPipe = new PipedInputStream
+			systemOut = System.out
+			val tee = new TeeOutputStream(systemOut, new PipedOutputStream(sysioPipe))
+			System.setOut(new PrintStream(tee))
+		}
 	}
-
-	@AfterClass
-	def static void tearDownSystemOut() {
-		System.setOut(systemOut)
+	
+	val closeSysIoPipe = new TestWatcher() {
+		override protected finished(Description description) {
+			sysioPipe.close
+			System.setOut(systemOut)
+		}
 	}
-
-	@Rule
-	public val DropwizardAppRule<TestExecutionDropwizardConfiguration> workerRule = new DropwizardAppRule(
+	
+	DropwizardAppRule<TestExecutionDropwizardConfiguration> workerRule = new DropwizardAppRule(
 		WorkerApplication,
 		ResourceHelpers.resourceFilePath('worker-config.yml'),
 		workerConfigs
 	)
+
+	@Rule
+	public val RuleChain ruleChain = RuleChain.outerRule(createSysIoPipe).around(dropwizardAppRule).around(workerRule).around(closeSysIoPipe)
+
+	protected override List<ConfigOverride> getConfigs() {
+		return new LinkedList(super.configs) => [ add(config('logging.level', 'DEBUG')) ]
+	}
 
 	protected def List<ConfigOverride> getWorkerConfigs() {
 		return #[
 			config('server.applicationConnectors[0].port', '0'),
 			config('localRepoFileRoot', workspaceRoot.root.path),
 			config('remoteRepoUrl', setupRemoteGitRepository),
-			config('testExecutionManagerUrl', '''http://localhost:«serverPort»/testexecution/manager/workers''')
+			config('testExecutionManagerUrl', '''http://localhost:«serverPort»/testexecution/manager/workers'''),
+			config('logging.level', 'DEBUG')
 		]
 	}
 
@@ -68,11 +82,11 @@ class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 		sysioReader.lines.takeWhile[!contains('stopped')].anyMatch[contains(expectedLogLine)].assertTrue
 	}
 
-	@Test()
+	@Test
 	def void jobIsAssignedToWorker() {
 		// given
 		waitForWorkerRegistration
-		
+
 		val workspaceRootPath = workspaceRoot.root.toPath
 		val testFile = 'test.tcl'
 		remoteGitFolder.newFile(testFile).commitInRemoteRepository
@@ -85,27 +99,18 @@ class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 			''')
 			commitInRemoteRepository
 		]
-		println('remote git folder: ' + remoteGitFolder.root.absolutePath)
 
 		// when
 		val request = createLaunchNewRequest().buildPost(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
 		val response = request.submit.get
-		println('received response')
-		Thread.sleep(200)
-//		
-//		// then
-//		println('thread woke up')
-//		assertThat(response.status).isEqualTo(CREATED.statusCode)
-//		assertThat(response.headers.get("Location").toString).matches("\\[http://localhost:[0-9]+/test-suite/0/0\\]")
-//		
-//		println('assertions went through...')
-//
-//		createTestRequest(TestExecutionKey.valueOf('0-0')).get // wait for test to terminate
-//		println('test terminated (apparantly...)')
-//		val executionResult = workspaceRootPath.resolve('test.ok.txt').toFile
-//		assertThat(executionResult).exists
-//		
-//		println('end of test')
+
+		// then
+		assertThat(response.status).isEqualTo(CREATED.statusCode)
+		assertThat(response.headers.get("Location").toString).matches("\\[http://localhost:[0-9]+/test-suite/0/0\\]")
+
+		createTestRequest(TestExecutionKey.valueOf('0-0')).get // wait for test to terminate
+		val executionResult = workspaceRootPath.resolve('test.ok.txt').toFile
+		assertThat(executionResult).exists
 
 	}
 

@@ -65,13 +65,15 @@ abstract class AbstractIntegrationTest {
 		]
 		return builder.sign(Algorithm.HMAC256("secret"))
 	}
+	
+	var DropwizardAppRule<TestExecutionDropwizardConfiguration> dropwizardServer
 
-	@Rule
-	public val DropwizardAppRule<TestExecutionDropwizardConfiguration> dropwizardAppRule = new DropwizardAppRule(
-		TestExecutionApplication,
-		ResourceHelpers.resourceFilePath('test-config.yml'),
-		configs
-	)
+	public def DropwizardAppRule<TestExecutionDropwizardConfiguration> getDropwizardAppRule() {
+		if (dropwizardServer === null) {
+			dropwizardServer = new DropwizardAppRule(TestExecutionApplication, ResourceHelpers.resourceFilePath('test-config.yml'), configs)
+		}		
+		return dropwizardServer
+	}
 
 	protected extension val AssertionHelper = AssertionHelper.instance
 
