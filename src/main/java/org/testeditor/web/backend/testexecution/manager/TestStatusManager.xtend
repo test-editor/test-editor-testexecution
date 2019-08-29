@@ -56,13 +56,17 @@ class TestStatusManager implements TestStatusMapper {
 
 	override TestStatus getStatus(TestExecutionKey executionKey) {
 		val workerStatus = suiteStatusMap.get(executionKey)
-		return workerStatus?.key.checkStatus => [ doOnComplete(workerStatus.value)] ?: IDLE
+		return if (workerStatus === null) {
+			IDLE
+		} else {
+			workerStatus?.key.checkStatus => [doOnComplete(workerStatus.value)]
+		}
 	}
 
 	override TestStatus waitForStatus(TestExecutionKey executionKey) {
 		return if (executionKey.presentOrGetsInsertedBeforeTimeout) {
 			val workerStatus = suiteStatusMap.get(executionKey)
-			workerStatus.key.waitForStatus => [ doOnComplete(workerStatus.value)]
+			workerStatus.key.waitForStatus => [doOnComplete(workerStatus.value)]
 		} else {
 			IDLE
 		}
@@ -74,8 +78,12 @@ class TestStatusManager implements TestStatusMapper {
 
 	override void addTestSuiteRun(TestExecutionKey job, Worker worker, (TestStatus)=>void onCompleted) {
 		synchronized (this) {
-			suiteStatusMap.put(job, Pair.of(worker, onCompleted))
-			notifyAll
+			if (suiteStatusMap.containsKey(job) && suiteStatusMap.get(job).key.checkStatus === RUNNING) {
+				throw new IllegalStateException('''Job "«job»" is still running.''')
+			} else {
+				suiteStatusMap.put(job, Pair.of(worker, onCompleted))
+				notifyAll
+			}
 		}
 	}
 
@@ -85,31 +93,22 @@ class TestStatusManager implements TestStatusMapper {
 		return this.suiteStatusMap.entrySet.map [ entry |
 			new TestSuiteStatusInfo => [
 				key = entry.key
-				status = (entry.value.key.checkStatus => [ doOnComplete(entry.value.value)]).name
+				status = (entry.value.key.checkStatus => [doOnComplete(entry.value.value)]).name
 			]
 		]
 	}
 
+//TODO what if kill fails?
 	override void terminateTestSuiteRun(TestExecutionKey testExecutionKey) {
-		val workerStatus = this.suiteStatusMap.get(testExecutionKey) 
-		try {
-			workerStatus.key.kill
-			doOnComplete(FAILED, workerStatus.value)
-		} catch (UnresponsiveTestProcessException ex) {
-			throw new TestExecutionException('Failed to terminate test execution', ex, testExecutionKey)
-		}
-
+		val workerStatus = this.suiteStatusMap.get(testExecutionKey)
+		workerStatus.key.kill
+		doOnComplete(FAILED, workerStatus.value)
 	}
-	
+
 	private def doOnComplete(TestStatus status, (TestStatus)=>void action) {
 		if (status !== RUNNING) {
 			action.apply(status)
 		}
-	}
-
-	private def boolean isRunning(TestExecutionKey executionKey) {
-		val worker = suiteStatusMap.get(executionKey)?.key
-		return worker?.checkStatus == RUNNING
 	}
 
 	private def synchronized boolean isPresentOrGetsInsertedBeforeTimeout(TestExecutionKey key) {

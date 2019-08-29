@@ -23,6 +23,10 @@ import org.testeditor.web.backend.testexecution.util.RecursiveHierarchicalLineSk
 import org.testeditor.web.backend.testexecution.workspace.WorkspaceProvider
 
 import static com.google.inject.name.Names.named
+import org.testeditor.web.backend.testexecution.manager.UriAppender
+import org.testeditor.web.backend.testexecution.manager.DefaultUriAppender
+import javax.ws.rs.core.UriInfo
+import com.google.inject.servlet.ServletScopes
 
 class TestExecutionModule extends AbstractModule {
 
@@ -41,6 +45,7 @@ class TestExecutionModule extends AbstractModule {
 			bind(GitConfiguration).to(TestExecutionDropwizardConfiguration)
 			bind(RestClient).to(JerseyBasedRestClient)
 			bind(TestStatusMapper).to(TestStatusManager)
+			bind(UriAppender).to(DefaultUriAppender).in(ServletScopes.REQUEST)
 		]
 	}
 

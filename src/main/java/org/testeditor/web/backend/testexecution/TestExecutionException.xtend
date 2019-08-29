@@ -10,16 +10,12 @@ import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR
 
 class TestExecutionException extends RuntimeException {
 
-	@Accessors(PUBLIC_GETTER)
-	val TestExecutionKey key
-
-	new(String message, Throwable cause, TestExecutionKey key) {
+	new(String message, Throwable cause) {
 		super(message, cause)
-		this.key = key
 	}
 
 	override String toString() {
-		return '''«message». Reason: «cause?.message». [«key»]'''
+		return '''«message». Reason: «cause?.message».'''
 	}
 
 }

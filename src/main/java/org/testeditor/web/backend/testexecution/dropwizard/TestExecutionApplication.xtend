@@ -1,9 +1,5 @@
 package org.testeditor.web.backend.testexecution.dropwizard
 
-import com.fasterxml.jackson.databind.BeanProperty
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.InjectableValues
-import com.fasterxml.jackson.databind.JsonMappingException
 import com.google.inject.Module
 import io.dropwizard.setup.Environment
 import java.util.List
@@ -20,11 +16,21 @@ import org.testeditor.web.backend.testexecution.manager.WorkersResource
 import org.testeditor.web.dropwizard.DropwizardApplication
 
 import static org.eclipse.jetty.servlets.CrossOriginFilter.EXPOSED_HEADERS_PARAM
+import org.glassfish.hk2.utilities.binding.AbstractBinder
+import org.testeditor.web.backend.testexecution.manager.UriAppender
+import org.glassfish.jersey.process.internal.RequestScoped
+import javax.ws.rs.core.UriInfo
+import com.google.inject.AbstractModule
+import com.google.inject.Provides
+import org.testeditor.web.backend.testexecution.manager.DefaultUriAppender
+import com.google.inject.servlet.ServletScopes
+import org.glassfish.hk2.api.Factory
 
 class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwizardConfiguration> {
 
 	@Inject Provider<ExecutionHealthCheck> executionHealthCheckProvider
 	@Inject Provider<RestClient> restClient
+//	@Inject Provider<UriInfo> uriInfoProvider
 
 	def static void main(String[] args) {
 		new TestExecutionApplication().run(args)
@@ -33,6 +39,17 @@ class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwi
 	override protected collectModules(List<Module> modules) {
 		super.collectModules(modules)
 		modules += new TestExecutionModule
+		modules += new AbstractModule {
+			override configure() {
+//				bind(UriAppender).toProvider(UriAppenderProvider).in(ServletScopes.REQUEST)
+//				bind(UriAppender).to(DefaultUriAppender).in(ServletScopes.REQUEST)
+			}
+
+//			@Provides
+//			def UriInfo provideUriInfo() {
+//				return uriInfoProvider.get
+//			}
+		}
 	}
 
 	override run(TestExecutionDropwizardConfiguration configuration, Environment environment) throws Exception {
@@ -43,17 +60,17 @@ class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwi
 			register(TestSuiteResource)
 			register(TestArtifactResource)
 			register(WorkersResource)
+			
+			register(new AbstractBinder {
+				
+				override protected configure() {
+					bind(DefaultUriAppender).proxy(true).proxyForSameScope(false).to(UriAppender).in(RequestScoped)
+				}
+				
+			})
 		]
-		environment.objectMapper.injectableValues = new InjectableValues {
+		environment.objectMapper.injectableValues = new InjectableValueProviderMap(#{'restClient' -> restClient})
 
-			val values = #{'restClient' -> restClient}
-
-			override findInjectableValue(Object valueId, DeserializationContext ctxt, BeanProperty forProperty,
-				Object beanInstance) throws JsonMappingException {
-				return values.get(valueId)?.get
-			}
-
-		}
 		environment.healthChecks.register('execution', executionHealthCheckProvider.get)
 
 	}
@@ -66,3 +83,13 @@ class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwi
 	}
 
 }
+
+//class UriAppenderProvider implements Provider<UriAppender> {
+//	@Inject
+//	Provider<UriInfo> uriInfoProvider
+//	
+//	override get() {
+//		return new DefaultUriAppender(uriInfoProvider.get)
+//	}
+//	
+//}

@@ -1,29 +1,15 @@
 package org.testeditor.web.backend.testexecution
 
-import io.dropwizard.testing.ConfigOverride
-import io.dropwizard.testing.ResourceHelpers
-import io.dropwizard.testing.junit.DropwizardAppRule
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.io.PipedInputStream
-import java.io.PipedOutputStream
-import java.io.PrintStream
-import java.util.LinkedList
-import java.util.List
 import javax.ws.rs.client.Entity
 import javax.ws.rs.core.MediaType
-import org.apache.commons.io.output.TeeOutputStream
 import org.eclipse.jgit.junit.JGitTestUtil
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
-import org.junit.rules.TestWatcher
-import org.junit.runner.Description
-import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionDropwizardConfiguration
-import org.testeditor.web.backend.testexecution.dropwizard.WorkerApplication
+import org.testeditor.web.backend.testexecution.TestUtils.SysIoPipeRuleChain
 import org.testeditor.web.backend.testexecution.worker.WorkerResource
 
-import static io.dropwizard.testing.ConfigOverride.config
 import static java.util.concurrent.CompletableFuture.runAsync
 import static java.util.concurrent.TimeUnit.SECONDS
 import static javax.ws.rs.core.Response.Status.CREATED
@@ -31,54 +17,20 @@ import static org.assertj.core.api.Assertions.*
 
 class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 
-	static var PrintStream systemOut
-	static var PipedInputStream sysioPipe
-
-	val createSysIoPipe = new TestWatcher() {
-
-		override protected starting(Description description) {
-			sysioPipe = new PipedInputStream
-			systemOut = System.out
-			val tee = new TeeOutputStream(systemOut, new PipedOutputStream(sysioPipe))
-			System.setOut(new PrintStream(tee))
-		}
-	}
-	
-	val closeSysIoPipe = new TestWatcher() {
-		override protected finished(Description description) {
-			sysioPipe.close
-			System.setOut(systemOut)
-		}
-	}
-	
-	DropwizardAppRule<TestExecutionDropwizardConfiguration> workerRule = new DropwizardAppRule(
-		WorkerApplication,
-		ResourceHelpers.resourceFilePath('worker-config.yml'),
-		workerConfigs
+	val workerRule = createWorkerRule(
+		workspaceRoot.root.path,
+		setupRemoteGitRepository,
+		'''http://localhost:«serverPort»/testexecution/manager/workers'''
 	)
 
 	@Rule
-	public val RuleChain ruleChain = RuleChain.outerRule(createSysIoPipe).around(dropwizardAppRule).around(workerRule).around(closeSysIoPipe)
-
-	protected override List<ConfigOverride> getConfigs() {
-		return new LinkedList(super.configs) => [ add(config('logging.level', 'INFO')) ]
-	}
-
-	protected def List<ConfigOverride> getWorkerConfigs() {
-		return #[
-			config('server.applicationConnectors[0].port', '0'),
-			config('localRepoFileRoot', workspaceRoot.root.path),
-			config('remoteRepoUrl', setupRemoteGitRepository),
-			config('testExecutionManagerUrl', '''http://localhost:«serverPort»/testexecution/manager/workers'''),
-			config('logging.level', 'INFO')
-		]
-	}
+	public val extension SysIoPipeRuleChain = new SysIoPipeRuleChain(dropwizardAppRule, workerRule)
 
 	@Test(timeout=5000)
 	def void workerRegistersWithManagerAtStartup() {
-		val expectedLogLine = '''«WorkerResource.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker%2Fjob"'''
+		val expectedLogLine = '''«WorkerResource.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"'''
 
-		val sysioReader = new BufferedReader(new InputStreamReader(sysioPipe))
+		val sysioReader = new BufferedReader(new InputStreamReader(sysIoPipeRule.sysioPipe))
 		sysioReader.lines.takeWhile[!contains('stopped')].anyMatch[contains(expectedLogLine)].assertTrue
 	}
 
@@ -111,7 +63,7 @@ class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 		val statusResponse = createTestRequest(TestExecutionKey.valueOf('0-0')).get // wait for test to terminate
 		val status = statusResponse.readEntity(String)
 		val executionResult = workspaceRootPath.resolve('test.ok.txt').toFile
-		assertThat(status).isEqualTo('FAILED')
+		assertThat(status).isEqualTo('SUCCESS')
 		assertThat(executionResult).exists
 
 	}
@@ -120,7 +72,7 @@ class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 		runAsync[
 			val expectedLogLine = '''«WorkerResource.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"'''
 
-			val sysioReader = new BufferedReader(new InputStreamReader(sysioPipe))
+			val sysioReader = new BufferedReader(new InputStreamReader(sysIoPipeRule.sysioPipe))
 			sysioReader.lines.anyMatch[contains(expectedLogLine)]
 		].get(5, SECONDS)
 	}

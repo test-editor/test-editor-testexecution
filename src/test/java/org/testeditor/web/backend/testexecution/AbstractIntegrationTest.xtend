@@ -7,8 +7,6 @@ import io.dropwizard.testing.ConfigOverride
 import io.dropwizard.testing.ResourceHelpers
 import io.dropwizard.testing.junit.DropwizardAppRule
 import java.io.File
-import java.io.IOException
-import java.net.ServerSocket
 import java.nio.file.Path
 import java.util.List
 import javax.ws.rs.client.Entity
@@ -20,7 +18,6 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.glassfish.jersey.client.ClientProperties
 import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionApplication
 import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionDropwizardConfiguration
@@ -28,14 +25,10 @@ import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionDropwiza
 import static io.dropwizard.testing.ConfigOverride.config
 
 abstract class AbstractIntegrationTest {
-
+	protected extension val TestUtils = new TestUtils
+	
 	protected static val String userId = 'john.doe'
-	protected static val String serverPort = {
-		val socket = new ServerSocket(0)
-		val port = socket.localPort.toString
-		try { socket.close } catch (IOException ex) {}
-		return port
-	}
+	protected val String serverPort = freePort 
 	protected val String token = createToken
 
 	// cannot use @Rule as we need to use it within another rule		

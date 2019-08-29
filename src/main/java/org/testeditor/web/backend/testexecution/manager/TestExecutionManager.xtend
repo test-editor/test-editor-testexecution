@@ -7,12 +7,10 @@ import java.util.concurrent.Executor
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
-import javax.ws.rs.core.Response.Status
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.TestExecutionKey
-import org.testeditor.web.backend.testexecution.dropwizard.RestClient
 import org.testeditor.web.backend.testexecution.manager.TestJob.JobState
 import org.testeditor.web.backend.testexecution.worker.Worker
 
@@ -110,7 +108,7 @@ class TestExecutionManager {
 	}
 
 	def TestExecutionKey jobOf(Worker worker) {
-		return workers.getOrDefault(worker, Pair.of(null, NONE)).value
+		return workers.getOrDefault(worker.id, Pair.of(null, NONE)).value
 	}
 
 	private def Iterable<Worker> idleWorkers() {

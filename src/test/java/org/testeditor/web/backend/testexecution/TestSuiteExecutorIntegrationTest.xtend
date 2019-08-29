@@ -13,16 +13,23 @@ import javax.ws.rs.core.GenericType
 import javax.ws.rs.core.MediaType
 import org.assertj.core.api.SoftAssertions
 import org.eclipse.jgit.junit.JGitTestUtil
+import org.junit.Rule
 import org.junit.Test
+import org.testeditor.web.backend.testexecution.TestUtils.SysIoPipeRuleChain
 
 import static javax.ws.rs.core.Response.Status.*
 import static org.assertj.core.api.Assertions.*
-import org.junit.Rule
 
 class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	
+	val workerRule = createWorkerRule(
+		workspaceRoot.root.path,
+		setupRemoteGitRepository,
+		'''http://localhost:«serverPort»/testexecution/manager/workers'''
+	)
+
 	@Rule
-	val dropwizardServer = dropwizardAppRule
+	public val extension SysIoPipeRuleChain = new SysIoPipeRuleChain(dropwizardAppRule, workerRule)
 
 	@Test
 	def void testThatCallTreeIsNotFoundIfNotExistent() {

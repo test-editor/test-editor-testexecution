@@ -1,5 +1,6 @@
 package org.testeditor.web.backend.testexecution.manager
 
+import javax.inject.Inject
 import javax.ws.rs.core.Context
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriInfo
@@ -16,10 +17,11 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND
 
 class TestExecutionManagerExceptionMapper implements ExceptionMapper<TestExecutionManagerException> {
 
-	@Context UriInfo uriInfo;
+	@Inject extension UriAppender uriAppender;
+	@Context UriInfo uriInfo
 
 	def dispatch Response toResponse(AlreadyRegisteredException it) {
-		val location = uriInfo.absolutePathBuilder.path(encode(workerId, UTF_8)).build()
+		val location = uriInfo.append(encode(workerId, UTF_8))
 		return Response.status(CONFLICT).entity('There is already a worker registered for this URL.').header('Location', location).build
 	}
 

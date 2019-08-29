@@ -80,21 +80,12 @@ class WorkerStatusManager {
 			currentJob = new TestProcess(runningTestSuite, onCompleted)
 		])
 	}
-
-	def Iterable<TestSuiteStatusInfo> getAllTestSuites() {
-		return #[
-			new TestSuiteStatusInfo => [
-				key = null
-				status = currentJob.map[checkStatus.name].orElse(IDLE.name)
-			]
-		]
-	}
 	
 	def void terminateTestSuiteRun() {
 		try {
 			currentJob.ifPresent[kill]
 		} catch (UnresponsiveTestProcessException ex) {
-			throw new TestExecutionException('Failed to terminate test execution', ex, null) // TODO adapt exception!
+			throw new TestExecutionException('Failed to terminate test execution', ex)
 		}
 		
 	}
