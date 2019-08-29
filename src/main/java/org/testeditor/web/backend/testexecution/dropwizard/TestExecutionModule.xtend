@@ -9,6 +9,7 @@ import java.util.concurrent.Executor
 import java.util.concurrent.ForkJoinPool
 import org.glassfish.jersey.client.rx.RxClient
 import org.glassfish.jersey.client.rx.java8.RxCompletionStageInvoker
+import org.glassfish.jersey.logging.LoggingFeature
 import org.testeditor.web.backend.testexecution.TestStatusMapper
 import org.testeditor.web.backend.testexecution.loglines.Log4JDefaultFilter
 import org.testeditor.web.backend.testexecution.loglines.LogFilter
@@ -22,9 +23,10 @@ import org.testeditor.web.backend.testexecution.util.RecursiveHierarchicalLineSk
 import org.testeditor.web.backend.testexecution.workspace.WorkspaceProvider
 
 import static com.google.inject.name.Names.named
-import org.glassfish.jersey.logging.LoggingFeature
 
 class TestExecutionModule extends AbstractModule {
+
+	var RxClient<RxCompletionStageInvoker> rxClient = null
 
 	override protected configure() {
 		binder => [
@@ -54,10 +56,13 @@ class TestExecutionModule extends AbstractModule {
 
 	@Provides
 	def RxClient<RxCompletionStageInvoker> provideRxClient(TestExecutionDropwizardConfiguration configuration, Environment environment) {
-		return new JerseyClientBuilder(environment) //
-		.using(configuration.jerseyClientConfiguration) //
-		.withProperty(LoggingFeature.LOGGING_FEATURE_VERBOSITY_CLIENT, LoggingFeature.Verbosity.PAYLOAD_TEXT) //
-		.buildRx(TestExecutionApplication.simpleName, RxCompletionStageInvoker)
+		if (rxClient === null) {
+			rxClient = new JerseyClientBuilder(environment) //
+			.using(configuration.jerseyClientConfiguration) //
+			.withProperty(LoggingFeature.LOGGING_FEATURE_VERBOSITY_CLIENT, LoggingFeature.Verbosity.PAYLOAD_TEXT) //
+			.buildRx(TestExecutionApplication.simpleName, RxCompletionStageInvoker)
+		}
+		return rxClient
 	}
 
 }

@@ -10,9 +10,9 @@ interface TestStatusMapper {
 
 	def TestStatus waitForStatus(TestExecutionKey executionKey)
 
-	def void addTestSuiteRun(Worker worker, Process runningTestSuite)
+	def void addTestSuiteRun(TestExecutionKey job, Worker worker)
 
-	def void addTestSuiteRun(Worker worker, Process runningTestSuite, (TestStatus)=>void onCompleted)
+	def void addTestSuiteRun(TestExecutionKey job, Worker worker, (TestStatus)=>void onCompleted)
 
 	def Iterable<TestSuiteStatusInfo> getAllTestSuites()
 

@@ -7,28 +7,35 @@ import java.util.concurrent.CompletionStage
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
-import static javax.ws.rs.client.Entity.json
+import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 import org.glassfish.jersey.client.rx.RxClient
 import org.glassfish.jersey.client.rx.java8.RxCompletionStageInvoker
-
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
 import org.slf4j.LoggerFactory
+
+import static javax.ws.rs.client.Entity.json
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
+import static org.glassfish.jersey.client.ClientProperties.READ_TIMEOUT
 
 /**
  * Abstraction around an HTTP client for easy mocking
  */
 interface RestClient {
+	public static val int READ_TIMEOUT_MILLIS = 10000
 
 	def <T> CompletionStage<Response> postAsync(URI uri, T body)
 
 	def <T> CompletionStage<Response> getAsync(URI uri)
+
+	def <T> CompletionStage<Response> getAsync(URI uri, MediaType accept)
 
 	def <T> CompletionStage<Response> deleteAsync(URI uri)
 
 	def <T> Response post(URI uri, T body)
 
 	def <T> Response get(URI uri)
+
+	def <T> Response get(URI uri, MediaType accept)
 
 	def <T> Response delete(URI uri)
 
@@ -43,15 +50,20 @@ abstract class AbstractRestClient implements RestClient {
 	override <T> get(URI uri) {
 		return uri.getAsync.toCompletableFuture.join
 	}
-	
+
 	override <T> delete(URI uri) {
 		return uri.deleteAsync.toCompletableFuture.join
+	}
+	
+	override <T> get(URI uri, MediaType accept) {
+		return uri.getAsync(accept).toCompletableFuture.join
 	}
 
 }
 
 @Singleton
 class JerseyBasedRestClient extends AbstractRestClient {
+
 	static val logger = LoggerFactory.getLogger(JerseyBasedRestClient)
 
 	@Inject
@@ -66,13 +78,21 @@ class JerseyBasedRestClient extends AbstractRestClient {
 	override <T> CompletionStage<Response> getAsync(URI uri) {
 		return uri.invoker.get
 	}
+	
+	override <T> CompletionStage<Response> getAsync(URI uri, MediaType accept) {
+		return uri.getInvoker(accept).get
+	}
 
 	override <T> deleteAsync(URI uri) {
 		return uri.invoker.delete
 	}
-
+	
 	private def getInvoker(URI uri) {
-		return httpClientProvider.get.target(uri).request(APPLICATION_JSON_TYPE).header('Authorization', '''Bearer «dummyToken»''').rx
+		return uri.getInvoker(APPLICATION_JSON_TYPE)
+	}
+
+	private def getInvoker(URI uri, MediaType accept) {
+		return httpClientProvider.get.property(READ_TIMEOUT, READ_TIMEOUT_MILLIS).target(uri).request(accept).header('Authorization', '''Bearer «dummyToken»''').rx
 	}
 
 	val static String dummyToken = createToken('test.execution', 'Test Execution User', 'testeditor.eng@gmail.com')

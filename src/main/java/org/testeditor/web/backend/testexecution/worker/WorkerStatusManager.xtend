@@ -72,7 +72,9 @@ class WorkerStatusManager {
 	}
 
 	def void addTestSuiteRun(Process runningTestSuite, (TestStatus)=>void onCompleted) {
-		currentJob.map[checkStatus].filter[it === RUNNING].ifPresentOrElse([
+		val status = currentJob.map[checkStatus]
+		val running = status.filter[it === RUNNING]
+		running.ifPresentOrElse([
 			throw new IllegalStateException('''Worker is busy.''')
 		],[
 			currentJob = new TestProcess(runningTestSuite, onCompleted)

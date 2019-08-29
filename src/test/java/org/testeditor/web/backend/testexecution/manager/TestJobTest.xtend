@@ -14,12 +14,8 @@ class TestJobTest {
 	@org.junit.Test
 	def void testJobSerializesToJSON() throws Exception {
 		// given
-		val testJob = new TestJob() => [
-			capabilities = #{ 'firefox', 'chrome' }
-			id = new TestExecutionKey('suiteId', 'suiteRunId', 'testCaseId', 'callTreeId')
-			resourcePaths = #[ 'path/to/test.tcl', 'another/differentTest.tcl' ]
-			status = -1
-		]
+		val testJob = new TestJob(new TestExecutionKey('suiteId', 'suiteRunId', 'testCaseId', 'callTreeId'), #{'firefox', 'chrome'},
+			#['path/to/test.tcl', 'another/differentTest.tcl'])
 		val expected = mapper.writeValueAsString(mapper.readValue(fixture("json/testJob.json"), TestJob))
 
 		// when
@@ -32,12 +28,8 @@ class TestJobTest {
 	@org.junit.Test
 	def void testJobDeserializesFromJSON() throws Exception {
 		// given
-		val testJob = new TestJob() => [
-			capabilities = #{ 'firefox', 'chrome' }
-			id = new TestExecutionKey('suiteId', 'suiteRunId', 'testCaseId', 'callTreeId')
-			resourcePaths = #[ 'path/to/test.tcl', 'another/differentTest.tcl' ]
-			status = -1
-		]
+		val testJob = new TestJob(new TestExecutionKey('suiteId', 'suiteRunId', 'testCaseId', 'callTreeId'), #{'firefox', 'chrome'},
+			#['path/to/test.tcl', 'another/differentTest.tcl'])
 
 		// when
 		val actual = mapper.readValue(fixture("json/testJob.json"), TestJob)

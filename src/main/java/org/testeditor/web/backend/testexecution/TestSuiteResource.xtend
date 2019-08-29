@@ -119,7 +119,7 @@ class TestSuiteResource {
 		@QueryParam("wait") String wait,
 		@Suspended AsyncResponse response
 	) {
-		if (status !== null) {
+		if (status !== null) {			
 			val executionKey = new TestExecutionKey(suiteId, suiteRunId)
 			if (wait !== null) {
 				executor.execute [
@@ -169,11 +169,7 @@ class TestSuiteResource {
 	def Response launchNewSuiteWith(List<String> resourcePaths) {
 		val suiteKey = new TestExecutionKey("0") // default suite
 		val executionKey = statusMapper.deriveFreshRunId(suiteKey)
-		manager.addJob(new TestJob => [
-			id = executionKey
-			it.resourcePaths = resourcePaths
-			capabilities = emptySet
-		])
+		manager.addJob(new TestJob(executionKey, emptySet, resourcePaths))
 		val uri = new URI(UriBuilder.fromResource(TestSuiteResource).build.toString +
 			'''/«URLEncoder.encode(executionKey.suiteId, "UTF-8")»/«URLEncoder.encode(executionKey.suiteRunId,"UTF-8")»''')
 		return Response.created(uri).build

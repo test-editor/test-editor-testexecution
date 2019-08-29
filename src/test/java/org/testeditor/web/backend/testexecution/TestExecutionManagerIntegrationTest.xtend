@@ -61,7 +61,7 @@ class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 	public val RuleChain ruleChain = RuleChain.outerRule(createSysIoPipe).around(dropwizardAppRule).around(workerRule).around(closeSysIoPipe)
 
 	protected override List<ConfigOverride> getConfigs() {
-		return new LinkedList(super.configs) => [ add(config('logging.level', 'DEBUG')) ]
+		return new LinkedList(super.configs) => [ add(config('logging.level', 'INFO')) ]
 	}
 
 	protected def List<ConfigOverride> getWorkerConfigs() {
@@ -70,7 +70,7 @@ class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 			config('localRepoFileRoot', workspaceRoot.root.path),
 			config('remoteRepoUrl', setupRemoteGitRepository),
 			config('testExecutionManagerUrl', '''http://localhost:«serverPort»/testexecution/manager/workers'''),
-			config('logging.level', 'DEBUG')
+			config('logging.level', 'INFO')
 		]
 	}
 
@@ -108,15 +108,17 @@ class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 		assertThat(response.status).isEqualTo(CREATED.statusCode)
 		assertThat(response.headers.get("Location").toString).matches("\\[http://localhost:[0-9]+/test-suite/0/0\\]")
 
-		createTestRequest(TestExecutionKey.valueOf('0-0')).get // wait for test to terminate
+		val statusResponse = createTestRequest(TestExecutionKey.valueOf('0-0')).get // wait for test to terminate
+		val status = statusResponse.readEntity(String)
 		val executionResult = workspaceRootPath.resolve('test.ok.txt').toFile
+		assertThat(status).isEqualTo('FAILED')
 		assertThat(executionResult).exists
 
 	}
 
 	private def void waitForWorkerRegistration() {
 		runAsync[
-			val expectedLogLine = '''«WorkerResource.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker%2Fjob"'''
+			val expectedLogLine = '''«WorkerResource.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"'''
 
 			val sysioReader = new BufferedReader(new InputStreamReader(sysioPipe))
 			sysioReader.lines.anyMatch[contains(expectedLogLine)]

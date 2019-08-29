@@ -13,6 +13,7 @@ import org.testeditor.web.backend.testexecution.worker.WorkerResource
 
 import static java.net.URLEncoder.encode
 import static java.nio.charset.StandardCharsets.UTF_8
+import javax.ws.rs.PUT
 
 @Path('/testexecution/manager/workers')
 class WorkersResource extends AbstractResource implements WorkersAPI {
@@ -20,7 +21,7 @@ class WorkersResource extends AbstractResource implements WorkersAPI {
 	static val logger = LoggerFactory.getLogger(WorkerResource)
 
 	@Inject
-	extension TestExecutionManager manager
+	TestExecutionManager manager
 
 	new() {
 		super()
@@ -43,6 +44,13 @@ class WorkersResource extends AbstractResource implements WorkersAPI {
 	@DELETE
 	override Response unregisterWorker(@PathParam(value='id') @Encoded String id) {
 		manager.removeWorker(id)
+		return Response.ok.build
+	}
+	
+	@Path('/{id}')
+	@PUT
+	def Response updateWorker(@PathParam(value='id') @Encoded String id) {
+		manager.update(id)
 		return Response.ok.build
 	}
 

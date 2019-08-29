@@ -13,6 +13,7 @@ import javax.ws.rs.DELETE
 import javax.ws.rs.GET
 import javax.ws.rs.POST
 import javax.ws.rs.Path
+import javax.ws.rs.Produces
 import javax.ws.rs.QueryParam
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriBuilder
@@ -33,6 +34,7 @@ import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
 import static javax.ws.rs.core.Response.Status.CONFLICT
 import static javax.ws.rs.core.Response.Status.NOT_FOUND
 import static org.testeditor.web.backend.testexecution.worker.WorkerState.*
+import javax.ws.rs.core.MediaType
 
 @Path('/worker')
 @Singleton
@@ -69,8 +71,9 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 
 	@GET
 	@Path('job')
+	@Produces(MediaType.TEXT_PLAIN)
 	override synchronized Response getTestJobState(@QueryParam('wait') Boolean wait) {
-		return state.getTestJobState(wait)
+		return state.getTestJobState(wait ?: false)
 	}
 
 	@POST
@@ -83,6 +86,11 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 	@Path('job')
 	override synchronized Response cancelTestJob() {
 		return state.cancelTestJob
+	}
+	
+	override transitionTo(WorkerState state, ()=>Void action) {
+		this.state = state
+		action.apply
 	}
 
 }
@@ -97,6 +105,7 @@ enum WorkerState {
 interface WorkerStateContext {
 
 	def void setState(WorkerState state)
+	def void transitionTo(WorkerState state, ()=>Void action)
 
 	def Logger getLogger()
 
@@ -122,7 +131,10 @@ class IdleWorker implements WorkerAPI {
 			val callTreeFile = new File(callTreeFileName)
 			callTreeFile.writeCallTreeYamlPrefix(executorProvider.yamlFileHeader(executionKey, Instant.now, job.resourcePaths))
 			val testProcess = builder.start
-			statusManager.addTestSuiteRun(testProcess)[status|callTreeFile.writeCallTreeYamlSuffix(status)]
+			statusManager.addTestSuiteRun(testProcess)[status|
+				callTreeFile.writeCallTreeYamlSuffix(status)
+				//TODO send PUT request to test execution manager to inform him of the completed test execution
+			]
 			testProcess.logToStandardOutAndIntoFile(new File(logFile))
 			val uri = new URI(UriBuilder.fromResource(TestSuiteResource).build.toString +
 				'''/«URLEncoder.encode(executionKey.suiteId, "UTF-8")»/«URLEncoder.encode(executionKey.suiteRunId,"UTF-8")»''')
@@ -143,7 +155,7 @@ class IdleWorker implements WorkerAPI {
 	}
 
 	override getTestJobState(Boolean wait) {
-		return Response.ok(TestStatus.IDLE).build
+		return Response.ok(TestStatus.IDLE.name).build
 	}
 
 	private def File writeCallTreeYamlPrefix(File callTreeYamlFile, String fileHeader) {
@@ -185,7 +197,7 @@ class BusyWorker implements WorkerAPI {
 			state = IDLE
 		}
 
-		return Response.ok(status).build
+		return Response.ok(status.name).build
 	}
 
 }

@@ -1,5 +1,9 @@
 package org.testeditor.web.backend.testexecution.dropwizard
 
+import com.fasterxml.jackson.databind.BeanProperty
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.InjectableValues
+import com.fasterxml.jackson.databind.JsonMappingException
 import com.google.inject.Module
 import io.dropwizard.setup.Environment
 import java.util.List
@@ -18,9 +22,10 @@ import org.testeditor.web.dropwizard.DropwizardApplication
 import static org.eclipse.jetty.servlets.CrossOriginFilter.EXPOSED_HEADERS_PARAM
 
 class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwizardConfiguration> {
-	
+
 	@Inject Provider<ExecutionHealthCheck> executionHealthCheckProvider
-	
+	@Inject Provider<RestClient> restClient
+
 	def static void main(String[] args) {
 		new TestExecutionApplication().run(args)
 	}
@@ -32,16 +37,25 @@ class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwi
 
 	override run(TestExecutionDropwizardConfiguration configuration, Environment environment) throws Exception {
 		super.run(configuration, environment)
-		
+
 		environment.jersey => [
 			register(TestExecutionExceptionMapper)
 			register(TestSuiteResource)
 			register(TestArtifactResource)
 			register(WorkersResource)
 		]
+		environment.objectMapper.injectableValues = new InjectableValues {
 
+			val values = #{'restClient' -> restClient}
+
+			override findInjectableValue(Object valueId, DeserializationContext ctxt, BeanProperty forProperty,
+				Object beanInstance) throws JsonMappingException {
+				return values.get(valueId)?.get
+			}
+
+		}
 		environment.healthChecks.register('execution', executionHealthCheckProvider.get)
-		
+
 	}
 
 	override Dynamic configureCorsFilter(TestExecutionDropwizardConfiguration configuration, Environment environment) {
@@ -50,4 +64,5 @@ class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwi
 			setInitParameter(EXPOSED_HEADERS_PARAM, "Content-Location, Location")
 		]
 	}
+
 }

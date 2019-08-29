@@ -1,48 +1,71 @@
 package org.testeditor.web.backend.testexecution.worker
 
+import com.fasterxml.jackson.annotation.JacksonInject
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.net.URI
-import java.util.HashSet
 import java.util.Set
-import javax.inject.Inject
+import java.util.concurrent.CompletionStage
+import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriBuilder
-import org.eclipse.xtend.lib.annotations.Accessors
+import org.eclipse.xtend.lib.annotations.Data
+import org.eclipse.xtend.lib.annotations.EqualsHashCode
+import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.RunningTest
-import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.TestStatus
 import org.testeditor.web.backend.testexecution.dropwizard.RestClient
-import java.util.Collections
+import org.testeditor.web.backend.testexecution.manager.TestJob
 
-@Accessors
+import static javax.ws.rs.core.Response.Status.CREATED
+import javax.ws.rs.core.MediaType
+
+@Data
+@EqualsHashCode
 class Worker implements RunningTest {
 
-	@Accessors(NONE)
-	@Inject transient extension RestClient
+	static val logger = LoggerFactory.getLogger(Worker)
 
-	URI uri
-	Set<String> capabilities
-	TestExecutionKey job
+	val URI uri
+	val Set<String> capabilities
+	val transient extension RestClient client
 
-	new() {
+	@JsonCreator
+	new(@JsonProperty('uri') URI uri, @JsonProperty('capabilities') Set<String> capabilities, @JacksonInject('restClient') RestClient client) {
+		this.uri = uri
+		this.capabilities = capabilities
+		this.client = client
 	}
 
-	def Worker copy() {
-		return new Worker => [
-			it.uri = this.uri
-			it.capabilities = if (this.capabilities === null) {
-				null
-			} else {
-				new HashSet(this.capabilities)
-			}
-			it.job = this.job?.copy
+	new(URI uri) {
+		this(uri, emptySet, null)
+	}
+
+	new(URI uri, Set<String> capabilities) {
+		this(uri, capabilities, null)
+	}
+
+	def CompletionStage<Boolean> startJob(TestJob job) {
+		return jobUri.build.postAsync(job).exceptionally [
+			logger.error('''exception occurred while trying to assign job "«job?.id»" to worker at "«uri»"''', it)
+			Response.serverError.entity('exception thrown on client side').build
+		].thenApplyAsync [
+			return (status === CREATED.statusCode) => [ success |
+				if (!success) {
+					logger.warn('''job "«job?.id»" was rejected by worker at "«uri»" with status code «status»: «readEntity(String)»''')
+				}
+			]
 		]
 	}
 
 	override checkStatus() {
-		return jobUri.build.get.readEntity(TestStatus)
+		return TestStatus.valueOf(jobUri.build.get(MediaType.TEXT_PLAIN_TYPE).readEntity(String))
 	}
 
 	override waitForStatus() {
-		return jobUri.queryParam('wait').build.get.readEntity(TestStatus)
+		val response = jobUri.queryParam('wait', true).build.get(MediaType.TEXT_PLAIN_TYPE)
+		val body = response.readEntity(String)
+		val status = TestStatus.valueOf(body)
+		return status
 	}
 
 	override kill() {

@@ -10,9 +10,9 @@ import org.testeditor.web.backend.testexecution.TestStatus
 import org.testeditor.web.backend.testexecution.TestStatusMapper
 import org.testeditor.web.backend.testexecution.TestSuiteStatusInfo
 import org.testeditor.web.backend.testexecution.UnresponsiveTestProcessException
+import org.testeditor.web.backend.testexecution.worker.Worker
 
 import static org.testeditor.web.backend.testexecution.TestStatus.*
-import org.testeditor.web.backend.testexecution.worker.Worker
 
 /**
  * Keeps a record of running tests and their current execution status.
@@ -41,43 +41,40 @@ import org.testeditor.web.backend.testexecution.worker.Worker
  */
 @Singleton
 class TestStatusManager implements TestStatusMapper {
+
 	private static val TIMEOUT_MILLIS = 2000
 
 	public static val TEST_STATUS_MAP_NAME = "testStatusMap"
 
 	var AtomicLong runningTestSuiteRunId = new AtomicLong(0)
 
-	val suiteStatusMap = new ConcurrentHashMap<TestExecutionKey, Worker>
+	val suiteStatusMap = new ConcurrentHashMap<TestExecutionKey, Pair<Worker, (TestStatus)=>void>>
 
 	override TestExecutionKey deriveFreshRunId(TestExecutionKey suiteKey) {
 		return suiteKey.deriveWithSuiteRunId(Long.toString(runningTestSuiteRunId.andIncrement))
 	}
 
 	override TestStatus getStatus(TestExecutionKey executionKey) {
-		if (suiteStatusMap.containsKey(executionKey)) {
-			return suiteStatusMap.get(executionKey).checkStatus
-		} else {
-			return IDLE
-		}
+		val workerStatus = suiteStatusMap.get(executionKey)
+		return workerStatus?.key.checkStatus => [ doOnComplete(workerStatus.value)] ?: IDLE
 	}
 
 	override TestStatus waitForStatus(TestExecutionKey executionKey) {
-		if (executionKey.presentOrGetsInsertedBeforeTimeout) {
-			return suiteStatusMap.get(executionKey).waitForStatus
+		return if (executionKey.presentOrGetsInsertedBeforeTimeout) {
+			val workerStatus = suiteStatusMap.get(executionKey)
+			workerStatus.key.waitForStatus => [ doOnComplete(workerStatus.value)]
 		} else {
-			return IDLE
+			IDLE
 		}
 	}
 
-	override void addTestSuiteRun(Worker worker, Process runningTestSuite) {
-		addTestSuiteRun(worker, runningTestSuite)[]
+	override void addTestSuiteRun(TestExecutionKey job, Worker worker) {
+		addTestSuiteRun(job, worker)[]
 	}
 
-	override void addTestSuiteRun(Worker worker, Process runningTestSuite, (TestStatus)=>void onCompleted) {
-		if (worker.job.isRunning) {
-			throw new IllegalStateException('''TestSuite "«worker.job»" is still running.''')
-		} else synchronized (this) {
-			suiteStatusMap.put(worker.job, worker)
+	override void addTestSuiteRun(TestExecutionKey job, Worker worker, (TestStatus)=>void onCompleted) {
+		synchronized (this) {
+			suiteStatusMap.put(job, Pair.of(worker, onCompleted))
 			notifyAll
 		}
 	}
@@ -88,32 +85,39 @@ class TestStatusManager implements TestStatusMapper {
 		return this.suiteStatusMap.entrySet.map [ entry |
 			new TestSuiteStatusInfo => [
 				key = entry.key
-				status = entry.value.checkStatus.name
+				status = (entry.value.key.checkStatus => [ doOnComplete(entry.value.value)]).name
 			]
 		]
 	}
-	
+
 	override void terminateTestSuiteRun(TestExecutionKey testExecutionKey) {
-		val testProcess = this.suiteStatusMap.get(testExecutionKey)
+		val workerStatus = this.suiteStatusMap.get(testExecutionKey) 
 		try {
-			testProcess.kill
+			workerStatus.key.kill
+			doOnComplete(FAILED, workerStatus.value)
 		} catch (UnresponsiveTestProcessException ex) {
 			throw new TestExecutionException('Failed to terminate test execution', ex, testExecutionKey)
 		}
-		
+
+	}
+	
+	private def doOnComplete(TestStatus status, (TestStatus)=>void action) {
+		if (status !== RUNNING) {
+			action.apply(status)
+		}
 	}
 
 	private def boolean isRunning(TestExecutionKey executionKey) {
-		val worker = suiteStatusMap.get(executionKey)
+		val worker = suiteStatusMap.get(executionKey)?.key
 		return worker?.checkStatus == RUNNING
 	}
-	
+
 	private def synchronized boolean isPresentOrGetsInsertedBeforeTimeout(TestExecutionKey key) {
 		var timeElapsed = 0L
 		val startTime = System.currentTimeMillis
 		while (!suiteStatusMap.containsKey(key) && timeElapsed < TIMEOUT_MILLIS) {
 			try {
-				wait(TIMEOUT_MILLIS-timeElapsed)
+				wait(TIMEOUT_MILLIS - timeElapsed)
 				timeElapsed = System.currentTimeMillis - startTime
 			} catch (InterruptedException ex) {
 				Thread.currentThread.interrupt

@@ -1,37 +1,40 @@
 package org.testeditor.web.backend.testexecution.manager
 
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.ConcurrentSkipListMap
-import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.Executor
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
+import javax.ws.rs.core.Response.Status
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.dropwizard.RestClient
+import org.testeditor.web.backend.testexecution.manager.TestJob.JobState
 import org.testeditor.web.backend.testexecution.worker.Worker
-import java.util.concurrent.ConcurrentLinkedQueue
-import javax.ws.rs.core.Response.Status
+
+import static org.testeditor.web.backend.testexecution.TestExecutionKey.NONE
 
 @Singleton
 class TestExecutionManager {
-    static val logger = LoggerFactory.getLogger(TestExecutionManager)
 
-	val ConcurrentMap<String, Worker> idleWorkers = new ConcurrentHashMap
-	val ConcurrentMap<String, Worker> busyWorkers = new ConcurrentHashMap
-	val ConcurrentLinkedQueue<TestJob> pendingJobs = new ConcurrentLinkedQueue 
-	val ConcurrentLinkedQueue<TestJob> assignedJobs = new ConcurrentLinkedQueue
+	static val logger = LoggerFactory.getLogger(TestExecutionManager)
+
+	val ConcurrentMap<String, Pair<Worker,TestExecutionKey>> workers = new ConcurrentHashMap
+	val ConcurrentLinkedQueue<TestExecutionKey> jobQueue = new ConcurrentLinkedQueue
+	//TODO cleanup of completed jobs (e.g. removal after a fixed timeout)
+	val ConcurrentMap<TestExecutionKey, TestJob> jobs = new ConcurrentHashMap
+
 	val dispatcher = new Dispatcher(this)
-
-	@Inject
-	RestClient client
 
 	@Inject @Named('TestExecutionManagerExecutor')
 	Executor executor
+	
+	@Inject
+	TestStatusManager statusManager
 
 	/**
 	 * Adds a new worker.
@@ -44,7 +47,7 @@ class TestExecutionManager {
 		if (worker.isRegistered) {
 			throw new AlreadyRegisteredException(worker.id)
 		}
-		idleWorkers.put(worker.id, worker.copy)
+		workers.put(worker.id, Pair.of(worker, NONE))
 		return worker.id
 	}
 
@@ -58,14 +61,9 @@ class TestExecutionManager {
 	 * the pending queue.
 	 */
 	def void removeWorker(String id) {
-		if (idleWorkers.containsKey(id)) {
-			idleWorkers.remove(id)
-		} else if (busyWorkers.containsKey(id)) {
-			busyWorkers.remove(id)
-		} else {
+		if (workers.remove(id) === null) {
 			throw new NoSuchWorkerException(id)
 		}
-
 	}
 
 	/**
@@ -81,16 +79,21 @@ class TestExecutionManager {
 	 */
 	def void addJob(TestJob job) {
 		if (job.canBeAccepted) {
-			pendingJobs.offer(job)
+			jobs.put(job.id, job)
+			jobQueue.offer(job.id)
 			dispatcher.jobAdded(job)
 		} else {
 			throw new NoEligibleWorkerException
 		}
 	}
 
+	// TODO this is a work-in-progress. Right now, this is interpreted as the worker signalling the job has been completed
+	def update(String workerId) {
+		dispatcher.jobProgressed(workers.get(workerId))
+	}
+
 	def boolean canBeAccepted(TestJob job) {
-		return (idleWorkers.values + busyWorkers.values) //
-		.map[capabilities] //
+		return idleWorkers.map[capabilities] //
 		.exists [ providedCapabilities |
 			job.capabilities.forall [ requiredCapability |
 				providedCapabilities.contains(requiredCapability)
@@ -98,19 +101,24 @@ class TestExecutionManager {
 		]
 	}
 
-	def TestJob getJob(String id) {
+	def TestJob getJob(TestExecutionKey id) {
+		return jobs.getOrDefault(id, TestJob.NONE)
+	}
+	
+	def Iterable<TestJob> getJobs() {
+		return jobs.values
 	}
 
 	def TestExecutionKey jobOf(Worker worker) {
-		return busyWorkers.get(worker.id)?.job?.copy
+		return workers.getOrDefault(worker, Pair.of(null, NONE)).value
 	}
 
-	private def boolean isRegistered(String id) {
-		return idleWorkers.containsKey(id) || busyWorkers.containsKey(id)
+	private def Iterable<Worker> idleWorkers() {
+		return workers.values.filter[value == NONE].map[key]
 	}
 
 	private def boolean isRegistered(Worker worker) {
-		return worker.id.isRegistered
+		return workers.containsKey(worker)
 	}
 
 	private def String id(Worker worker) {
@@ -125,44 +133,54 @@ class TestExecutionManager {
 		def void workerAvailable(Worker worker) {}
 
 		def void jobAdded(TestJob job) {
-			idleWorkers.values.findFirst [ worker |
+			idleWorkers.findFirst [ worker |
 				job.capabilities.forall [ requiredCapability |
 					worker.capabilities.contains(requiredCapability)
 				]
 			]?.assign(job)
 		}
+		
+		def jobProgressed(Pair<Worker, TestExecutionKey> assignment) {
+			completed(assignment.key, jobs.get(assignment.value))
+		}
 
 		private synchronized def void assign(Worker worker, TestJob job) {
-			idleWorkers.remove(worker.id)
-			busyWorkers.put(worker.id, worker)
-			pendingJobs.remove(job)
-			assignedJobs.offer(job)
+			worker.assigning(job)
 
-			logger.info('''trying to assign job «job.id» to worker «worker.id»''')
-
-			client.postAsync(worker.uri, job).whenCompleteAsync([ response, error |
-				if (error !== null) {
-					logger.error(error.message)
-					error.printStackTrace
-					assignmentFailed(worker, job)
-				} else if (response.status !== Status.CREATED.statusCode) {
-					logger.error(response.readEntity(String))
-					assignmentFailed(worker, job)
-				} else {
-					worker.job = job.id
+			worker.startJob(job).thenAcceptAsync([success |
+				if (success) {
+					job.assigned
+					statusManager.addTestSuiteRun(job.id, worker)[
+						worker.completed(job)
+					]
 					logger.info('''assignment of job «job.id» to worker «worker.id» was successful''')
+				} else {
+					assignmentFailed(worker, job)
 				}
 			], executor)
 		}
 
-		private synchronized def void assignmentFailed(Worker worker, TestJob job) {
-			logger.info('''assignment of job «job.id» to worker «worker.id» has failed''')
-			assignedJobs.remove(job)
-			pendingJobs.offer(job)
-			busyWorkers.remove(worker.id)
-			idleWorkers.put(worker.id, worker)
+		private synchronized def void assigning(Worker worker, TestJob job) {
+			logger.info('''trying to assign job «job.id» to worker «worker.id»''')
+			jobs.replace(job.id, job.state = JobState.ASSIGNING)
+			workers.replace(worker.id, Pair.of(worker,job.id))
 		}
 
+		private synchronized def void assigned(TestJob job) {
+			jobs.replace(job.id, job.state = JobState.ASSIGNED)
+		}
+
+		private synchronized def void assignmentFailed(Worker worker, TestJob job) {
+			logger.info('''assignment of job «job.id» to worker «worker.id» has failed''')
+			jobs.replace(job.id, job.state = JobState.PENDING)
+			workers.replace(worker.id, Pair.of(worker, NONE))
+		}
+		
+		private synchronized def void completed(Worker worker, TestJob job) {
+			jobs.replace(job.id, job.state = JobState.COMPLETED)
+			jobQueue.remove(job.id)
+			workers.replace(worker.id, Pair.of(worker, NONE))
+		}
 	}
 
 	static abstract class TestExecutionManagerException extends IllegalStateException {
@@ -208,5 +226,4 @@ class TestExecutionManager {
 		}
 
 	}
-
 }

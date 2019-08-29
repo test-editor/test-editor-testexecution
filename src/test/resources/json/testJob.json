@@ -1,1 +1,1 @@
-{"id":{"suiteId":"suiteId","suiteRunId":"suiteRunId","caseRunId":"testCaseId","callTreeId":"callTreeId"},"status":-1,"capabilities":["chrome","firefox"],"resourcePaths":["path/to/test.tcl","another/differentTest.tcl"]}
+{"id":{"suiteId":"suiteId","suiteRunId":"suiteRunId","caseRunId":"testCaseId","callTreeId":"callTreeId"},"capabilities":["chrome","firefox"],"resourcePaths":["path/to/test.tcl","another/differentTest.tcl"]}

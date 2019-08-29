@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 @EqualsHashCode
 @Data
 class TestExecutionKey {
+	public static val TestExecutionKey NONE = new TestExecutionKey('') 
 
 	static val logger = LoggerFactory.getLogger(TestExecutionKey)
 
