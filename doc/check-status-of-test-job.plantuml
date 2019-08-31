@@ -1,0 +1,68 @@
+@startuml Enqueue Test Job
+hide footbox
+skinparam style strictuml
+
+participant Client
+box "Test Execution Management Server"
+    participant " : TestSuiteResource" as TSR
+    participant " : TestExecutionManager" as TEM
+    participant " pendingJobs : Queue" as PQ
+    participant " : Dispatcher" as D
+end box
+box "Test Execution Worker"
+    participant " : WorkerResource" as WR
+    participant " idleWorker : WorkerAPI" as IW
+    participant " testProcess : Process" as TP
+end box
+
+Client -> TSR ++ : «REST» post(resourcePaths)
+'activate TSR
+TSR -> TEM ++ : addJob(job)
+TEM -> TEM ++ : canBeAccepted(job)
+TEM <-- TEM -- : canBeAccepted(job) :true
+TEM -> PQ ++ : offer(job)
+TEM <-- PQ -- : offer
+TEM -> D ++ : jobAdded(job)
+
+hnote over D: idle eligible worker
+D -> D ++ : assign(job)
+
+ref over D
+    set worker from idle to busy
+    set job from pending to assigned
+end ref
+
+D ->> WR: «REST» postAsync(job)
+activate WR
+D <-- D -- : assign
+TEM <-- D: jobAdded
+TSR <-- TEM -- : addJob
+Client <-- TSR -- : «REST» post
+    WR -> IW: executeTestJob(job)
+    activate IW
+    create TP
+    IW -->> TP: new
+    IW ->> TP: start
+    activate TP
+    WR <- IW: executeTestJob(job)
+    deactivate IW
+D <<- WR: «REST» whenCompleteAsync(response)
+opt response != '201 CREATED'
+    D -> D ++ : assignmentFailed
+    ref over D
+        reset job from assigned to pending
+        reset worker from busy to idle
+    end ref
+    D <-- D -- : assignementFailed
+end
+deactivate WR
+activate D
+deactivate D
+
+    
+
+deactivate D
+
+
+
+@enduml

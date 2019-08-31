@@ -1,0 +1,65 @@
+@startuml Register Worker
+hide footbox
+' skinparam sequenceParticipant underline
+skinparam style strictuml
+
+actor Deployment
+box "Test Execution Management Server"
+    participant " : TestExecutionApplication" as TEA
+    participant " : TestExecutionManager" as TEM
+end box
+box "Test Execution Worker"
+    participant " : WorkerApplication" as WA
+    participant " workerLogger : Logger" as WL
+end box
+Deployment ->> TEA: main
+TEA -> TEA: run
+activate TEA
+create TEM
+TEA -->> TEM: new
+TEA <-- TEA: run
+deactivate TEA
+
+Deployment ->> WA: main(managerUrl)
+WA -> WA: run
+activate WA
+create WL
+WA -->> WL: new
+
+WA ->> WA: tryRegistration
+loop "(1, maxRetries) not cancelled"
+
+    activate WA
+
+
+    WA -> TEM: «REST» post(managerUrl, workerUrl)
+    activate TEM
+    WA <-- TEM: «REST» response = post
+    deactivate TEM
+
+    alt response.status == '201 CREATED'
+        WA -> WL: info('successfully registered')
+        WA <-- WL: info
+        WA -> WA: cancel
+        WA <-- WA: cancel
+    else response.status == '409 CONFLICT'
+        WA -> WL: warn('already registered')
+        WA <-- WL: warn
+        WA -> WA: cancel
+        WA <-- WA: cancel
+    else 
+        WA -> WL: warn('registration failed, retrying')
+        WA <-- WL: warn
+        deactivate WA
+        ... repeat after registrationRetryIntervalSecs seconds ...
+'        WA -> WA: wait(registrationRetryIntervalSecs)
+        'WA <-- WA: wait
+    end
+end
+
+
+
+WA <-- WA: run
+deactivate WA
+
+@enduml
