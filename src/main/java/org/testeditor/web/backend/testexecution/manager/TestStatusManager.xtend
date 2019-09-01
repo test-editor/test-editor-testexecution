@@ -3,13 +3,13 @@ package org.testeditor.web.backend.testexecution.manager
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Singleton
-import org.testeditor.web.backend.testexecution.TestExecutionException
+import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
+import org.testeditor.web.backend.testexecution.RunningTest
 import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.TestProcess
 import org.testeditor.web.backend.testexecution.TestStatus
 import org.testeditor.web.backend.testexecution.TestStatusMapper
 import org.testeditor.web.backend.testexecution.TestSuiteStatusInfo
-import org.testeditor.web.backend.testexecution.UnresponsiveTestProcessException
 import org.testeditor.web.backend.testexecution.worker.Worker
 
 import static org.testeditor.web.backend.testexecution.TestStatus.*
@@ -42,13 +42,31 @@ import static org.testeditor.web.backend.testexecution.TestStatus.*
 @Singleton
 class TestStatusManager implements TestStatusMapper {
 
+	@FinalFieldsConstructor
+	private static class FinishedTest implements RunningTest { //TODO reconsider class names!
+
+		val TestStatus status
+
+		override checkStatus() {
+			return status
+		}
+
+		override waitForStatus() {
+			return status
+		}
+
+		override kill() {
+		}
+
+	}
+
 	private static val TIMEOUT_MILLIS = 2000
 
 	public static val TEST_STATUS_MAP_NAME = "testStatusMap"
 
 	var AtomicLong runningTestSuiteRunId = new AtomicLong(0)
 
-	val suiteStatusMap = new ConcurrentHashMap<TestExecutionKey, Pair<Worker, (TestStatus)=>void>>
+	val suiteStatusMap = new ConcurrentHashMap<TestExecutionKey, Pair<RunningTest, (TestStatus)=>void>>
 
 	override TestExecutionKey deriveFreshRunId(TestExecutionKey suiteKey) {
 		return suiteKey.deriveWithSuiteRunId(Long.toString(runningTestSuiteRunId.andIncrement))
@@ -59,14 +77,14 @@ class TestStatusManager implements TestStatusMapper {
 		return if (workerStatus === null) {
 			IDLE
 		} else {
-			workerStatus?.key.checkStatus => [doOnComplete(workerStatus.value)]
+			workerStatus?.key.checkStatus => [doOnComplete(executionKey, workerStatus.value)]
 		}
 	}
 
 	override TestStatus waitForStatus(TestExecutionKey executionKey) {
 		return if (executionKey.presentOrGetsInsertedBeforeTimeout) {
 			val workerStatus = suiteStatusMap.get(executionKey)
-			workerStatus.key.waitForStatus => [doOnComplete(workerStatus.value)]
+			workerStatus.key.waitForStatus => [doOnComplete(executionKey, workerStatus.value)]
 		} else {
 			IDLE
 		}
@@ -93,7 +111,7 @@ class TestStatusManager implements TestStatusMapper {
 		return this.suiteStatusMap.entrySet.map [ entry |
 			new TestSuiteStatusInfo => [
 				key = entry.key
-				status = (entry.value.key.checkStatus => [doOnComplete(entry.value.value)]).name
+				status = (entry.value.key.checkStatus => [doOnComplete(entry.key, entry.value.value)]).name
 			]
 		]
 	}
@@ -102,11 +120,12 @@ class TestStatusManager implements TestStatusMapper {
 	override void terminateTestSuiteRun(TestExecutionKey testExecutionKey) {
 		val workerStatus = this.suiteStatusMap.get(testExecutionKey)
 		workerStatus.key.kill
-		doOnComplete(FAILED, workerStatus.value)
+		doOnComplete(FAILED, testExecutionKey, workerStatus.value)
 	}
 
-	private def doOnComplete(TestStatus status, (TestStatus)=>void action) {
+	private def doOnComplete(TestStatus status, TestExecutionKey key, (TestStatus)=>void action) {
 		if (status !== RUNNING) {
+			suiteStatusMap.replace(key, Pair.of(new FinishedTest(status),[]))
 			action.apply(status)
 		}
 	}

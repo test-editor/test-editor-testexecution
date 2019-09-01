@@ -10,8 +10,6 @@ import org.junit.Test
 import org.testeditor.web.backend.testexecution.TestUtils.SysIoPipeRuleChain
 import org.testeditor.web.backend.testexecution.worker.WorkerResource
 
-import static java.util.concurrent.CompletableFuture.runAsync
-import static java.util.concurrent.TimeUnit.SECONDS
 import static javax.ws.rs.core.Response.Status.CREATED
 import static org.assertj.core.api.Assertions.*
 
@@ -37,7 +35,7 @@ class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 	@Test
 	def void jobIsAssignedToWorker() {
 		// given
-		waitForWorkerRegistration
+		waitForLogLine('''«WorkerResource.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"''')
 
 		val workspaceRootPath = workspaceRoot.root.toPath
 		val testFile = 'test.tcl'
@@ -66,15 +64,6 @@ class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 		assertThat(status).isEqualTo('SUCCESS')
 		assertThat(executionResult).exists
 
-	}
-
-	private def void waitForWorkerRegistration() {
-		runAsync[
-			val expectedLogLine = '''«WorkerResource.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"'''
-
-			val sysioReader = new BufferedReader(new InputStreamReader(sysIoPipeRule.sysioPipe))
-			sysioReader.lines.anyMatch[contains(expectedLogLine)]
-		].get(5, SECONDS)
 	}
 
 }

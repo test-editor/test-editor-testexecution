@@ -16,12 +16,13 @@ import org.eclipse.jgit.junit.JGitTestUtil
 import org.junit.Rule
 import org.junit.Test
 import org.testeditor.web.backend.testexecution.TestUtils.SysIoPipeRuleChain
+import org.testeditor.web.backend.testexecution.worker.WorkerResource
 
 import static javax.ws.rs.core.Response.Status.*
 import static org.assertj.core.api.Assertions.*
 
 class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
-	
+
 	val workerRule = createWorkerRule(
 		workspaceRoot.root.path,
 		setupRemoteGitRepository,
@@ -902,12 +903,12 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 			assertThat(pollResponse.status).isEqualTo(OK.statusCode)
 			statusList.offerFirst(pollResponse.readEntity(String))
 			pollResponse.close
-			System.out.println('still running, sleeping 5 seconds ...')
+			sysIoPipeRule.systemOut.println('still running, sleeping 5 seconds ...')
 			Thread.sleep(5000)
 		}
 
 		// then
-		System.out.println('no longer running.')
+		sysIoPipeRule.systemOut.println('no longer running.')
 		assertThat(statusList.size).isGreaterThan(3)
 		assertThat(statusList.tail).allMatch['RUNNING'.equals(it)]
 		assertThat(statusList.head).isEqualTo('SUCCESS')
@@ -916,6 +917,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	@Test
 	def void testThatfAllRunningAndTerminatedTestsIsReturned() {
 		// given
+		waitForLogLine('''«WorkerResource.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"''')
 		new File(workspaceRoot.root, '''calledCount.txt''').delete
 		remoteGitFolder.newFile('''gradlew''') => [
 			executable = true
@@ -945,11 +947,13 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 			new File(workspaceRoot.root, '''finished.txt''').delete
 			val response = createLaunchNewRequest().post(Entity.entity(#[name], MediaType.APPLICATION_JSON_TYPE))
 			assertThat(response.status).isEqualTo(CREATED.statusCode)
+			sysIoPipeRule.systemOut.println(
+				'Job added here: ' + response.stringHeaders.get('Location')
+			)
 			var threshold = 20
-			while (!new File(workspaceRoot.root, '''finished.txt''').exists && threshold > 0) {
-				println('waiting for script to settle ...')
-				Thread.sleep(500) // give the script some time to settle
-				threshold--
+
+			while (createTestRequest(TestExecutionKey.valueOf('''0-«index»''')).get.readEntity(String) == 'RUNNING') {
+				Thread.yield
 			}
 		]
 

@@ -2,7 +2,9 @@ package org.testeditor.web.backend.testexecution
 
 import io.dropwizard.testing.ConfigOverride
 import io.dropwizard.testing.junit.DropwizardAppRule
+import java.io.BufferedReader
 import java.io.IOException
+import java.io.InputStreamReader
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.io.PrintStream
@@ -21,6 +23,8 @@ import org.testeditor.web.backend.testexecution.dropwizard.WorkerApplication
 
 import static io.dropwizard.testing.ConfigOverride.config
 import static io.dropwizard.testing.ResourceHelpers.resourceFilePath
+import static java.util.concurrent.CompletableFuture.runAsync
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class TestUtils {
 
@@ -64,14 +68,26 @@ class TestUtils {
 			].around(new SysIoPipeCloseAndRestoreRule(sysIoPipeRule.sysioPipe, sysIoPipeRule.systemOut))
 		}
 
+		def void waitForLogLine(String expectedLogLine) {
+			waitForLogLine(expectedLogLine, 5)
+		}
+
+		def void waitForLogLine(String expectedLogLine, int timeoutSecs) {
+			runAsync[
+				val sysioReader = new BufferedReader(new InputStreamReader(sysIoPipeRule.sysioPipe))
+				sysioReader.lines.anyMatch[contains(expectedLogLine)]
+			].get(timeoutSecs, SECONDS)
+		}
+
 	}
 
-	def DropwizardAppRule<TestExecutionDropwizardConfiguration> createWorkerRule(String localRepoFileRoot, String remoteRepoUrl, String testExecutionManagerUrl, ConfigOverride... overrides) {
+	def DropwizardAppRule<TestExecutionDropwizardConfiguration> createWorkerRule(String localRepoFileRoot, String remoteRepoUrl,
+		String testExecutionManagerUrl, ConfigOverride... overrides) {
 		return createWorkerRule('worker-config.yml', #[
 			config('server.applicationConnectors[0].port', '0'),
 			config('localRepoFileRoot', localRepoFileRoot),
 			config('remoteRepoUrl', remoteRepoUrl),
-			config('testExecutionManagerUrl', testExecutionManagerUrl)			
+			config('testExecutionManagerUrl', testExecutionManagerUrl)
 		] + overrides)
 	}
 

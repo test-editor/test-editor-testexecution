@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import java.net.URI
 import java.util.Set
 import java.util.concurrent.CompletionStage
+import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriBuilder
 import org.eclipse.xtend.lib.annotations.Data
@@ -17,11 +18,12 @@ import org.testeditor.web.backend.testexecution.dropwizard.RestClient
 import org.testeditor.web.backend.testexecution.manager.TestJob
 
 import static javax.ws.rs.core.Response.Status.CREATED
-import javax.ws.rs.core.MediaType
 
 @Data
 @EqualsHashCode
 class Worker implements RunningTest {
+
+	public static val Worker NONE = new Worker(null)
 
 	static val logger = LoggerFactory.getLogger(Worker)
 

@@ -1,5 +1,7 @@
 package org.testeditor.web.backend.testexecution.manager
 
+import java.util.Optional
+import java.util.Set
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ConcurrentMap
@@ -21,16 +23,16 @@ class TestExecutionManager {
 
 	static val logger = LoggerFactory.getLogger(TestExecutionManager)
 
-	val ConcurrentMap<String, Pair<Worker,TestExecutionKey>> workers = new ConcurrentHashMap
+	val ConcurrentMap<String, Pair<Worker, TestExecutionKey>> workers = new ConcurrentHashMap
 	val ConcurrentLinkedQueue<TestExecutionKey> jobQueue = new ConcurrentLinkedQueue
-	//TODO cleanup of completed jobs (e.g. removal after a fixed timeout)
+	// TODO cleanup of completed jobs (e.g. removal after a fixed timeout)
 	val ConcurrentMap<TestExecutionKey, TestJob> jobs = new ConcurrentHashMap
 
 	val dispatcher = new Dispatcher(this)
 
 	@Inject @Named('TestExecutionManagerExecutor')
 	Executor executor
-	
+
 	@Inject
 	TestStatusManager statusManager
 
@@ -77,6 +79,7 @@ class TestExecutionManager {
 	 */
 	def void addJob(TestJob job) {
 		if (job.canBeAccepted) {
+			logger.info('''accepting job «job.id»''')
 			jobs.put(job.id, job)
 			jobQueue.offer(job.id)
 			dispatcher.jobAdded(job)
@@ -91,7 +94,7 @@ class TestExecutionManager {
 	}
 
 	def boolean canBeAccepted(TestJob job) {
-		return idleWorkers.map[capabilities] //
+		return workers.values.map[key.capabilities] //
 		.exists [ providedCapabilities |
 			job.capabilities.forall [ requiredCapability |
 				providedCapabilities.contains(requiredCapability)
@@ -102,7 +105,7 @@ class TestExecutionManager {
 	def TestJob getJob(TestExecutionKey id) {
 		return jobs.getOrDefault(id, TestJob.NONE)
 	}
-	
+
 	def Iterable<TestJob> getJobs() {
 		return jobs.values
 	}
@@ -137,7 +140,7 @@ class TestExecutionManager {
 				]
 			]?.assign(job)
 		}
-		
+
 		def jobProgressed(Pair<Worker, TestExecutionKey> assignment) {
 			completed(assignment.key, jobs.get(assignment.value))
 		}
@@ -145,10 +148,10 @@ class TestExecutionManager {
 		private synchronized def void assign(Worker worker, TestJob job) {
 			worker.assigning(job)
 
-			worker.startJob(job).thenAcceptAsync([success |
+			worker.startJob(job).thenAcceptAsync([ success |
 				if (success) {
 					job.assigned
-					statusManager.addTestSuiteRun(job.id, worker)[
+					statusManager.addTestSuiteRun(job.id, worker) [
 						worker.completed(job)
 					]
 					logger.info('''assignment of job «job.id» to worker «worker.id» was successful''')
@@ -161,7 +164,7 @@ class TestExecutionManager {
 		private synchronized def void assigning(Worker worker, TestJob job) {
 			logger.info('''trying to assign job «job.id» to worker «worker.id»''')
 			jobs.replace(job.id, job.state = JobState.ASSIGNING)
-			workers.replace(worker.id, Pair.of(worker,job.id))
+			workers.replace(worker.id, Pair.of(worker, job.id))
 		}
 
 		private synchronized def void assigned(TestJob job) {
@@ -169,16 +172,38 @@ class TestExecutionManager {
 		}
 
 		private synchronized def void assignmentFailed(Worker worker, TestJob job) {
-			logger.info('''assignment of job «job.id» to worker «worker.id» has failed''')
+			logger.warn('''assignment of job «job.id» to worker «worker.id» has failed''')
 			jobs.replace(job.id, job.state = JobState.PENDING)
-			workers.replace(worker.id, Pair.of(worker, NONE))
+			worker.reassignOrMarkIdle
+		// TODO how to avoid loops of endlessly trying to reassign the same job to a worker that won't accept it?
 		}
-		
+
 		private synchronized def void completed(Worker worker, TestJob job) {
+			logger.info('''worker «worker.id» completed job «job.id»''')
 			jobs.replace(job.id, job.state = JobState.COMPLETED)
 			jobQueue.remove(job.id)
+			worker.reassignOrMarkIdle
+		}
+
+		private synchronized def void reassignOrMarkIdle(Worker worker) {
+			worker.capabilities.findMatchingJob.ifPresentOrElse([
+				worker.assign(it)
+			], [
+				worker.markIdle
+			])
+		}
+
+		private def void markIdle(Worker worker) {
+			logger.info('''worker «worker.id» is idle''')
 			workers.replace(worker.id, Pair.of(worker, NONE))
 		}
+
+		private def Optional<TestJob> findMatchingJob(Set<String> providedCapabilities) {
+			return Optional.ofNullable(jobs.values.filter[state === JobState.PENDING].findFirst [
+				providedCapabilities.containsAll(capabilities)
+			])
+		}
+
 	}
 
 	static abstract class TestExecutionManagerException extends IllegalStateException {
@@ -224,4 +249,5 @@ class TestExecutionManager {
 		}
 
 	}
+
 }
