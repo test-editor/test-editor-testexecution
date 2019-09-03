@@ -156,6 +156,7 @@ class TestSuiteResource {
 		@PathParam("suiteRunId") String suiteRunId
 	) {
 		val executionKey = new TestExecutionKey(suiteId, suiteRunId)
+		manager.cancelJob(executionKey)
 		return if (statusMapper.getStatus(executionKey) === TestStatus.RUNNING) {
 			statusMapper.terminateTestSuiteRun(executionKey)
 			Response.ok.build

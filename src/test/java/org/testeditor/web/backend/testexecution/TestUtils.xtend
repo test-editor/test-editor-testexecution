@@ -9,6 +9,7 @@ import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.io.PrintStream
 import java.net.ServerSocket
+import java.util.function.Supplier
 import org.apache.commons.io.output.TeeOutputStream
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.Delegate
@@ -81,8 +82,8 @@ class TestUtils {
 
 	}
 
-	def DropwizardAppRule<TestExecutionDropwizardConfiguration> createWorkerRule(String localRepoFileRoot, String remoteRepoUrl,
-		String testExecutionManagerUrl, ConfigOverride... overrides) {
+	def DropwizardAppRule<TestExecutionDropwizardConfiguration> createWorkerRule(Supplier<String> localRepoFileRoot, Supplier<String> remoteRepoUrl,
+		Supplier<String> testExecutionManagerUrl, ConfigOverride... overrides) {
 		return createWorkerRule('worker-config.yml', #[
 			config('server.applicationConnectors[0].port', '0'),
 			config('localRepoFileRoot', localRepoFileRoot),

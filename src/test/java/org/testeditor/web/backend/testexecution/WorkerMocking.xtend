@@ -1,13 +1,16 @@
 package org.testeditor.web.backend.testexecution
 
+import java.net.URI
+import java.util.Set
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeoutException
-import java.util.stream.Stream
+import org.eclipse.xtend.lib.annotations.Accessors
+import org.testeditor.web.backend.testexecution.manager.TestJobInfo
+import org.testeditor.web.backend.testexecution.worker.OperableWorker
 import org.testeditor.web.backend.testexecution.worker.Worker
 
-import static java.util.concurrent.TimeUnit.SECONDS
 import static org.mockito.ArgumentMatchers.*
 import static org.mockito.Mockito.*
+import static org.testeditor.web.backend.testexecution.TestStatus.*
 
 class WorkerMocking {
 
@@ -16,35 +19,6 @@ class WorkerMocking {
 			when(checkStatus).thenReturn(TestStatus.RUNNING)
 			when(waitForStatus).thenReturn(TestStatus.RUNNING)
 		]
-	}
-
-	def Process thatIsRunningAndThenForciblyDestroyed(Process mockProcess) {
-		val processHandle = mock(ProcessHandle)
-		val processFuture = mock(CompletableFuture)
-		when(processFuture.get(anyLong, eq(SECONDS))).thenReturn(processHandle)
-		when(processHandle.onExit).thenReturn(processFuture)
-		when(mockProcess.toHandle).thenReturn(processHandle)
-
-		when(mockProcess.alive).thenReturn(true, false)
-		when(mockProcess.destroyForcibly).thenReturn(mockProcess)
-		when(mockProcess.exitValue).thenReturn(129)
-		when(mockProcess.waitFor(1, SECONDS)).thenReturn(true)
-
-		return mockProcess
-	}
-
-	def Process thatIsRunningAndWontDie(Process mockProcess) {
-		val processHandle = mock(ProcessHandle)
-		val processFuture = mock(CompletableFuture)
-		when(processFuture.get(anyLong, eq(SECONDS))).thenThrow(TimeoutException)
-		when(processHandle.onExit).thenReturn(processFuture)
-		when(mockProcess.toHandle).thenReturn(processHandle)
-
-		when(mockProcess.alive).thenReturn(true)
-		when(mockProcess.destroyForcibly).thenReturn(mockProcess)
-		when(mockProcess.exitValue).thenThrow(new IllegalThreadStateException())
-		when(mockProcess.waitFor(1, SECONDS)).thenReturn(false)
-		return mockProcess
 	}
 
 	def Worker thatTerminatedSuccessfully(Worker mockWorker) {
@@ -61,31 +35,69 @@ class WorkerMocking {
 		]
 	}
 
-	def Process thatTerminatedWithExitCode(Process mockProcess, int exitCode) {
-		when(mockProcess.alive).thenReturn(false)
-		when(mockProcess.exitValue).thenReturn(exitCode)
-		return mockProcess
-	}
-
-	def ProcessHandle mockHandle(Process mockProcess, boolean alive) {
-		return mock(ProcessHandle) => [ handle |
-			when(handle.alive).thenReturn(alive)
-			when(mockProcess.toHandle).thenReturn(handle)
-			when(mockProcess.descendants).thenAnswer[Stream.empty]
+	def Worker thatIsIdle(Worker mockWorker) {
+		return mockWorker => [
+			when(checkStatus).thenReturn(TestStatus.IDLE)
+			lenient.when(waitForStatus).thenReturn(TestStatus.IDLE)
 		]
 	}
 
-	def CompletableFuture<ProcessHandle> mockFuture(ProcessHandle mockHandle, boolean complete) {
-		return mock(CompletableFuture) as CompletableFuture<ProcessHandle> => [ future |
-			when(future.get(anyLong, eq(SECONDS))) => [
-				if (complete) {
-					thenReturn(mockHandle)
-				} else {
-					thenThrow(TimeoutException)
+	def Worker withUri(Worker mockWorker, String uri) {
+		return mockWorker => [
+			when(getUri).thenReturn(new URI(uri))
+		]
+	}
+
+	def Worker withCapabilities(Worker mockWorker, String... capabilities) {
+		return mockWorker => [
+			when(providedCapabilities).thenReturn(newHashSet(capabilities))
+		]
+	}
+
+	def Worker thatCanBeStarted(Worker mockWorker) {
+		return mockWorker => [
+			when(startJob(any(TestJobInfo))).thenReturn(CompletableFuture.completedStage(true))
+		]
+	}
+
+	static class WorkerStub implements OperableWorker {
+
+		@Accessors(PUBLIC_SETTER)
+		var TestStatus status
+
+		@Accessors
+		var Set<String> providedCapabilities
+
+		@Accessors
+		var URI uri
+
+		override checkStatus() {
+			return status
+		}
+
+		override waitForStatus() {
+			return status
+		}
+
+		override kill() {
+			if (status === RUNNING) {
+				status = TestStatus.FAILED
+			}
+		}
+
+		override startJob(TestJobInfo job) {
+			return CompletableFuture.completedStage(transitionToRunning)
+
+		}
+
+		private def boolean transitionToRunning() {
+			return (status !== RUNNING) => [ idle |
+				if (idle) {
+					status = RUNNING
 				}
 			]
-			when(mockHandle.onExit).thenReturn(future)
-		]
+		}
+
 	}
 
 }

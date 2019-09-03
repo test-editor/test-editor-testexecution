@@ -25,24 +25,22 @@ import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionDropwiza
 import static io.dropwizard.testing.ConfigOverride.config
 
 abstract class AbstractIntegrationTest {
+
 	protected extension val TestUtils = new TestUtils
-	
+
 	protected static val String userId = 'john.doe'
-	protected val String serverPort = freePort 
+	protected val String serverPort = freePort
 	protected val String token = createToken
 
-	// cannot use @Rule as we need to use it within another rule		
-	public val TemporaryFolder workspaceRoot = new TemporaryFolder => [
-		create
-	]
+	protected val TemporaryFolder workspaceRoot = new TemporaryFolder
 
-	protected var TemporaryFolder remoteGitFolder
+	protected val TemporaryFolder remoteGitFolder = new TemporaryFolder
 
 	protected def List<ConfigOverride> getConfigs() {
 		return #[
 			config('server.applicationConnectors[0].port', serverPort),
-			config('localRepoFileRoot', workspaceRoot.root.path),
-			config('remoteRepoUrl', setupRemoteGitRepository)
+			config('localRepoFileRoot', [workspaceRoot.root.path]),
+			config('remoteRepoUrl', [setupRemoteGitRepository])
 		]
 	}
 
@@ -58,22 +56,20 @@ abstract class AbstractIntegrationTest {
 		]
 		return builder.sign(Algorithm.HMAC256("secret"))
 	}
-	
+
 	var DropwizardAppRule<TestExecutionDropwizardConfiguration> dropwizardServer
 
-	public def DropwizardAppRule<TestExecutionDropwizardConfiguration> getDropwizardAppRule() {
+	def DropwizardAppRule<TestExecutionDropwizardConfiguration> getDropwizardAppRule() {
 		if (dropwizardServer === null) {
 			dropwizardServer = new DropwizardAppRule(TestExecutionApplication, ResourceHelpers.resourceFilePath('test-config.yml'), configs)
-		}		
+		}
 		return dropwizardServer
 	}
 
 	protected extension val AssertionHelper = AssertionHelper.instance
 
 	def String setupRemoteGitRepository() {
-		if (remoteGitFolder === null) {
-			remoteGitFolder = new TemporaryFolder => [create]
-
+		if (!new File(remoteGitFolder.root, '.git').exists) {
 			val git = Git.init.setDirectory(remoteGitFolder.root).call
 			git.populatedRemoteGit
 		}
@@ -91,11 +87,11 @@ abstract class AbstractIntegrationTest {
 		git.add.addFilepattern(pathToCommit).call
 		return git.commit.setMessage("pre-existing commit in remote repository").call
 	}
-	
+
 	protected def void commitInRemoteRepository(Path pathToCommit) {
 		commitInRemoteRepository(remoteGitFolder.root.toPath.relativize(pathToCommit).toString)
 	}
-	
+
 	protected def void commitInRemoteRepository(File fileToCommit) {
 		commitInRemoteRepository(fileToCommit.toPath)
 	}
@@ -104,12 +100,6 @@ abstract class AbstractIntegrationTest {
 	def void setClientTimeouts() {
 		dropwizardAppRule.client.property(ClientProperties.CONNECT_TIMEOUT, 100000);
 		dropwizardAppRule.client.property(ClientProperties.READ_TIMEOUT, 100000);
-	}
-
-	@After
-	def void deleteTemporaryFolders() {
-		workspaceRoot.delete
-		remoteGitFolder.delete
 	}
 
 	def Entity<String> stringEntity(CharSequence charSequence) {
@@ -134,7 +124,6 @@ abstract class AbstractIntegrationTest {
 		builder.header('Authorization', '''Bearer «customToken»''')
 		return builder
 	}
-
 
 	protected def Builder createCallTreeRequest(TestExecutionKey key) {
 		return createRequest('''test-suite/«key.suiteId»/«key.suiteRunId»''')

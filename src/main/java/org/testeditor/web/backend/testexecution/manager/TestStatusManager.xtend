@@ -10,7 +10,6 @@ import org.testeditor.web.backend.testexecution.TestProcess
 import org.testeditor.web.backend.testexecution.TestStatus
 import org.testeditor.web.backend.testexecution.TestStatusMapper
 import org.testeditor.web.backend.testexecution.TestSuiteStatusInfo
-import org.testeditor.web.backend.testexecution.worker.Worker
 
 import static org.testeditor.web.backend.testexecution.TestStatus.*
 
@@ -90,11 +89,11 @@ class TestStatusManager implements TestStatusMapper {
 		}
 	}
 
-	override void addTestSuiteRun(TestExecutionKey job, Worker worker) {
+	override void addTestSuiteRun(TestExecutionKey job, RunningTest worker) {
 		addTestSuiteRun(job, worker)[]
 	}
 
-	override void addTestSuiteRun(TestExecutionKey job, Worker worker, (TestStatus)=>void onCompleted) {
+	override void addTestSuiteRun(TestExecutionKey job, RunningTest worker, (TestStatus)=>void onCompleted) {
 		synchronized (this) {
 			if (suiteStatusMap.containsKey(job) && suiteStatusMap.get(job).key.checkStatus === RUNNING) {
 				throw new IllegalStateException('''Job "«job»" is still running.''')

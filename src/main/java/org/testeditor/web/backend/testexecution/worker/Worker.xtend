@@ -15,26 +15,42 @@ import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.RunningTest
 import org.testeditor.web.backend.testexecution.TestStatus
 import org.testeditor.web.backend.testexecution.dropwizard.RestClient
-import org.testeditor.web.backend.testexecution.manager.TestJob
+import org.testeditor.web.backend.testexecution.manager.TestJobInfo
 
 import static javax.ws.rs.core.Response.Status.CREATED
+import java.util.concurrent.CompletableFuture
+
+interface WorkerInfo {
+
+	def URI getUri()
+
+	def Set<String> getProvidedCapabilities()
+
+}
+
+interface OperableWorker extends RunningTest, WorkerInfo {
+
+	def CompletionStage<Boolean> startJob(TestJobInfo job)
+
+}
 
 @Data
 @EqualsHashCode
-class Worker implements RunningTest {
+class Worker implements OperableWorker {
 
 	public static val Worker NONE = new Worker(null)
 
 	static val logger = LoggerFactory.getLogger(Worker)
 
 	val URI uri
-	val Set<String> capabilities
+	val Set<String> providedCapabilities
 	val transient extension RestClient client
+	var transient CompletionStage<?> asyncCallStage = CompletableFuture.completedStage(null)
 
 	@JsonCreator
 	new(@JsonProperty('uri') URI uri, @JsonProperty('capabilities') Set<String> capabilities, @JacksonInject('restClient') RestClient client) {
 		this.uri = uri
-		this.capabilities = capabilities
+		this.providedCapabilities = capabilities
 		this.client = client
 	}
 
@@ -46,32 +62,45 @@ class Worker implements RunningTest {
 		this(uri, capabilities, null)
 	}
 
-	def CompletionStage<Boolean> startJob(TestJob job) {
-		return jobUri.build.postAsync(job).exceptionally [
-			logger.error('''exception occurred while trying to assign job "«job?.id»" to worker at "«uri»"''', it)
-			Response.serverError.entity('exception thrown on client side').build
-		].thenApplyAsync [
-			return (status === CREATED.statusCode) => [ success |
-				if (!success) {
-					logger.warn('''job "«job?.id»" was rejected by worker at "«uri»" with status code «status»: «readEntity(String)»''')
-				}
+	override CompletionStage<Boolean> startJob(TestJobInfo job) {
+		synchronized (asyncCallStage) {
+			val result = asyncCallStage.thenCompose [
+				jobUri.build.postAsync(job).exceptionally [
+					logger.error('''exception occurred while trying to assign job "«job?.id»" to worker at "«uri»"''', it)
+					Response.serverError.entity('exception thrown on client side').build
+				].thenApplyAsync [
+					return (status === CREATED.statusCode) => [ success |
+						if (!success) {
+							logger.warn('''job "«job?.id»" was rejected by worker at "«uri»" with status code «status»: «readEntity(String)»''')
+						}
+					]
+				]
 			]
-		]
+			asyncCallStage = result
+			return result
+		}
 	}
 
 	override checkStatus() {
-		return TestStatus.valueOf(jobUri.build.get(MediaType.TEXT_PLAIN_TYPE).readEntity(String))
+		synchronized (asyncCallStage) {
+			val result = asyncCallStage.thenCompose[jobUri.build.getAsync(MediaType.TEXT_PLAIN_TYPE)]
+			asyncCallStage = result
+			return TestStatus.valueOf(result.toCompletableFuture.get.readEntity(String))
+		}
 	}
 
 	override waitForStatus() {
-		val response = jobUri.queryParam('wait', true).build.get(MediaType.TEXT_PLAIN_TYPE)
-		val body = response.readEntity(String)
-		val status = TestStatus.valueOf(body)
-		return status
+		synchronized (asyncCallStage) {
+			val result = asyncCallStage.thenCompose[jobUri.queryParam('wait', true).build.getAsync(MediaType.TEXT_PLAIN_TYPE)]
+			asyncCallStage = result
+			return TestStatus.valueOf(result.toCompletableFuture.get.readEntity(String))
+		}
 	}
 
 	override kill() {
-		jobUri.build.delete
+		synchronized (asyncCallStage) {
+			asyncCallStage = asyncCallStage.thenCompose[jobUri.build.deleteAsync]
+		}
 	}
 
 	private def UriBuilder jobUri() {

@@ -6,15 +6,18 @@ import java.util.ArrayList
 import java.util.HashSet
 import java.util.List
 import java.util.Set
+import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.Data
 import org.eclipse.xtend.lib.annotations.EqualsHashCode
 import org.testeditor.web.backend.testexecution.TestExecutionKey
-import org.eclipse.xtend.lib.annotations.Accessors
 
-@EqualsHashCode
-@Data
-class TestJob {
-
+interface TestJobInfo {
+	def TestExecutionKey getId()
+	def Set<String> getRequiredCapabilities()
+	def List<String> getResourcePaths()
+	def JobState getState()
+	def TestJobInfo setState(JobState state)
+	
 	enum JobState {
 
 		PENDING,
@@ -23,29 +26,34 @@ class TestJob {
 		COMPLETED
 
 	}
+}
+
+@EqualsHashCode
+@Data
+class TestJob implements TestJobInfo {
 
 	public static val TestJob NONE = new TestJob(new TestExecutionKey(''), emptySet, emptyList)
 
 	val TestExecutionKey id
-	val Set<String> capabilities
+	val Set<String> requiredCapabilities
 	val List<String> resourcePaths
 	@Accessors(PUBLIC_GETTER)
 	transient val JobState state
 
 	@JsonCreator
-	new(@JsonProperty('id') TestExecutionKey id, @JsonProperty('capabilities') Set<String> capabilities, @JsonProperty('resourcePaths') List<String> resourcePaths) {
+	new(@JsonProperty('id') TestExecutionKey id, @JsonProperty('requiredCapabilities') Set<String> capabilities, @JsonProperty('resourcePaths') List<String> resourcePaths) {
 		this(id, new HashSet(capabilities), new ArrayList(resourcePaths), JobState.PENDING)
 	}
 	
 	private new(TestExecutionKey id, Set<String> capabilities, List<String> resourcePaths, JobState state) {
 		this.id = id
-		this.capabilities = new HashSet(capabilities)
+		this.requiredCapabilities = new HashSet(capabilities)
 		this.resourcePaths = new ArrayList(resourcePaths)
 		this.state = state
 	}
 	
-	def TestJob setState(JobState state) {
-		return new TestJob(this.id, this.capabilities, this.resourcePaths, state)
+	override TestJobInfo setState(JobState state) {
+		return new TestJob(this.id, this.requiredCapabilities, this.resourcePaths, state)
 	}
 
 }

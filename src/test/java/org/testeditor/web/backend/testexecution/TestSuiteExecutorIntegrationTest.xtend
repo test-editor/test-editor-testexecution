@@ -25,13 +25,13 @@ import static org.assertj.core.api.Assertions.*
 class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 
 	val workerRule = createWorkerRule(
-		workspaceRoot.root.path,
-		setupRemoteGitRepository,
-		'''http://localhost:«serverPort»/testexecution/manager/workers'''
+		[workspaceRoot.root.path],
+		[setupRemoteGitRepository],
+		['''http://localhost:«serverPort»/testexecution/manager/workers''']
 	)
 
 	@Rule
-	public val extension SysIoPipeRuleChain = new SysIoPipeRuleChain(dropwizardAppRule, workerRule)
+	public val extension SysIoPipeRuleChain = new SysIoPipeRuleChain(remoteGitFolder, workspaceRoot, dropwizardAppRule, workerRule)
 
 	@Before
 	def void waitForWorkerRegistration() {
@@ -1008,6 +1008,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 			commitInRemoteRepository
 		]
 		val launchResponse = createLaunchNewRequest().buildPost(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE)).submit.get
+		
 		val testRunIdMatcher = Pattern.compile("\\[http://localhost:[0-9]+/test-suite/(\\d+)/(\\d+)\\]").matcher(
 			launchResponse.headers.get("Location").toString)
 		testRunIdMatcher.find.assertTrue
