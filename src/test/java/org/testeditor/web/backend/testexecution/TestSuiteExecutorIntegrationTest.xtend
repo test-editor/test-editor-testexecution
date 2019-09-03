@@ -13,6 +13,7 @@ import javax.ws.rs.core.GenericType
 import javax.ws.rs.core.MediaType
 import org.assertj.core.api.SoftAssertions
 import org.eclipse.jgit.junit.JGitTestUtil
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.testeditor.web.backend.testexecution.TestUtils.SysIoPipeRuleChain
@@ -31,8 +32,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 
 	@Rule
 	public val extension SysIoPipeRuleChain = new SysIoPipeRuleChain(dropwizardAppRule, workerRule)
-	
-	private def void waitForWorkerRegistration() {
+
+	@Before
+	def void waitForWorkerRegistration() {
 		waitForLogLine('''«WorkerResource.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"''')
 	}
 
@@ -578,7 +580,6 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 
 	@Test
 	def void testThatLogLinesAreFilteredToTheSpecifiedLogLevel() {
-		waitForWorkerRegistration
 		val testKey = TestExecutionKey.valueOf('0-0')
 		val testFile = 'test.tcl'
 		remoteGitFolder.newFile(testFile).commitInRemoteRepository
@@ -922,7 +923,6 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	@Test
 	def void testThatfAllRunningAndTerminatedTestsIsReturned() {
 		// given
-		waitForWorkerRegistration
 		new File(workspaceRoot.root, '''calledCount.txt''').delete
 		remoteGitFolder.newFile('''gradlew''') => [
 			executable = true
