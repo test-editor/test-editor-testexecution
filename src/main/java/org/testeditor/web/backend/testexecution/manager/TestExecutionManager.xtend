@@ -102,14 +102,6 @@ class TestExecutionManager {
 		]
 	}
 
-	def TestJob getJob(TestExecutionKey id) {
-		return jobs.getOrDefault(id, TestJob.NONE)
-	}
-
-	def Iterable<TestJob> getJobs() {
-		return jobs.values
-	}
-
 	def TestExecutionKey jobOf(Worker worker) {
 		return workers.getOrDefault(worker.id, Pair.of(null, NONE)).value
 	}
