@@ -31,6 +31,10 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 
 	@Rule
 	public val extension SysIoPipeRuleChain = new SysIoPipeRuleChain(dropwizardAppRule, workerRule)
+	
+	private def void waitForWorkerRegistration() {
+		waitForLogLine('''«WorkerResource.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"''')
+	}
 
 	@Test
 	def void testThatCallTreeIsNotFoundIfNotExistent() {
@@ -574,6 +578,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 
 	@Test
 	def void testThatLogLinesAreFilteredToTheSpecifiedLogLevel() {
+		waitForWorkerRegistration
 		val testKey = TestExecutionKey.valueOf('0-0')
 		val testFile = 'test.tcl'
 		remoteGitFolder.newFile(testFile).commitInRemoteRepository
@@ -917,7 +922,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	@Test
 	def void testThatfAllRunningAndTerminatedTestsIsReturned() {
 		// given
-		waitForLogLine('''«WorkerResource.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"''')
+		waitForWorkerRegistration
 		new File(workspaceRoot.root, '''calledCount.txt''').delete
 		remoteGitFolder.newFile('''gradlew''') => [
 			executable = true
