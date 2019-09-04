@@ -44,7 +44,7 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 	var WorkerAPI state
 
 	@Inject
-	new(TestExecutorProvider executorProvider, WorkerStatusManager statusManager, TestLogWriter logWriter) {
+	new(TestExecutionWorkerConfiguration config, TestExecutorProvider executorProvider, WorkerStatusManager statusManager, TestLogWriter logWriter) {
 		states = #{
 			IDLE -> new IdleWorker(this, logWriter, executorProvider, statusManager),
 			BUSY -> new BusyWorker(this, statusManager)
@@ -59,15 +59,6 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 	static val logger = LoggerFactory.getLogger(WorkerResource)
 
 	override Logger getLogger() { return logger }
-
-	@GET
-	def Worker getWorkerState() {
-	}
-
-	@GET
-	@Path('capabilities')
-	def Set<String> getWorkerCapabilities() {
-	}
 
 	@GET
 	@Path('job')
@@ -87,7 +78,7 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 	override synchronized Response cancelTestJob() {
 		return state.cancelTestJob
 	}
-	
+
 	override transitionTo(WorkerState state, ()=>Void action) {
 		this.state = state
 		action.apply
@@ -105,6 +96,7 @@ enum WorkerState {
 interface WorkerStateContext {
 
 	def void setState(WorkerState state)
+
 	def void transitionTo(WorkerState state, ()=>Void action)
 
 	def Logger getLogger()
@@ -131,9 +123,9 @@ class IdleWorker implements WorkerAPI {
 			val callTreeFile = new File(callTreeFileName)
 			callTreeFile.writeCallTreeYamlPrefix(executorProvider.yamlFileHeader(executionKey, Instant.now, job.resourcePaths))
 			val testProcess = builder.start
-			statusManager.addTestSuiteRun(testProcess)[status|
+			statusManager.addTestSuiteRun(testProcess) [ status |
 				callTreeFile.writeCallTreeYamlSuffix(status)
-				//TODO send PUT request to test execution manager to inform him of the completed test execution
+			// TODO send PUT request to test execution manager to inform him of the completed test execution
 			]
 			testProcess.logToStandardOutAndIntoFile(new File(logFile))
 			val uri = new URI(UriBuilder.fromResource(TestSuiteResource).build.toString +

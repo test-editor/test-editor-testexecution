@@ -1,5 +1,6 @@
 package org.testeditor.web.backend.testexecution.manager
 
+import java.io.InputStream
 import javax.inject.Inject
 import javax.ws.rs.DELETE
 import javax.ws.rs.Encoded
@@ -11,6 +12,8 @@ import javax.ws.rs.core.Context
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriInfo
 import org.slf4j.LoggerFactory
+import org.testeditor.web.backend.testexecution.TestExecutionKey
+import org.testeditor.web.backend.testexecution.TestStatus
 import org.testeditor.web.backend.testexecution.worker.Worker
 import org.testeditor.web.backend.testexecution.worker.WorkerResource
 
@@ -46,11 +49,16 @@ class WorkersResource implements WorkersAPI {
 		manager.removeWorker(id)
 		return Response.ok.build
 	}
-
-	@Path('/{id}')
+	@Path('/{workerId}/{jobId}/{file}')
+	@POST
+	override upload(@PathParam(value='workerId') @Encoded String workerId, @PathParam(value='jobId') TestExecutionKey jobId, @PathParam('file') String fileName, InputStream content) {
+		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+	}
+	
+	@Path('/{workerId}/{jobId}')
 	@PUT
-	def Response updateWorker(@PathParam(value='id') @Encoded String id) {
-		manager.update(id)
+	override updateStatus(@PathParam(value='workerId') @Encoded String workerId, @PathParam(value='jobId') TestExecutionKey jobId, TestStatus status) {
+		manager.update(jobId)
 		return Response.ok.build
 	}
 
