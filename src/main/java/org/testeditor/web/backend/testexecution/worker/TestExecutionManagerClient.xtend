@@ -1,6 +1,10 @@
 package org.testeditor.web.backend.testexecution.worker
 
+import com.google.common.base.Supplier
+import com.google.common.base.Suppliers
 import java.io.InputStream
+import java.net.URI
+import java.net.URL
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -8,12 +12,16 @@ import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
 import javax.ws.rs.core.Response.Status
+import javax.ws.rs.core.UriBuilder
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.TestStatus
 import org.testeditor.web.backend.testexecution.dropwizard.RestClient
 import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionDropwizardConfiguration
-import org.testeditor.web.backend.testexecution.manager.WorkerClient
+import org.testeditor.web.backend.testexecution.manager.WorkerInfo
+
+import static java.net.URLEncoder.encode
+import static java.nio.charset.StandardCharsets.UTF_8
 
 @Singleton
 class TestExecutionManagerClient {
@@ -28,8 +36,12 @@ class TestExecutionManagerClient {
 
 	@Inject
 	extension TestExecutionDropwizardConfiguration
+	
+	var Supplier<URI> workerUri = Suppliers.memoize[
+		new URL(workerUrl.protocol, workerUrl.host, workerUrl.port, UriBuilder.fromResource(WorkerResource).build.toString).toURI
+	]
 
-	def void registerWorker(WorkerClient worker) {
+	def void registerWorker(WorkerInfo worker) {
 		registrationRetries = 0
 		registrationTask = registrationScheduler.scheduleWithFixedDelay([tryRegistration(worker)], 0,
 			registrationRetryIntervalSecs, TimeUnit.SECONDS)
@@ -43,11 +55,12 @@ class TestExecutionManagerClient {
 		throw new UnsupportedOperationException("TODO: auto-generated method stub")
 	}
 
-	def void updateStatus(String workerId, TestExecutionKey jobId, TestStatus status) {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+	def void updateStatus(TestExecutionKey jobId, TestStatus status) {
+		val uri = UriBuilder.fromUri(testExecutionManagerUrl).path(encode(workerUri.get.toString, UTF_8)).path(jobId.toString).build
+		client.get.putAsync(uri, status)
 	}
 
-	private def void tryRegistration(WorkerClient worker) {
+	private def void tryRegistration(WorkerInfo worker) {
 		if (registrationRetries++ < registrationMaxRetries) {
 			logger.info('''trying to register with test execution manager at "«testExecutionManagerUrl»"''')
 			val response = client.get.postAsync(testExecutionManagerUrl, worker).toCompletableFuture.join

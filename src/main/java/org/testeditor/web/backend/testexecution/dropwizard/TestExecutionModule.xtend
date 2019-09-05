@@ -2,6 +2,7 @@ package org.testeditor.web.backend.testexecution.dropwizard
 
 import com.google.inject.AbstractModule
 import com.google.inject.Provides
+import com.google.inject.servlet.ServletScopes
 import io.dropwizard.client.JerseyClientBuilder
 import io.dropwizard.setup.Environment
 import java.io.File
@@ -15,7 +16,9 @@ import org.testeditor.web.backend.testexecution.loglines.Log4JDefaultFilter
 import org.testeditor.web.backend.testexecution.loglines.LogFilter
 import org.testeditor.web.backend.testexecution.loglines.LogFinder
 import org.testeditor.web.backend.testexecution.loglines.ScanningLogFinder
+import org.testeditor.web.backend.testexecution.manager.DefaultUriAppender
 import org.testeditor.web.backend.testexecution.manager.TestStatusManager
+import org.testeditor.web.backend.testexecution.manager.UriAppender
 import org.testeditor.web.backend.testexecution.screenshots.ScreenshotFinder
 import org.testeditor.web.backend.testexecution.screenshots.SubStepAggregatingScreenshotFinder
 import org.testeditor.web.backend.testexecution.util.HierarchicalLineSkipper
@@ -23,10 +26,6 @@ import org.testeditor.web.backend.testexecution.util.RecursiveHierarchicalLineSk
 import org.testeditor.web.backend.testexecution.workspace.WorkspaceProvider
 
 import static com.google.inject.name.Names.named
-import org.testeditor.web.backend.testexecution.manager.UriAppender
-import org.testeditor.web.backend.testexecution.manager.DefaultUriAppender
-import javax.ws.rs.core.UriInfo
-import com.google.inject.servlet.ServletScopes
 
 class TestExecutionModule extends AbstractModule {
 

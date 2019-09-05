@@ -42,8 +42,8 @@ class WorkerApplication extends DropwizardApplication<TestExecutionDropwizardCon
 		environment.healthChecks.register('execution', executionHealthCheckProvider.get)
 
 		environment.lifecycle.addServerLifecycleListener [ server |
-			val workerResourcePath = UriBuilder.fromResource(WorkerResource).build.toString
-			val workerUri = new URL(configuration.workerUrl.protocol, configuration.workerUrl.host, server.URI.port, workerResourcePath).toURI
+			val workerUri = UriBuilder.fromUri(configuration.workerUrl.toURI).path(WorkerResource).build
+			
 			managerClient.get.registerWorker(new WorkerClient(workerUri))
 		]
 	}

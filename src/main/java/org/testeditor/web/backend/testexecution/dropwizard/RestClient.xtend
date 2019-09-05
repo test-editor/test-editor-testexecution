@@ -24,6 +24,8 @@ interface RestClient {
 	public static val int READ_TIMEOUT_MILLIS = 10000
 
 	def <T> CompletionStage<Response> postAsync(URI uri, T body)
+	
+	def <T> CompletionStage<Response> putAsync(URI uri, T body)
 
 	def <T> CompletionStage<Response> getAsync(URI uri)
 
@@ -32,6 +34,8 @@ interface RestClient {
 	def <T> CompletionStage<Response> deleteAsync(URI uri)
 
 	def <T> Response post(URI uri, T body)
+	
+	def <T> Response put(URI uri, T body)
 
 	def <T> Response get(URI uri)
 
@@ -45,6 +49,10 @@ abstract class AbstractRestClient implements RestClient {
 
 	override <T> post(URI uri, T body) {
 		return uri.postAsync(body).toCompletableFuture.join
+	}
+	
+	override <T> put(URI uri, T body) {
+		return uri.putAsync(body).toCompletableFuture.join
 	}
 
 	override <T> get(URI uri) {
@@ -73,6 +81,12 @@ class JerseyBasedRestClient extends AbstractRestClient {
 		val entity = json(body)
 		logger.info('''sending POST request to «uri.toString» with body:\n«entity.toString»''')
 		return uri.invoker.post(entity)
+	}
+	
+	override <T> CompletionStage<Response> putAsync(URI uri, T body) {
+		val entity = json(body)
+		logger.info('''sending PUT request to «uri.toString» with body:\n«entity.toString»''')
+		return uri.invoker.put(entity)		
 	}
 
 	override <T> CompletionStage<Response> getAsync(URI uri) {

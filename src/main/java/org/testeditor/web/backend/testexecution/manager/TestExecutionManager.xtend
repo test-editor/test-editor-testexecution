@@ -161,8 +161,20 @@ class TestExecutionManager {
 			idleWorkers.findFirst[providedCapabilities.containsAll(job.requiredCapabilities)]?.assign(job)
 		}
 
-		def jobProgressed(TestExecutionKey jobId) {
-			completed(assignments.get(jobId))
+		def void jobProgressed(TestExecutionKey jobId) {
+			jobs.get(jobId) => [
+				switch (state) {
+					case PENDING:
+						throw new IllegalStateException('''job "«jobId»" is still pending''')
+					case ASSIGNING,
+					case ASSIGNED: {
+						assignments.get(jobId).completed
+					}
+					case COMPLETED:
+						throw new IllegalStateException('''job "«jobId»" has already been completed''')
+				}
+			]
+			
 		}
 
 		def synchronized void jobCancelled(TestExecutionKey jobId) {

@@ -84,11 +84,13 @@ class TestUtils {
 
 	def DropwizardAppRule<TestExecutionDropwizardConfiguration> createWorkerRule(Supplier<String> localRepoFileRoot, Supplier<String> remoteRepoUrl,
 		Supplier<String> testExecutionManagerUrl, ConfigOverride... overrides) {
+		val port = freePort
 		return createWorkerRule('worker-config.yml', #[
-			config('server.applicationConnectors[0].port', '0'),
+			config('server.applicationConnectors[0].port',port),
 			config('localRepoFileRoot', localRepoFileRoot),
 			config('remoteRepoUrl', remoteRepoUrl),
-			config('testExecutionManagerUrl', testExecutionManagerUrl)
+			config('testExecutionManagerUrl', testExecutionManagerUrl),
+			config('workerUrl', '''http://localhost:«port»''')
 		] + overrides)
 	}
 

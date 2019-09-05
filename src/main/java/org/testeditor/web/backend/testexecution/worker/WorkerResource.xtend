@@ -6,8 +6,8 @@ import java.net.URLEncoder
 import java.nio.file.Files
 import java.time.Instant
 import java.util.Map
-import java.util.Set
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 import javax.ws.rs.DELETE
 import javax.ws.rs.GET
@@ -15,6 +15,7 @@ import javax.ws.rs.POST
 import javax.ws.rs.Path
 import javax.ws.rs.Produces
 import javax.ws.rs.QueryParam
+import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriBuilder
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
@@ -34,7 +35,6 @@ import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
 import static javax.ws.rs.core.Response.Status.CONFLICT
 import static javax.ws.rs.core.Response.Status.NOT_FOUND
 import static org.testeditor.web.backend.testexecution.worker.WorkerState.*
-import javax.ws.rs.core.MediaType
 
 @Path('/worker')
 @Singleton
@@ -44,9 +44,9 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 	var WorkerAPI state
 
 	@Inject
-	new(TestExecutionWorkerConfiguration config, TestExecutorProvider executorProvider, WorkerStatusManager statusManager, TestLogWriter logWriter) {
+	new(TestExecutionManagerClient executionManager, TestExecutorProvider executorProvider, WorkerStatusManager statusManager, TestLogWriter logWriter) {
 		states = #{
-			IDLE -> new IdleWorker(this, logWriter, executorProvider, statusManager),
+			IDLE -> new IdleWorker(this, executionManager, logWriter, executorProvider, statusManager),
 			BUSY -> new BusyWorker(this, statusManager)
 		}
 		state = states.get(IDLE)
@@ -107,6 +107,7 @@ interface WorkerStateContext {
 class IdleWorker implements WorkerAPI {
 
 	val extension WorkerStateContext
+	val TestExecutionManagerClient executionManager
 	val extension TestLogWriter logWriter
 	val TestExecutorProvider executorProvider
 	val WorkerStatusManager statusManager
@@ -125,7 +126,7 @@ class IdleWorker implements WorkerAPI {
 			val testProcess = builder.start
 			statusManager.addTestSuiteRun(testProcess) [ status |
 				callTreeFile.writeCallTreeYamlSuffix(status)
-			// TODO send PUT request to test execution manager to inform him of the completed test execution
+				executionManager.updateStatus(job.id, statusManager.getStatus)
 			]
 			testProcess.logToStandardOutAndIntoFile(new File(logFile))
 			val uri = new URI(UriBuilder.fromResource(TestSuiteResource).build.toString +
