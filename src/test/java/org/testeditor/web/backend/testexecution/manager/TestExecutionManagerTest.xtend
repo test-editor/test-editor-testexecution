@@ -15,16 +15,15 @@ import org.testeditor.web.backend.testexecution.WorkerMocking
 import org.testeditor.web.backend.testexecution.WorkerMocking.WorkerStub
 import org.testeditor.web.backend.testexecution.manager.TestExecutionManager.AlreadyRegisteredException
 import org.testeditor.web.backend.testexecution.manager.TestExecutionManager.NoSuchJobException
-import org.testeditor.web.backend.testexecution.worker.Worker
 
 import static org.assertj.core.api.Assertions.assertThat
 import static org.junit.Assert.fail
 import static org.mockito.ArgumentMatchers.*
 import static org.mockito.Mockito.doAnswer
+import static org.mockito.Mockito.inOrder
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.spy
 import static org.mockito.Mockito.verify
-import static org.mockito.Mockito.inOrder
 import static org.testeditor.web.backend.testexecution.manager.TestJobInfo.JobState.*
 
 @RunWith(MockitoJUnitRunner)
@@ -50,7 +49,7 @@ class TestExecutionManagerTest {
 	def void canAddWorkerWithNoPendingJobs() {
 		// given
 		val expectedId = 'http://workers.example.com/1'
-		val worker = new Worker(new URI(expectedId), emptySet)
+		val worker = new WorkerClient(new URI(expectedId), emptySet)
 
 		// when
 		val actualId = managerUnderTest.addWorker(worker)
@@ -77,7 +76,7 @@ class TestExecutionManagerTest {
 	@Test(expected=Test.None)
 	def void canAddAndRemoveIdleWorker() {
 		// given
-		val worker = new Worker(new URI('http://workers.example.com/1'), emptySet)
+		val worker = new WorkerClient(new URI('http://workers.example.com/1'), emptySet)
 
 		// when
 		val id = managerUnderTest.addWorker(worker)
@@ -90,7 +89,7 @@ class TestExecutionManagerTest {
 	@Test
 	def void canReAddWorkerAfterRemoval() {
 		// given
-		val worker = new Worker(new URI('http://workers.example.com/1'), emptySet)
+		val worker = new WorkerClient(new URI('http://workers.example.com/1'), emptySet)
 
 		// when
 		val id = managerUnderTest.addWorker(worker)
@@ -104,8 +103,8 @@ class TestExecutionManagerTest {
 	@Test
 	def void cannotAddMoreThanOneWorkerWithTheSameUri() {
 		// given
-		val worker = mock(Worker).withUri('http://workers.example.com/1')
-		val workerWithSameUri = mock(Worker).withUri('http://workers.example.com/1')
+		val worker = mock(WorkerClient).withUri('http://workers.example.com/1')
+		val workerWithSameUri = mock(WorkerClient).withUri('http://workers.example.com/1')
 
 		managerUnderTest.addWorker(worker)
 
@@ -137,7 +136,7 @@ class TestExecutionManagerTest {
 	@Test
 	def void canAddJobWithMatchingWorker() {
 		// given
-		val worker = mock(Worker).withUri('http://workers.example.com/1').thatIsIdle.thatCanBeStarted
+		val worker = mock(WorkerClient).withUri('http://workers.example.com/1').thatIsIdle.thatCanBeStarted
 		val job = new TestJob(new TestExecutionKey('the-test-job'), emptySet, emptyList)
 
 		managerUnderTest.addWorker(worker)
@@ -154,8 +153,8 @@ class TestExecutionManagerTest {
 	@Test
 	def void addsJobToMatchingWorker() {
 		// given
-		val capableWorker = mock(Worker).withCapabilities('firefox').withUri('http://workers.example.com/capable').thatIsIdle.thatCanBeStarted
-		val incapableWorker = mock(Worker).withCapabilities.withUri('http://workers.example.com/incapable').thatIsIdle.thatCanBeStarted
+		val capableWorker = mock(WorkerClient).withCapabilities('firefox').withUri('http://workers.example.com/capable').thatIsIdle.thatCanBeStarted
+		val incapableWorker = mock(WorkerClient).withCapabilities.withUri('http://workers.example.com/incapable').thatIsIdle.thatCanBeStarted
 
 		managerUnderTest.addWorker(incapableWorker)
 		managerUnderTest.addWorker(capableWorker)
@@ -173,8 +172,8 @@ class TestExecutionManagerTest {
 	@Test
 	def void addsJobToOnlyOneMatchingWorker() {
 		// given
-		val worker1 = mock(Worker).withCapabilities('firefox').withUri('http://workers.example.com/1').thatIsIdle.thatCanBeStarted
-		val worker2 = mock(Worker).withCapabilities('firefox').withUri('http://workers.example.com/2').thatIsIdle.thatCanBeStarted
+		val worker1 = mock(WorkerClient).withCapabilities('firefox').withUri('http://workers.example.com/1').thatIsIdle.thatCanBeStarted
+		val worker2 = mock(WorkerClient).withCapabilities('firefox').withUri('http://workers.example.com/2').thatIsIdle.thatCanBeStarted
 
 		managerUnderTest.addWorker(worker1)
 		managerUnderTest.addWorker(worker2)
@@ -191,7 +190,7 @@ class TestExecutionManagerTest {
 	@Test
 	def void canCancelJob() {
 		// given
-		val worker = mock(Worker).withCapabilities('firefox').withUri('http://workers.example.com/capable').thatIsIdle.thatCanBeStarted
+		val worker = mock(WorkerClient).withCapabilities('firefox').withUri('http://workers.example.com/capable').thatIsIdle.thatCanBeStarted
 		val job = new TestJob(new TestExecutionKey('the-test-job'), emptySet, emptyList)
 
 		managerUnderTest.addWorker(worker)
@@ -222,7 +221,7 @@ class TestExecutionManagerTest {
 	@Test
 	def void cancellingJobNotifiesAssignedWorker() {
 		// given
-		val worker = mock(Worker).withUri('http://workers.example.com/1').thatIsIdle.thatCanBeStarted
+		val worker = mock(WorkerClient).withUri('http://workers.example.com/1').thatIsIdle.thatCanBeStarted
 		val job = new TestJob(new TestExecutionKey('the-test-job'), emptySet, emptyList)
 
 		managerUnderTest.addWorker(worker)

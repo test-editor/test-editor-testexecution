@@ -4,57 +4,57 @@ import java.net.URI
 import java.util.Set
 import java.util.concurrent.CompletableFuture
 import org.eclipse.xtend.lib.annotations.Accessors
+import org.testeditor.web.backend.testexecution.manager.OperableWorker
 import org.testeditor.web.backend.testexecution.manager.TestJobInfo
-import org.testeditor.web.backend.testexecution.worker.OperableWorker
-import org.testeditor.web.backend.testexecution.worker.Worker
 
 import static org.mockito.ArgumentMatchers.*
 import static org.mockito.Mockito.*
 import static org.testeditor.web.backend.testexecution.TestStatus.*
+import org.testeditor.web.backend.testexecution.manager.WorkerClient
 
 class WorkerMocking {
 
-	def Worker thatIsRunning(Worker mockWorker) {
+	def WorkerClient thatIsRunning(WorkerClient mockWorker) {
 		return mockWorker => [
 			when(checkStatus).thenReturn(TestStatus.RUNNING)
 			when(waitForStatus).thenReturn(TestStatus.RUNNING)
 		]
 	}
 
-	def Worker thatTerminatedSuccessfully(Worker mockWorker) {
+	def WorkerClient thatTerminatedSuccessfully(WorkerClient mockWorker) {
 		return mockWorker => [
 			when(checkStatus).thenReturn(TestStatus.SUCCESS)
 			when(waitForStatus).thenReturn(TestStatus.SUCCESS)
 		]
 	}
 
-	def Worker thatTerminatedWithAnError(Worker mockWorker) {
+	def WorkerClient thatTerminatedWithAnError(WorkerClient mockWorker) {
 		return mockWorker => [
 			when(checkStatus).thenReturn(TestStatus.FAILED)
 			when(waitForStatus).thenReturn(TestStatus.FAILED)
 		]
 	}
 
-	def Worker thatIsIdle(Worker mockWorker) {
+	def WorkerClient thatIsIdle(WorkerClient mockWorker) {
 		return mockWorker => [
 			when(checkStatus).thenReturn(TestStatus.IDLE)
 			lenient.when(waitForStatus).thenReturn(TestStatus.IDLE)
 		]
 	}
 
-	def Worker withUri(Worker mockWorker, String uri) {
+	def WorkerClient withUri(WorkerClient mockWorker, String uri) {
 		return mockWorker => [
 			when(getUri).thenReturn(new URI(uri))
 		]
 	}
 
-	def Worker withCapabilities(Worker mockWorker, String... capabilities) {
+	def WorkerClient withCapabilities(WorkerClient mockWorker, String... capabilities) {
 		return mockWorker => [
 			when(providedCapabilities).thenReturn(newHashSet(capabilities))
 		]
 	}
 
-	def Worker thatCanBeStarted(Worker mockWorker) {
+	def WorkerClient thatCanBeStarted(WorkerClient mockWorker) {
 		return mockWorker => [
 			when(startJob(any(TestJobInfo))).thenReturn(CompletableFuture.completedStage(true))
 		]

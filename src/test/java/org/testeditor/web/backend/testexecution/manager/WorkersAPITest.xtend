@@ -4,12 +4,12 @@ import java.net.URI
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriBuilder
 import org.junit.Before
+import org.junit.Test
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.testeditor.web.backend.testexecution.manager.TestExecutionManager.AlreadyRegisteredException
 import org.testeditor.web.backend.testexecution.manager.TestExecutionManager.NoSuchWorkerException
-import org.testeditor.web.backend.testexecution.worker.Worker
 
 import static org.assertj.core.api.Assertions.assertThat
 import static org.mockito.ArgumentMatchers.*
@@ -46,11 +46,11 @@ abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
 		]
 	}
 
-	@org.junit.Test
+	@Test
 	def void workersCanRegisterThemselves() {
 		// given
-		val worker = new Worker(new URI('http://worker.example.org'), emptySet)
-		when(manager.addWorker(any(Worker))).thenReturn('http://worker.example.org')
+		val worker = new WorkerClient(new URI('http://worker.example.org'), emptySet)
+		when(manager.addWorker(any(WorkerClient))).thenReturn('http://worker.example.org')
 
 		// when
 		val response = systemUnderTest.registerWorker(worker)
@@ -60,13 +60,14 @@ abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
 		assertThat(response.stringHeaders.getFirst('Location')).isEqualTo(baseUrl + 'http%3A%2F%2Fworker.example.org')
 	}
 
-	@org.junit.Test
+	@Test
 	def void onlyOneWorkerPerUrlIsAllowed() {
 		// given
-		val firstWorker = new Worker(new URI('http://worker.example.org'), emptySet)
-		val secondWorker = new Worker(new URI('http://worker.example.org'), #{'linux', 'chrome76'})
-		when(manager.addWorker(any(Worker))).thenReturn('http://worker.example.org').thenThrow(
-			new AlreadyRegisteredException('http://worker.example.org'))
+		val workerUri = new URI('http://worker.example.org')
+		val firstWorker = new WorkerClient(workerUri, emptySet)
+		val secondWorker = new WorkerClient(workerUri, #{'linux', 'chrome76'})
+		when(manager.addWorker(any(WorkerClient))).thenReturn('http://worker.example.org').thenThrow(
+			new AlreadyRegisteredException(workerUri))
 
 		// when
 		val firstResponse = systemUnderTest.registerWorker(firstWorker)
@@ -79,11 +80,11 @@ abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
 		assertThat(secondResponse.headers.get('Location')).isEqualTo(firstResponse.headers.get('Location'))
 	}
 
-	@org.junit.Test
+	@Test
 	def void registeredWorkersCanBeUnregistered() {
 		// given
-		val worker = new Worker(new URI('http://worker.example.org'), emptySet)
-		when(manager.addWorker(any(Worker))).thenReturn('http://worker.example.org')
+		val worker = new WorkerClient(new URI('http://worker.example.org'), emptySet)
+		when(manager.addWorker(any(WorkerClient))).thenReturn('http://worker.example.org')
 		val registered = systemUnderTest.registerWorker(worker)
 		val unregisterUrl = registered.stringHeaders.getFirst('Location') as String
 		val workerId = unregisterUrl.substring(baseUrl.length)
@@ -95,7 +96,7 @@ abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
 		assertThat(response.status).isEqualTo(200)
 	}
 
-	@org.junit.Test
+	@Test
 	def void nonExistantWorkersCannotBeUnregistered() {
 		// given
 		val workerId = 'non-existing-worker-id'
@@ -109,12 +110,12 @@ abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
 		assertThat(response.getBody(String)).isEqualTo('Worker does not exist. It may have already been deleted.')
 	}
 
-	@org.junit.Test
+	@Test
 	def void workersCannotBeDeletedTwice() { // Note: DELETE should be idempotent, and it is (deleting multiple times does not change the server state).
 	// The response is _not_ considered for idempotency, see 
 	// given							//       https://stackoverflow.com/questions/24713945/does-idempotency-include-response-codes/24713946#24713946
-		val worker = new Worker(new URI('http://worker.example.org'), emptySet)
-		when(manager.addWorker(any(Worker))).thenReturn('http://worker.example.org')
+		val worker = new WorkerClient(new URI('http://worker.example.org'), emptySet)
+		when(manager.addWorker(any(WorkerClient))).thenReturn('http://worker.example.org')
 		doNothing.doThrow(NoSuchWorkerException).when(manager).removeWorker(any(String))
 		val registered = systemUnderTest.registerWorker(worker)
 		val unregisterUrl = registered.stringHeaders.getFirst('Location') as String

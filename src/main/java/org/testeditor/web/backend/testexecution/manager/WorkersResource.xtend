@@ -14,7 +14,6 @@ import javax.ws.rs.core.UriInfo
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.TestStatus
-import org.testeditor.web.backend.testexecution.worker.Worker
 import org.testeditor.web.backend.testexecution.worker.WorkerResource
 
 import static java.net.URLEncoder.encode
@@ -35,7 +34,7 @@ class WorkersResource implements WorkersAPI {
 	UriInfo uriInfo
 
 	@POST
-	override Response registerWorker(Worker worker) {
+	override Response registerWorker(WorkerClient worker) {
 		logger.info('''received request to register worker at "«worker.uri»"''')
 
 		val workerId = manager.addWorker(worker)

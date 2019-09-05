@@ -19,8 +19,6 @@ import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.TestStatus
 import org.testeditor.web.backend.testexecution.manager.TestJobInfo.JobState
-import org.testeditor.web.backend.testexecution.worker.OperableWorker
-import org.testeditor.web.backend.testexecution.worker.WorkerInfo
 
 import static org.testeditor.web.backend.testexecution.TestExecutionKey.NONE
 

@@ -1,4 +1,4 @@
-package org.testeditor.web.backend.testexecution.worker
+package org.testeditor.web.backend.testexecution.manager
 
 import com.fasterxml.jackson.annotation.JacksonInject
 import com.fasterxml.jackson.annotation.JsonCreator
@@ -36,11 +36,11 @@ interface OperableWorker extends RunningTest, WorkerInfo {
 
 @Data
 @EqualsHashCode
-class Worker implements OperableWorker {
+class WorkerClient implements OperableWorker {
 
-	public static val Worker NONE = new Worker(null)
+	public static val WorkerClient NONE = new WorkerClient(null)
 
-	static val logger = LoggerFactory.getLogger(Worker)
+	static val logger = LoggerFactory.getLogger(WorkerClient)
 
 	val URI uri
 	val Set<String> providedCapabilities

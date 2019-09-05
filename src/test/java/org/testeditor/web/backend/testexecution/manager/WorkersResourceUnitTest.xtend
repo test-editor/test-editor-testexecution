@@ -1,9 +1,11 @@
 package org.testeditor.web.backend.testexecution.manager
 
+import java.io.InputStream
 import javax.ws.rs.core.Response
 import org.mockito.InjectMocks
+import org.testeditor.web.backend.testexecution.TestExecutionKey
+import org.testeditor.web.backend.testexecution.TestStatus
 import org.testeditor.web.backend.testexecution.manager.TestExecutionManager.TestExecutionManagerException
-import org.testeditor.web.backend.testexecution.worker.Worker
 
 /**
  * Tests the contract of WorkersResource in conjunction with the TestExecutionManagerExceptionMapper.
@@ -23,7 +25,7 @@ class WorkersResourceUnitTest extends WorkersAPITest implements WorkersAPI {
 	override getBaseUrl() '''http://server.example.org/testexecution/manager/workers/'''
 	
 	
-	override registerWorker(Worker worker) {
+	override registerWorker(WorkerClient worker) {
 		return mapException[workersResource.registerWorker(worker)]
 	}
 	
@@ -37,6 +39,14 @@ class WorkersResourceUnitTest extends WorkersAPITest implements WorkersAPI {
 		} catch (TestExecutionManagerException ex) {
 			toResponse(ex)
 		}
+	}
+	
+	override upload(String workerId, TestExecutionKey jobId, String fileName, InputStream content) {
+		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+	}
+	
+	override updateStatus(String workerId, TestExecutionKey jobId, TestStatus status) {
+		throw new UnsupportedOperationException("TODO: auto-generated method stub")
 	}
 	
 }

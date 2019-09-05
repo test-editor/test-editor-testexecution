@@ -14,11 +14,11 @@ import javax.ws.rs.core.Response.Status
 import javax.ws.rs.core.UriBuilder
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.TestExecutionExceptionMapper
-import org.testeditor.web.backend.testexecution.worker.Worker
 import org.testeditor.web.backend.testexecution.worker.WorkerResource
 import org.testeditor.web.dropwizard.DropwizardApplication
 
 import static org.eclipse.jetty.servlets.CrossOriginFilter.EXPOSED_HEADERS_PARAM
+import org.testeditor.web.backend.testexecution.manager.WorkerClient
 
 class WorkerApplication extends DropwizardApplication<TestExecutionDropwizardConfiguration> {
 
@@ -62,7 +62,7 @@ class WorkerApplication extends DropwizardApplication<TestExecutionDropwizardCon
 //		val workerUri = uriInfo.get.baseUriBuilder.path(WorkerResource).path('job').build
 		if (registrationRetries++ < config.registrationMaxRetries) {
 			logger.info('''trying to register with test execution manager at "«config.testExecutionManagerUrl»"''')
-			val response = client.get.postAsync(config.testExecutionManagerUrl, new Worker(workerUri)).toCompletableFuture.join
+			val response = client.get.postAsync(config.testExecutionManagerUrl, new WorkerClient(workerUri)).toCompletableFuture.join
 			if (response.statusInfo == Status.CREATED) {
 				logger.info('''successfully registered at "«response.location.toString»"''')
 				registrationTask.cancel(false)

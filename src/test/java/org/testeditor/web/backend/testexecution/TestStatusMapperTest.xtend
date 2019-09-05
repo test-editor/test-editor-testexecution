@@ -2,11 +2,11 @@ package org.testeditor.web.backend.testexecution
 
 import org.junit.Test
 import org.testeditor.web.backend.testexecution.manager.TestStatusManager
-import org.testeditor.web.backend.testexecution.worker.Worker
 
 import static org.assertj.core.api.Assertions.*
 import static org.mockito.Mockito.*
 import static org.testeditor.web.backend.testexecution.TestStatus.*
+import org.testeditor.web.backend.testexecution.manager.WorkerClient
 
 class TestStatusMapperTest {
 
@@ -18,7 +18,7 @@ class TestStatusMapperTest {
 	def void addTestRunAddsTestInRunningStatus() {
 		// given
 		val testKey = new TestExecutionKey('a')
-		val worker = mock(Worker).thatIsRunning
+		val worker = mock(WorkerClient).thatIsRunning
 
 		// when
 		statusMapperUnderTest.addTestSuiteRun(testKey, worker)
@@ -30,8 +30,8 @@ class TestStatusMapperTest {
 	@Test
 	def void addTestRunThrowsExceptionWhenAddingRunningTestTwice() {
 		// given
-		val firstWorker = mock(Worker).thatIsRunning
-		val secondWorker = mock(Worker).thatIsRunning
+		val firstWorker = mock(WorkerClient).thatIsRunning
+		val secondWorker = mock(WorkerClient).thatIsRunning
 		val testKey = new TestExecutionKey('a')
 		statusMapperUnderTest.addTestSuiteRun(testKey, firstWorker)
 
@@ -49,8 +49,8 @@ class TestStatusMapperTest {
 	@Test
 	def void addTestRunSetsRunningStatusIfPreviousExecutionTerminated() {
 		// given
-		val firstWorker = mock(Worker).thatTerminatedSuccessfully
-		val secondWorker = mock(Worker).thatIsRunning
+		val firstWorker = mock(WorkerClient).thatTerminatedSuccessfully
+		val secondWorker = mock(WorkerClient).thatIsRunning
 		val testKey = new TestExecutionKey('a')
 		statusMapperUnderTest.addTestSuiteRun(testKey, firstWorker)
 		assertThat(statusMapperUnderTest.getStatus(testKey)).isNotEqualTo(RUNNING)
@@ -77,7 +77,7 @@ class TestStatusMapperTest {
 	@Test
 	def void getStatusReturnsRunningAsLongAsTestProcessIsAlive() {
 		// given
-		val worker = mock(Worker).thatIsRunning
+		val worker = mock(WorkerClient).thatIsRunning
 		val testKey = new TestExecutionKey('a')
 		statusMapperUnderTest.addTestSuiteRun(testKey, worker)
 
@@ -91,7 +91,7 @@ class TestStatusMapperTest {
 	@Test
 	def void getStatusReturnsSuccessAfterTestFinishedSuccessfully() {
 		// given
-		val worker = mock(Worker).thatTerminatedSuccessfully
+		val worker = mock(WorkerClient).thatTerminatedSuccessfully
 		val testKey = new TestExecutionKey('a')
 		statusMapperUnderTest.addTestSuiteRun(testKey, worker)
 
@@ -105,7 +105,7 @@ class TestStatusMapperTest {
 	@Test
 	def void getStatusReturnsFailureAfterTestFailed() {
 		// given
-		val testProcess = mock(Worker).thatTerminatedWithAnError
+		val testProcess = mock(WorkerClient).thatTerminatedWithAnError
 		val testKey = new TestExecutionKey('a')
 		statusMapperUnderTest.addTestSuiteRun(testKey, testProcess)
 
@@ -131,7 +131,7 @@ class TestStatusMapperTest {
 	@Test
 	def void waitForStatusReturnsSuccessAfterTestFinishedSuccessfully() {
 		// given
-		val worker = mock(Worker).thatTerminatedSuccessfully
+		val worker = mock(WorkerClient).thatTerminatedSuccessfully
 		val testKey = new TestExecutionKey('a')
 		statusMapperUnderTest.addTestSuiteRun(testKey, worker)
 
@@ -145,7 +145,7 @@ class TestStatusMapperTest {
 	@Test
 	def void waitForStatusReturnsFailureAfterTestFailed() {
 		// given
-		val worker = mock(Worker).thatTerminatedWithAnError
+		val worker = mock(WorkerClient).thatTerminatedWithAnError
 		val testKey = new TestExecutionKey('a')
 		statusMapperUnderTest.addTestSuiteRun(testKey, worker)
 
@@ -169,13 +169,13 @@ class TestStatusMapperTest {
 	def void getAllReturnsStatusOfAllTestsWithKnownStatus() {
 		// given
 		val failedTestKey = new TestExecutionKey('f')
-		val failedWorker = mock(Worker).thatTerminatedWithAnError
+		val failedWorker = mock(WorkerClient).thatTerminatedWithAnError
 
 		val successfulTestKey = new TestExecutionKey('s')
-		val successfulWorker = mock(Worker).thatTerminatedSuccessfully
+		val successfulWorker = mock(WorkerClient).thatTerminatedSuccessfully
 
 		val runningTestKey = new TestExecutionKey('r')
-		val runningWorker = mock(Worker).thatIsRunning
+		val runningWorker = mock(WorkerClient).thatIsRunning
 
 		statusMapperUnderTest.addTestSuiteRun(failedTestKey, failedWorker)
 		statusMapperUnderTest.addTestSuiteRun(successfulTestKey, successfulWorker)
