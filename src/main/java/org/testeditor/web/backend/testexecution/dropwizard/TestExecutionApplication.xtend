@@ -1,5 +1,6 @@
 package org.testeditor.web.backend.testexecution.dropwizard
 
+import com.google.inject.AbstractModule
 import com.google.inject.Module
 import io.dropwizard.setup.Environment
 import java.util.List
@@ -17,14 +18,16 @@ import org.testeditor.web.dropwizard.DropwizardApplication
 
 import static org.eclipse.jetty.servlets.CrossOriginFilter.EXPOSED_HEADERS_PARAM
 import org.glassfish.hk2.utilities.binding.AbstractBinder
-import org.testeditor.web.backend.testexecution.manager.UriAppender
 import org.glassfish.jersey.process.internal.RequestScoped
-import javax.ws.rs.core.UriInfo
-import com.google.inject.AbstractModule
-import com.google.inject.Provides
+import org.testeditor.web.backend.testexecution.TestExecutionExceptionMapper
+import org.testeditor.web.backend.testexecution.TestSuiteResource
 import org.testeditor.web.backend.testexecution.manager.DefaultUriAppender
-import com.google.inject.servlet.ServletScopes
-import org.glassfish.hk2.api.Factory
+import org.testeditor.web.backend.testexecution.manager.TestExecutionManagerExceptionMapper
+import org.testeditor.web.backend.testexecution.manager.UriAppender
+import org.testeditor.web.backend.testexecution.manager.WorkersResource
+import org.testeditor.web.dropwizard.DropwizardApplication
+
+import static org.eclipse.jetty.servlets.CrossOriginFilter.EXPOSED_HEADERS_PARAM
 
 class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwizardConfiguration> {
 
@@ -57,6 +60,7 @@ class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwi
 
 		environment.jersey => [
 			register(TestExecutionExceptionMapper)
+			register(TestExecutionManagerExceptionMapper)
 			register(TestSuiteResource)
 			register(TestArtifactResource)
 			register(WorkersResource)
