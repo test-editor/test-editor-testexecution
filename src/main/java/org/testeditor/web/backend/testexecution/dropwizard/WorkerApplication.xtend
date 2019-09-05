@@ -4,32 +4,23 @@ import com.google.inject.Module
 import io.dropwizard.setup.Environment
 import java.net.URL
 import java.util.List
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.servlet.FilterRegistration.Dynamic
-import javax.ws.rs.core.Response.Status
 import javax.ws.rs.core.UriBuilder
-import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.TestExecutionExceptionMapper
+import org.testeditor.web.backend.testexecution.manager.WorkerClient
+import org.testeditor.web.backend.testexecution.worker.TestExecutionManagerClient
 import org.testeditor.web.backend.testexecution.worker.WorkerResource
 import org.testeditor.web.dropwizard.DropwizardApplication
 
 import static org.eclipse.jetty.servlets.CrossOriginFilter.EXPOSED_HEADERS_PARAM
-import org.testeditor.web.backend.testexecution.manager.WorkerClient
 
 class WorkerApplication extends DropwizardApplication<TestExecutionDropwizardConfiguration> {
 
-	static val logger = LoggerFactory.getLogger(WorkerResource)
-
 	@Inject Provider<ExecutionHealthCheck> executionHealthCheckProvider
-	@Inject Provider<RestClient> client
+	@Inject Provider<TestExecutionManagerClient> managerClient
 
-	val registrationScheduler = Executors.newSingleThreadScheduledExecutor
-	var ScheduledFuture<?> registrationTask
-	var registrationRetries = 0
 
 	def static void main(String[] args) {
 		new WorkerApplication().run(args)
@@ -51,32 +42,10 @@ class WorkerApplication extends DropwizardApplication<TestExecutionDropwizardCon
 		environment.healthChecks.register('execution', executionHealthCheckProvider.get)
 
 		environment.lifecycle.addServerLifecycleListener [ server |
-			registrationTask = registrationScheduler.scheduleWithFixedDelay([tryRegistration(configuration, server.URI.port)], 0,
-				configuration.registrationRetryIntervalSecs, TimeUnit.SECONDS)
+			val workerResourcePath = UriBuilder.fromResource(WorkerResource).build.toString
+			val workerUri = new URL(configuration.workerUrl.protocol, configuration.workerUrl.host, server.URI.port, workerResourcePath).toURI
+			managerClient.get.registerWorker(new WorkerClient(workerUri))
 		]
-	}
-
-	private def void tryRegistration(TestExecutionDropwizardConfiguration config, int serverPort) {
-		val workerResourcePath = UriBuilder.fromResource(WorkerResource).build.toString
-		val workerUri = new URL(config.workerUrl.protocol, config.workerUrl.host, serverPort, workerResourcePath).toURI
-//		val workerUri = uriInfo.get.baseUriBuilder.path(WorkerResource).path('job').build
-		if (registrationRetries++ < config.registrationMaxRetries) {
-			logger.info('''trying to register with test execution manager at "«config.testExecutionManagerUrl»"''')
-			val response = client.get.postAsync(config.testExecutionManagerUrl, new WorkerClient(workerUri)).toCompletableFuture.join
-			if (response.statusInfo == Status.CREATED) {
-				logger.info('''successfully registered at "«response.location.toString»"''')
-				registrationTask.cancel(false)
-			} else if (response.statusInfo == Status.CONFLICT) {
-				val message = response.readEntity(String)
-				logger.warn('''test execution manager already has a worker registered at "«workerUri»"; message: «message»''')
-				registrationTask.cancel(false)
-			} else {
-				logger.warn('''registration with test execution manager failed, retry in «config.registrationRetryIntervalSecs» seconds''')
-			}
-		} else {
-			logger.warn('''giving up registering with test execution manager after «registrationRetries» attempts''')
-			registrationTask.cancel(false)
-		}
 	}
 
 	override Dynamic configureCorsFilter(TestExecutionDropwizardConfiguration configuration, Environment environment) {

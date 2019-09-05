@@ -8,7 +8,7 @@ import org.eclipse.jgit.junit.JGitTestUtil
 import org.junit.Rule
 import org.junit.Test
 import org.testeditor.web.backend.testexecution.TestUtils.SysIoPipeRuleChain
-import org.testeditor.web.backend.testexecution.worker.WorkerResource
+import org.testeditor.web.backend.testexecution.worker.TestExecutionManagerClient
 
 import static javax.ws.rs.core.Response.Status.CREATED
 import static org.assertj.core.api.Assertions.*
@@ -16,17 +16,17 @@ import static org.assertj.core.api.Assertions.*
 class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 
 	val workerRule = createWorkerRule(
-		workspaceRoot.root.path,
-		setupRemoteGitRepository,
-		'''http://localhost:«serverPort»/testexecution/manager/workers'''
+		[workspaceRoot.root.path],
+		[setupRemoteGitRepository],
+		['''http://localhost:«serverPort»/testexecution/manager/workers''']
 	)
 
 	@Rule
-	public val extension SysIoPipeRuleChain = new SysIoPipeRuleChain(dropwizardAppRule, workerRule)
+	public val extension SysIoPipeRuleChain = new SysIoPipeRuleChain(remoteGitFolder, workspaceRoot, dropwizardAppRule, workerRule)
 
 	@Test(timeout=5000)
 	def void workerRegistersWithManagerAtStartup() {
-		val expectedLogLine = '''«WorkerResource.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"'''
+		val expectedLogLine = '''«TestExecutionManagerClient.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"'''
 
 		val sysioReader = new BufferedReader(new InputStreamReader(sysIoPipeRule.sysioPipe))
 		sysioReader.lines.takeWhile[!contains('stopped')].anyMatch[contains(expectedLogLine)].assertTrue
@@ -35,7 +35,7 @@ class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 	@Test
 	def void jobIsAssignedToWorker() {
 		// given
-		waitForLogLine('''«WorkerResource.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"''')
+		waitForLogLine('''«TestExecutionManagerClient.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"''')
 
 		val workspaceRootPath = workspaceRoot.root.toPath
 		val testFile = 'test.tcl'

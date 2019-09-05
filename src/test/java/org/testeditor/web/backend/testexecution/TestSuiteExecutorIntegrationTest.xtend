@@ -17,7 +17,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.testeditor.web.backend.testexecution.TestUtils.SysIoPipeRuleChain
-import org.testeditor.web.backend.testexecution.worker.WorkerResource
+import org.testeditor.web.backend.testexecution.worker.TestExecutionManagerClient
 
 import static javax.ws.rs.core.Response.Status.*
 import static org.assertj.core.api.Assertions.*
@@ -35,7 +35,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 
 	@Before
 	def void waitForWorkerRegistration() {
-		waitForLogLine('''«WorkerResource.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"''')
+		waitForLogLine('''«TestExecutionManagerClient.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"''')
 	}
 
 	@Test
