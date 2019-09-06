@@ -184,22 +184,25 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	@Test
 	def void testThatRunningsReturned() {
 		// given
+		val jobId = TestExecutionKey.valueOf('0-0')
 		val testFile = 'test.tcl'
 		remoteGitFolder.newFile(testFile).commitInRemoteRepository
 		remoteGitFolder.newFile('gradlew') => [
 			executable = true
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
-				sleep 7 # ensure test reads process's status while still running
+				sleep 30 # ensure test reads process's status while still running
 				echo "test was run" > test.ok.txt
 			''')
 			commitInRemoteRepository
 		]
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
 		assertThat(response.status).isEqualTo(CREATED.statusCode)
+		val waitForStatus = createTestRequest(jobId).get.readEntity(String) // give the worker time to assign and start executing the test
+		assertThat(waitForStatus).^as('status after having waited').isEqualTo('RUNNING')
 
 		// when
-		val actualTestStatus = createAsyncTestRequest(TestExecutionKey.valueOf('0-0')).get
+		val actualTestStatus = createAsyncTestRequest(jobId).get
 
 		// then
 		assertThat(actualTestStatus.readEntity(String)).isEqualTo('RUNNING')
@@ -933,7 +936,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				echo "called $called times"
 				if [ "$called" = "3" ]; then
 				  echo "lastcall" > finished.txt
-				  sleep 7; exit 0
+				  sleep 30; exit 0
 				elif [ "$called" = "2" ]; then
 				  echo "secondcall" > finished.txt
 				  exit 0
@@ -955,9 +958,8 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 			sysIoPipeRule.systemOut.println(
 				'Job added here: ' + response.stringHeaders.get('Location')
 			)
-			var threshold = 20
 
-			while (createTestRequest(TestExecutionKey.valueOf('''0-«index»''')).get.readEntity(String) == 'RUNNING') {
+			if (createTestRequest(TestExecutionKey.valueOf('''0-«index»''')).get.readEntity(String) == 'RUNNING') {
 				Thread.yield
 			}
 		]
