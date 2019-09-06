@@ -68,8 +68,8 @@ dependencies {
 
     testImplementation "junit:junit:4.12"
     testImplementation "io.dropwizard:dropwizard-testing:$versions.dropwizard"
-    testImplementation "org.assertj:assertj-core:3.8.0"
-    testImplementation "org.mockito:mockito-core:2.11.0"
+    testImplementation "org.assertj:assertj-core:3.13.2"
+    testImplementation "org.mockito:mockito-core:3.0.0"
     testImplementation "org.eclipse.xtext:org.eclipse.xtext.testing:$versions.xtext"
 	testImplementation "org.testeditor.web:org.testeditor.web.dropwizard.testing:$versions.testEditorDropwizard"
 	testImplementation 'org.eclipse.jgit:org.eclipse.jgit.junit:5.1.2.201810061102-r'
