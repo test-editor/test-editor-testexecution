@@ -16,6 +16,7 @@ import static java.net.URLEncoder.encode
 import static java.nio.charset.StandardCharsets.UTF_8
 import static javax.ws.rs.core.Response.Status.CONFLICT
 import static javax.ws.rs.core.Response.Status.NOT_FOUND
+import org.testeditor.web.backend.testexecution.manager.TestExecutionManager.AlreadyCompletedException
 
 class TestExecutionManagerExceptionMapper implements ExceptionMapper<TestExecutionManagerException> {
 
@@ -43,6 +44,10 @@ class TestExecutionManagerExceptionMapper implements ExceptionMapper<TestExecuti
 
 	def dispatch Response toResponse(NoSuchJobException it) {
 		return Response.status(NOT_FOUND).entity(it.message).build
+	}
+	
+	def dispatch Response toResponse(AlreadyCompletedException it) {
+		return Response.ok(it.message).build
 	}
 
 }

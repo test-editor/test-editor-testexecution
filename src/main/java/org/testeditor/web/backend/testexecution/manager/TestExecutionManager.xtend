@@ -21,6 +21,7 @@ import org.testeditor.web.backend.testexecution.TestStatus
 import org.testeditor.web.backend.testexecution.manager.TestJobInfo.JobState
 
 import static org.testeditor.web.backend.testexecution.TestExecutionKey.NONE
+import org.testeditor.web.backend.testexecution.manager.TestExecutionManager.TestExecutionManagerException
 
 @Singleton
 class TestExecutionManager {
@@ -171,10 +172,10 @@ class TestExecutionManager {
 						assignments.get(jobId).completed
 					}
 					case COMPLETED:
-						throw new IllegalStateException('''job "«jobId»" has already been completed''')
+						throw new AlreadyCompletedException(jobId)
 				}
 			]
-			
+
 		}
 
 		def synchronized void jobCancelled(TestExecutionKey jobId) {
@@ -189,7 +190,7 @@ class TestExecutionManager {
 						jobs.remove(jobId)
 					}
 					case COMPLETED:
-						throw new IllegalStateException('''job "«jobId»" has already been completed''')
+						throw new AlreadyCompletedException(jobId)
 				}
 			]
 
@@ -303,6 +304,14 @@ class TestExecutionManager {
 
 		new() {
 			super('no registered worker can accept this job, or no workers registered')
+		}
+
+	}
+
+	static class AlreadyCompletedException extends TestExecutionManagerException {
+
+		new(TestExecutionKey jobId) {
+			super('''job "«jobId»" has already been completed''')
 		}
 
 	}

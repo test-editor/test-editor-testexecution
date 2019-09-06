@@ -7,7 +7,6 @@ import java.nio.file.Files
 import java.time.Instant
 import java.util.Map
 import javax.inject.Inject
-import javax.inject.Provider
 import javax.inject.Singleton
 import javax.ws.rs.DELETE
 import javax.ws.rs.GET
