@@ -232,8 +232,14 @@ class TestExecutionManager {
 		private synchronized def void failed(Assignment it) {
 			logger.warn('''assignment of job «job.id» to worker «worker.uri» has failed''')
 			jobs.replace(job.id, job.state = JobState.PENDING)
-			reassignOrMarkIdle
-		// TODO how to avoid loops of endlessly trying to reassign the same job to a worker that won't accept it?
+
+			// TODO how to avoid loops of endlessly trying to reassign the same job to a worker that won't accept it (but isn't reporting to be busy, either)?
+
+			if (worker.checkStatus === TestStatus.IDLE) {
+				reassignOrMarkIdle
+			} else {
+				logger.info('''worker «worker.uri» is busy''')
+			}
 		}
 
 		private synchronized def void completed(Assignment it) {
