@@ -19,8 +19,14 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND
 
 class TestExecutionManagerExceptionMapper implements ExceptionMapper<TestExecutionManagerException> {
 
-	@Inject Provider<UriAppender> uriAppender;
-	@Context UriInfo uriInfo
+	Provider<UriAppender> uriAppender
+	UriInfo uriInfo
+
+	@Inject
+	new(Provider<UriAppender> uriAppender, @Context UriInfo uriInfo) {
+		this.uriAppender = uriAppender
+		this.uriInfo = uriInfo
+	}
 
 	def dispatch Response toResponse(AlreadyRegisteredException it) {
 		val location = uriAppender.get.append(uriInfo, encode(workerId, UTF_8))
@@ -34,7 +40,7 @@ class TestExecutionManagerExceptionMapper implements ExceptionMapper<TestExecuti
 	def dispatch Response toResponse(NoEligibleWorkerException it) {
 		return Response.serverError.entity(it.message).build
 	}
-	
+
 	def dispatch Response toResponse(NoSuchJobException it) {
 		return Response.status(NOT_FOUND).entity(it.message).build
 	}

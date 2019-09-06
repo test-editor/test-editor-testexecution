@@ -2,7 +2,7 @@ package org.testeditor.web.backend.testexecution.manager
 
 import java.io.InputStream
 import javax.ws.rs.core.Response
-import org.mockito.InjectMocks
+import org.junit.Before
 import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.TestStatus
 import org.testeditor.web.backend.testexecution.manager.TestExecutionManager.TestExecutionManagerException
@@ -15,8 +15,12 @@ import org.testeditor.web.backend.testexecution.manager.TestExecutionManager.Tes
  */
 class WorkersResourceUnitTest extends WorkersAPITest implements WorkersAPI {
 	
-	@InjectMocks
-	extension val TestExecutionManagerExceptionMapper exceptionMapper = new TestExecutionManagerExceptionMapper
+	extension var TestExecutionManagerExceptionMapper exceptionMapper
+	
+	@Before
+	def void setupExceptionMapper() {
+		exceptionMapper = new TestExecutionManagerExceptionMapper([appender], null)
+	}
 
 	override getSystemUnderTest() {
 		return this
