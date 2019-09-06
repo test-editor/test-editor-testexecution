@@ -28,6 +28,24 @@ import static java.util.concurrent.CompletableFuture.runAsync
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class TestUtils {
+	
+	@FinalFieldsConstructor
+	static class BeforeRule extends TestWatcher {
+		val ()=>void before
+		
+		override protected starting(Description description) {
+			before.apply
+		}
+	}
+	
+	@FinalFieldsConstructor
+	static class AfterRule extends TestWatcher {
+		val ()=>void after
+		
+		override protected finished(Description description) {
+			after.apply
+		}
+	}
 
 	@Accessors
 	static class SysIoPipeRule extends TestWatcher {

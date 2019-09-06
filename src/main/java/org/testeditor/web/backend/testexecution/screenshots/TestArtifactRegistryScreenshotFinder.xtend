@@ -35,12 +35,37 @@ class TestArtifactRegistryScreenshotFinder implements ScreenshotFinder {
 		}
 	}
 
-	private def Path getArtifactRegistryPath() {
-		return workspace.get.absoluteFile.toPath.resolve(Paths.get(BASE_PATH))
+	override toPath(TestExecutionKey key) {
+		return Paths.get(key.suiteId, key.suiteRunId, key.caseRunId, key.callTreeId + FILE_EXTENSION)
 	}
 
-	private def toPath(TestExecutionKey key) {
-		return Paths.get(key.suiteId, key.suiteRunId, key.caseRunId, key.callTreeId + FILE_EXTENSION)
+	override toTestExecutionKey(Path path) {
+		val pathElements = (if (path.isAbsolute) {
+			artifactRegistryPath.relativize(path)
+		} else {
+			path
+		}).map[toString].iterator
+
+		return if (pathElements.hasNext) {
+			var key = new TestExecutionKey(pathElements.next)
+			if (pathElements.hasNext) {
+				key = key.deriveWithSuiteRunId(pathElements.next)
+				if (pathElements.hasNext) {
+					key = key.deriveWithCaseRunId(pathElements.next)
+					if (pathElements.hasNext) {
+						val fileName = pathElements.next
+						key = key.deriveWithCallTreeId(fileName.substring(0, fileName.length - FILE_EXTENSION.length))
+					}
+				}
+				return key
+			}
+		} else {
+			null
+		}
+	}
+
+	private def Path getArtifactRegistryPath() {
+		return workspace.get.absoluteFile.toPath.resolve(Paths.get(BASE_PATH))
 	}
 
 	private def entryPatternMatcher(String fileEntry) {

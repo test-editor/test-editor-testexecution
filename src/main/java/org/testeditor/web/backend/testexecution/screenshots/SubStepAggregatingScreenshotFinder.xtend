@@ -5,6 +5,7 @@ import javax.inject.Inject
 import org.testeditor.web.backend.testexecution.TestExecutionCallTree
 import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.TestExecutorProvider
+import java.nio.file.Path
 
 class SubStepAggregatingScreenshotFinder implements ScreenshotFinder {
 
@@ -27,6 +28,14 @@ class SubStepAggregatingScreenshotFinder implements ScreenshotFinder {
 			.reduce[list1, list2|list1 + list2]
 		}
 		return Optional.ofNullable(result).orElse(#[])
+	}
+	
+	override toPath(TestExecutionKey key) {
+		return delegateFinder.toPath(key)
+	}
+	
+	override toTestExecutionKey(Path path) {
+		return delegateFinder.toTestExecutionKey(path)
 	}
 
 }

@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat
 import static org.mockito.Mockito.when
 
 import static extension java.nio.file.Files.write
+import java.nio.file.Paths
 
 @RunWith(MockitoJUnitRunner)
 class TestArtifactRegistryScreenshotFinderTest {
@@ -102,6 +103,31 @@ class TestArtifactRegistryScreenshotFinderTest {
 
 		// then
 		assertThat(actualScreenshotPaths).isEmpty
+	}
+	
+	@Test
+	def void shouldReturnCorrectTestExecutionKeyForGivenRelativePath() {
+		// given
+		val path = Paths.get('0/1/2/3.yaml')
+		
+		// when
+		val actualKey = screenshotFinder.toTestExecutionKey(path)
+		
+		// then
+		assertThat(actualKey).isEqualTo(new TestExecutionKey('0', '1', '2', '3'))
+	}
+	
+	@Test
+	def void shouldReturnCorrectTestExecutionKeyForGivenAbsolutePath() {
+		// given
+		val path = testRoot.root.absoluteFile.toPath.resolve(Paths.get('.testexecution/artifacts/0/1/2/3.yaml'))
+		when(mockWorkspace.get).thenReturn(testRoot.root)
+		
+		// when
+		val actualKey = screenshotFinder.toTestExecutionKey(path)
+		
+		// then
+		assertThat(actualKey).isEqualTo(new TestExecutionKey('0', '1', '2', '3'))
 	}
 
 }
