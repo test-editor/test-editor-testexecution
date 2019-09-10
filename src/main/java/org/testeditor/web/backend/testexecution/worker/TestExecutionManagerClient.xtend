@@ -3,6 +3,7 @@ package org.testeditor.web.backend.testexecution.worker
 import com.google.common.base.Supplier
 import com.google.common.base.Suppliers
 import java.io.InputStream
+import java.io.OutputStream
 import java.net.URI
 import java.net.URL
 import java.util.concurrent.Executors
@@ -12,6 +13,7 @@ import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
 import javax.ws.rs.core.Response.Status
+import javax.ws.rs.core.StreamingOutput
 import javax.ws.rs.core.UriBuilder
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.TestExecutionKey
@@ -25,6 +27,7 @@ import static java.nio.charset.StandardCharsets.UTF_8
 
 @Singleton
 class TestExecutionManagerClient {
+
 	static val logger = LoggerFactory.getLogger(TestExecutionManagerClient)
 
 	val registrationScheduler = Executors.newSingleThreadScheduledExecutor
@@ -36,15 +39,16 @@ class TestExecutionManagerClient {
 
 	@Inject
 	extension TestExecutionDropwizardConfiguration
-	
-	var Supplier<URI> workerUri = Suppliers.memoize[
-		new URL(workerUrl.protocol, workerUrl.host, workerUrl.port, UriBuilder.fromResource(WorkerResource).build.toString).toURI
+
+	var Supplier<URI> workerUri = Suppliers.memoize [
+		new URL(workerUrl.protocol, workerUrl.host,
+			workerUrl.port, '''«IF !workerUrl.path.nullOrEmpty»«workerUrl.path»«ENDIF»«UriBuilder.fromResource(WorkerResource).build.toString»''').
+			toURI
 	]
 
 	def void registerWorker(WorkerInfo worker) {
 		registrationRetries = 0
-		registrationTask = registrationScheduler.scheduleWithFixedDelay([tryRegistration(worker)], 0,
-			registrationRetryIntervalSecs, TimeUnit.SECONDS)
+		registrationTask = registrationScheduler.scheduleWithFixedDelay([tryRegistration(worker)], 0, registrationRetryIntervalSecs, TimeUnit.SECONDS)
 	}
 
 	def void unregisterWorker(String id) {
@@ -52,7 +56,12 @@ class TestExecutionManagerClient {
 	}
 
 	def void upload(String workerId, TestExecutionKey jobId, String fileName, InputStream content) {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		val uri = UriBuilder.fromUri(testExecutionManagerUrl).path(encode(workerUri.get.toString, UTF_8)).path(jobId.toString).path(
+			encode(fileName, UTF_8)).build
+		val body = [ OutputStream out |
+			content.transferTo(out)
+		] as StreamingOutput
+		client.get.postAsync(uri, body)
 	}
 
 	def void updateStatus(TestExecutionKey jobId, TestStatus status) {
