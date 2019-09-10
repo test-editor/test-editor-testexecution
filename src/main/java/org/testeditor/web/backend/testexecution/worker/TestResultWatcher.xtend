@@ -1,10 +1,10 @@
 package org.testeditor.web.backend.testexecution.worker
 
+import com.sun.nio.file.SensitivityWatchEventModifier
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.StandardOpenOption
 import java.nio.file.StandardWatchEventKinds
 import java.nio.file.WatchKey
 import java.util.concurrent.Executor
@@ -97,9 +97,9 @@ class TestResultWatcher {
 		}
 		logger.info('stopped watching for test result files')
 	}
-	
+
 	private def void watchDirectory(Path dir) {
-		watchedDirectories.put(dir.register(watchService, ENTRY_CREATE, ENTRY_MODIFY), dir)
+		watchedDirectories.put(dir.register(watchService, #[ENTRY_CREATE, ENTRY_MODIFY], SensitivityWatchEventModifier.HIGH), dir)
 	}
 
 	private def void watchOrUpload(Path it) {
