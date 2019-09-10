@@ -7,10 +7,12 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.inject.Provider
+import org.apache.commons.io.IOUtils
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.rules.TemporaryFolder
+import org.mockito.ArgumentCaptor
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.testeditor.web.backend.testexecution.TestExecutionKey
@@ -37,7 +39,7 @@ class TestResultWatcherTest {
 
 	val workspace = new TemporaryFolder
 
-	@Rule public val rules = RuleChain.outerRule(workspace).around(new BeforeRule[setupMocks]).around(new AfterRule[tearDownExecutor])
+	@Rule public val RuleChain rules = RuleChain.outerRule(workspace).around(new BeforeRule[setupMocks]).around(new AfterRule[tearDownExecutor])
 
 	@Mock Provider<File> workspaceProviderMock
 
@@ -50,7 +52,7 @@ class TestResultWatcherTest {
 	var ExecutorService executor
 
 	static val workerUrl = new URL('http://worker.example.com:4711')
-	
+
 	def TestResultWatcher getTestResultWatcher() {
 		return new TestResultWatcher(workspaceProviderMock, managerClientMock, executor, screenshotFinderMock, configMock)
 	}
@@ -61,7 +63,7 @@ class TestResultWatcherTest {
 		when(configMock.workerUrl).thenReturn(workerUrl)
 		executor = Executors.newSingleThreadExecutor()
 	}
-	
+
 	def void tearDownExecutor() {
 		executor.shutdownNow
 		executor.awaitTermination(5, TimeUnit.SECONDS)
@@ -83,7 +85,7 @@ class TestResultWatcherTest {
 		executor.awaitTermination(5, TimeUnit.SECONDS)
 		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString), any(InputStream))
 	}
-	
+
 	@Test
 	def void usesWorkerUrlFromConfig() {
 		// given
@@ -91,7 +93,7 @@ class TestResultWatcherTest {
 		val configuredWorkerUrl = new URL('http://worker.example.com:4242/testWorker')
 		when(configMock.workerUrl).thenReturn(configuredWorkerUrl)
 		val watcher = new TestResultWatcher(workspaceProviderMock, managerClientMock, executor, screenshotFinderMock, configMock)
-		
+
 		val jobId = new TestExecutionKey('jobId')
 		watcher.watch(jobId)
 		val logFile = new File(workspace.newFolder('logs'), '''testrun.«jobId.toString».1912-06-23.log''').toPath
@@ -102,7 +104,8 @@ class TestResultWatcherTest {
 		// then
 		executor.shutdown()
 		executor.awaitTermination(5, TimeUnit.SECONDS)
-		verify(managerClientMock).upload(eq(configuredWorkerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString), any(InputStream))
+		verify(managerClientMock).upload(eq(configuredWorkerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString),
+			any(InputStream))
 	}
 
 	@Test
@@ -193,6 +196,53 @@ class TestResultWatcherTest {
 			any(InputStream))
 		verify(managerClientMock).upload(eq(workerUrl.toString), eq(fullId), eq(workspace.root.toPath.relativize(secondScreenshotFile).toString),
 			any(InputStream))
+	}
+
+	@Test
+	def void uploadsCorrectFileContent() {
+		// given
+		val jobId = new TestExecutionKey('jobId')
+		testResultWatcher.watch(jobId)
+		val logFile = new File(workspace.newFolder('logs'), '''testrun.«jobId.toString».1912-06-23.log''').toPath
+		val uploadStream = ArgumentCaptor.forClass(InputStream)
+
+		// when
+		logFile.createFile
+		logFile.write(#['Hello', 'World'], UTF_8, WRITE, APPEND)
+
+		// then
+		executor.shutdown()
+		executor.awaitTermination(5, TimeUnit.SECONDS)
+		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString),
+			uploadStream.capture)
+		assertThat(IOUtils.toString(uploadStream.value, UTF_8)).isEqualTo('''
+			Hello
+			World
+		'''.toString)
+	}
+
+	@Test
+	def void uploadsCorrectFileContentFromRepeatedWrites() {
+		// given
+		val jobId = new TestExecutionKey('jobId')
+		testResultWatcher.watch(jobId)
+		val logFile = new File(workspace.newFolder('logs'), '''testrun.«jobId.toString».1912-06-23.log''').toPath
+		val uploadStream = ArgumentCaptor.forClass(InputStream)
+
+		// when
+		logFile.createFile
+		logFile.write(#['Hello'], UTF_8, WRITE, APPEND)
+		logFile.write(#['World'], UTF_8, WRITE, APPEND)
+
+		// then
+		executor.shutdown()
+		executor.awaitTermination(5, TimeUnit.SECONDS)
+		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString),
+			uploadStream.capture)
+		assertThat(IOUtils.toString(uploadStream.value, UTF_8)).isEqualTo('''
+			Hello
+			World
+		'''.toString)
 	}
 
 }
