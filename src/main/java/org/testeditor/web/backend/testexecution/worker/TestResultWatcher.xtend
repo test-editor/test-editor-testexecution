@@ -39,7 +39,8 @@ class TestResultWatcher {
 	val extension ScreenshotFinder screenshotFinder
 	val testArtifactRegistryMatcher = FileSystems.getDefault().getPathMatcher('''glob:**/«artifactRegistryPath»/**.yaml''')
 	val String workerUrl
-	val watchedDirectories = <WatchKey,Path>newHashMap
+	val watchedDirectories = <WatchKey, Path>newHashMap
+	val alreadyHandled = <Path>newHashSet
 
 	@Inject
 	new(@Named("workspace") Provider<File> workspaceProvider, TestExecutionManagerClient managerClient, Executor executor,
@@ -135,7 +136,6 @@ class TestResultWatcher {
 		if (key.suiteId == currentJob.suiteId && key.suiteRunId == currentJob.suiteRunId) {
 			logger.info('''reading new test artifact registry entries for key "«key»"''')
 			key.screenshotPathsForTestStep.forEach [
-				logger.info('''starting to upload file «it» to test execution manager''')
 				workspace.resolve(it).upload(key, it)
 			]
 		} else {
@@ -147,10 +147,15 @@ class TestResultWatcher {
 	private def void handleLogs(Path it) {
 		upload(currentJob, workspace.relativize(it).toString)
 	}
-	
+
 	private def upload(Path fileToStream, TestExecutionKey key, String relativePath) {
-		logger.info('''starting to upload file «relativePath» to test execution manager''')
-		managerClient.upload(workerUrl, key, relativePath, fileToStream.newInputStream(READ))
+		if (alreadyHandled.contains(fileToStream)) {
+			logger.info('''skipping file "«relativePath»" (already uploaded)''')
+		} else {
+			logger.info('''starting to upload file «relativePath» to test execution manager''')
+			alreadyHandled.add(fileToStream)
+			managerClient.upload(workerUrl, key, relativePath, fileToStream.newInputStream(READ))
+		}
 	}
 
 }
