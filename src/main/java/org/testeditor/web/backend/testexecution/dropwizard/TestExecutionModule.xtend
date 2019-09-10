@@ -26,6 +26,7 @@ import org.testeditor.web.backend.testexecution.util.RecursiveHierarchicalLineSk
 import org.testeditor.web.backend.testexecution.workspace.WorkspaceProvider
 
 import static com.google.inject.name.Names.named
+import java.util.concurrent.Executors
 
 class TestExecutionModule extends AbstractModule {
 
@@ -35,6 +36,7 @@ class TestExecutionModule extends AbstractModule {
 		binder => [
 			bind(Executor).toInstance(ForkJoinPool.commonPool)
 			bind(Executor).annotatedWith(named("TestExecutionManagerExecutor")).toInstance(ForkJoinPool.commonPool)
+			bind(Executor).annotatedWith(named("watcherExecutor")).toInstance(Executors.newSingleThreadExecutor)
 			bind(ScreenshotFinder).to(SubStepAggregatingScreenshotFinder)
 			bind(LogFinder).to(ScanningLogFinder)
 			bind(HierarchicalLineSkipper).to(RecursiveHierarchicalLineSkipper)

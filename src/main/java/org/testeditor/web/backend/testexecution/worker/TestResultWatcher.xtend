@@ -43,7 +43,7 @@ class TestResultWatcher {
 	val alreadyHandled = <Path>newHashSet
 
 	@Inject
-	new(@Named("workspace") Provider<File> workspaceProvider, TestExecutionManagerClient managerClient, Executor executor,
+	new(@Named("workspace") Provider<File> workspaceProvider, TestExecutionManagerClient managerClient, @Named("watcherExecutor") Executor executor,
 		ScreenshotFinder screenshotFinder, TestExecutionDropwizardConfiguration config) {
 		this.managerClient = managerClient
 		this.workspace = workspaceProvider.get.toPath

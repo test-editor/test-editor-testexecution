@@ -43,9 +43,9 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 	var WorkerAPI state
 
 	@Inject
-	new(TestExecutionManagerClient executionManager, TestExecutorProvider executorProvider, WorkerStatusManager statusManager, TestLogWriter logWriter) {
+	new(TestExecutionManagerClient executionManager, TestExecutorProvider executorProvider, WorkerStatusManager statusManager, TestLogWriter logWriter, TestResultWatcher watcher) {
 		states = #{
-			IDLE -> new IdleWorker(this, executionManager, logWriter, executorProvider, statusManager),
+			IDLE -> new IdleWorker(this, executionManager, logWriter, executorProvider, statusManager, watcher),
 			BUSY -> new BusyWorker(this, statusManager)
 		}
 		state = states.get(IDLE)
@@ -110,6 +110,7 @@ class IdleWorker implements WorkerAPI {
 	val extension TestLogWriter logWriter
 	val TestExecutorProvider executorProvider
 	val WorkerStatusManager statusManager
+	val extension TestResultWatcher
 
 	override Response executeTestJob(TestJob job) {
 		try {
@@ -122,6 +123,9 @@ class IdleWorker implements WorkerAPI {
 				info('''Starting test for resourcePaths='«job.resourcePaths.join(',')»' logging into logFile='«logFile»', callTreeFile='«callTreeFileName»'.''')
 			val callTreeFile = new File(callTreeFileName)
 			callTreeFile.writeCallTreeYamlPrefix(executorProvider.yamlFileHeader(executionKey, Instant.now, job.resourcePaths))
+			
+			job.id.watch // TODO or is it executionKey? Clean that up!!
+			
 			val testProcess = builder.start
 			statusManager.addTestSuiteRun(testProcess) [ status |
 				callTreeFile.writeCallTreeYamlSuffix(status)
