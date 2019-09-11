@@ -7,7 +7,10 @@ import io.dropwizard.client.JerseyClientBuilder
 import io.dropwizard.setup.Environment
 import java.io.File
 import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 import java.util.concurrent.ForkJoinPool
+import org.glassfish.jersey.client.ClientProperties
+import org.glassfish.jersey.client.RequestEntityProcessing
 import org.glassfish.jersey.client.rx.RxClient
 import org.glassfish.jersey.client.rx.java8.RxCompletionStageInvoker
 import org.glassfish.jersey.logging.LoggingFeature
@@ -26,7 +29,6 @@ import org.testeditor.web.backend.testexecution.util.RecursiveHierarchicalLineSk
 import org.testeditor.web.backend.testexecution.workspace.WorkspaceProvider
 
 import static com.google.inject.name.Names.named
-import java.util.concurrent.Executors
 
 class TestExecutionModule extends AbstractModule {
 
@@ -65,6 +67,7 @@ class TestExecutionModule extends AbstractModule {
 		if (rxClient === null) {
 			rxClient = new JerseyClientBuilder(environment) //
 			.using(configuration.jerseyClientConfiguration) //
+			.withProperty(ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.CHUNKED)
 			.withProperty(LoggingFeature.LOGGING_FEATURE_VERBOSITY_CLIENT, LoggingFeature.Verbosity.PAYLOAD_TEXT) //
 			.buildRx(TestExecutionApplication.simpleName, RxCompletionStageInvoker)
 		}
