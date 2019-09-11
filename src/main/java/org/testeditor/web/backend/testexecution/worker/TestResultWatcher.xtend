@@ -138,6 +138,7 @@ class TestResultWatcher {
 			key.screenshotPathsForTestStep.forEach [
 				workspace.resolve(it).upload(key, it)
 			]
+			workspace.resolve(it).upload(key, workspace.relativize(it).toString)
 		} else {
 			logger.info('''ignoring file "«it»", not relevant for current job "«currentJob»"''')
 		}

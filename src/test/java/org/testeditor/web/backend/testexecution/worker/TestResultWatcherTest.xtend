@@ -197,6 +197,44 @@ class TestResultWatcherTest {
 		verify(managerClientMock).upload(eq(workerUrl.toString), eq(fullId), eq(workspace.root.toPath.relativize(secondScreenshotFile).toString),
 			any(InputStream))
 	}
+	
+	@Test
+	def void uploadsArtifactRegistryFiles() {
+		// given
+		val baseId = new TestExecutionKey('suiteId', 'suiteRunId')
+		val fullId = baseId.deriveWithCaseRunId('caseRunId').deriveWithCallTreeId('callTreeId')
+		testResultWatcher.watch(baseId)
+		val screenshotsDir = workspace.newFolder('screenshots')
+		new File(screenshotsDir, 'firstScreenshot.png').toPath.createFile
+		new File(screenshotsDir, 'secondScreenshot.png').toPath.createFile
+
+		val testArtifactDir = new File(workspace.newFolder('.testexecution'), 'artifacts')
+		val suiteDir = new File(testArtifactDir, fullId.suiteId)
+		val suiteRunDir = new File(suiteDir, fullId.suiteRunId)
+		val testRunDir = new File(suiteRunDir, fullId.caseRunId)
+		val callTreeNodeArtifactFile = new File(testRunDir, fullId.callTreeId + '.yaml').toPath
+		testRunDir.mkdirs
+
+		when(screenshotFinderMock.toTestExecutionKey(eq(suiteRunDir.toPath))).thenReturn(baseId)
+		when(screenshotFinderMock.toTestExecutionKey(eq(callTreeNodeArtifactFile))).thenReturn(fullId)
+		when(screenshotFinderMock.getScreenshotPathsForTestStep(eq(fullId))).thenReturn(
+			#['screenshots/firstScreenshot.png', 'screenshots/secondScreenshot.png'])
+		
+		val content = #[ '"screenshot": "screenshots/firstScreenshot.png"', '"screenshot": "screenshots/secondScreenshot.png"' ]
+
+		// when
+		callTreeNodeArtifactFile.write(content, UTF_8, WRITE, APPEND, CREATE)
+		assertThat(callTreeNodeArtifactFile).exists
+
+		// then
+		executor.shutdown()
+		executor.awaitTermination(5, TimeUnit.SECONDS)
+		val contentCaptor = ArgumentCaptor.forClass(InputStream)
+		verify(managerClientMock).upload(eq(workerUrl.toString), eq(fullId), eq(workspace.root.toPath.relativize(callTreeNodeArtifactFile).toString),
+			contentCaptor.capture)
+		assertThat(IOUtils.readLines(contentCaptor.value, UTF_8)).containsExactly(content)
+	}
+	
 
 	@Test
 	def void uploadsCorrectFileContent() {
