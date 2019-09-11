@@ -152,7 +152,9 @@ class TestResultWatcher {
 	private def upload(Path fileToStream, TestExecutionKey key, String relativePath) {
 		if (alreadyHandled.contains(fileToStream)) {
 			logger.info('''skipping file "«relativePath»" (already uploaded)''')
-		} else {
+		} else if (!fileToStream.exists) {
+			logger.error('''cannot upload non-existing but registered test artifact file "«relativePath»"''')
+		} else{
 			logger.info('''starting to upload file «relativePath» to test execution manager''')
 			alreadyHandled.add(fileToStream)
 			managerClient.upload(workerUrl, key, relativePath, fileToStream.newInputStream(READ))

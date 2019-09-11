@@ -235,6 +235,38 @@ class TestResultWatcherTest {
 		assertThat(IOUtils.readLines(contentCaptor.value, UTF_8)).containsExactly(content)
 	}
 	
+	@Test
+	def void skipsOverNonExistingTestArtifactsGracefully() {
+		val baseId = new TestExecutionKey('suiteId', 'suiteRunId')
+		val fullId = baseId.deriveWithCaseRunId('caseRunId').deriveWithCallTreeId('callTreeId')
+		testResultWatcher.watch(baseId)
+		val screenshotsDir = workspace.newFolder('screenshots')
+		val existingScreenshotFile = new File(screenshotsDir, 'existingScreenshot.png').toPath.createFile
+
+		val testArtifactDir = new File(workspace.newFolder('.testexecution'), 'artifacts')
+		val suiteDir = new File(testArtifactDir, fullId.suiteId)
+		val suiteRunDir = new File(suiteDir, fullId.suiteRunId)
+		val testRunDir = new File(suiteRunDir, fullId.caseRunId)
+		val callTreeNodeArtifactFile = new File(testRunDir, fullId.callTreeId + '.yaml').toPath
+		testRunDir.mkdirs
+
+		when(screenshotFinderMock.toTestExecutionKey(eq(suiteRunDir.toPath))).thenReturn(baseId)
+		when(screenshotFinderMock.toTestExecutionKey(eq(callTreeNodeArtifactFile))).thenReturn(fullId)
+		when(screenshotFinderMock.getScreenshotPathsForTestStep(eq(fullId))).thenReturn(
+			#['screenshots/nonExistingScreenshot.png', 'screenshots/existingScreenshot.png'])
+		
+		val content = #[ '"screenshot": "screenshots/nonExistingScreenshot.png"', '"screenshot": "screenshots/existingScreenshot.png"' ]
+
+		// when
+		callTreeNodeArtifactFile.write(content, UTF_8, WRITE, APPEND, CREATE)
+		assertThat(callTreeNodeArtifactFile).exists
+
+		// then
+		executor.shutdown()
+		executor.awaitTermination(5, TimeUnit.SECONDS)
+		verify(managerClientMock).upload(eq(workerUrl.toString), eq(fullId), eq(workspace.root.toPath.relativize(existingScreenshotFile).toString),
+			any(InputStream))
+	}
 
 	@Test
 	def void uploadsCorrectFileContent() {
