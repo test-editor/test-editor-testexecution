@@ -314,5 +314,28 @@ class TestResultWatcherTest {
 			World
 		'''.toString)
 	}
+	
+	@Test
+	def void registersToWatchAllSubdirectoriesRecursively() {
+		// given
+		val jobId = new TestExecutionKey('jobId')
+		val logDir = workspace.newFolder('logs')
+		val nestedDir = workspace.newFolder('sampleDir', 'nestedDir')
+		
+		val logFile = new File(logDir, '''testrun.«jobId.toString».1912-06-23.log''').toPath
+		val anotherFile = new File(nestedDir, '''testrun.«jobId.toString».1912-06-23.another.log''').toPath
+
+		
+		// when
+		testResultWatcher.watch(jobId)
+		logFile.createFile
+		anotherFile.createFile
+		
+		// then
+		executor.shutdown()
+		executor.awaitTermination(5, TimeUnit.SECONDS)
+		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString), any(InputStream))
+		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(anotherFile).toString), any(InputStream))
+	}
 
 }

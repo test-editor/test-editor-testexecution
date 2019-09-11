@@ -22,6 +22,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
 
 import static extension java.nio.file.Files.exists
+import static extension java.nio.file.Files.isDirectory
 import static extension java.nio.file.Files.isRegularFile
 import static extension java.nio.file.Files.newInputStream
 import static extension java.nio.file.Files.walk
@@ -47,12 +48,7 @@ class TestResultWatcher {
 		ScreenshotFinder screenshotFinder, TestExecutionDropwizardConfiguration config) {
 		this.managerClient = managerClient
 		this.workspace = workspaceProvider.get.toPath
-		workspace.watchDirectory
-		workspace.resolve(artifactRegistryPath) => [
-			if (exists) {
-				watchDirectory
-			}
-		]
+		workspace.walk.filter[isDirectory].forEach[watchDirectory]
 		executor.execute[startWatching]
 		this.screenshotFinder = screenshotFinder
 		this.workerUrl = config.workerUrl.toString
@@ -70,21 +66,17 @@ class TestResultWatcher {
 				val watchKey = key
 				val events = key.pollEvents
 				logger.info('''received new batch of file system events («key»)''')
-				if (currentJob !== null) {
-					if (events.empty) {
-						logger.warn('''no events''')
-					}
-					events.reject [
-						kind == StandardWatchEventKinds.OVERFLOW => [
-							logger.warn('cannot keep up with file system events')
-						]
-					].map [
-						logger.info('''detected "«kind»" at path "«context»"''')
-						watchedDirectories.get(watchKey).resolve(context as Path)
-					].forEach[watchOrUpload]
-				} else {
-					logger.info('discarding event (no job to watch)')
+				if (events.empty) {
+					logger.warn('''no events''')
 				}
+				events.reject [
+					kind == StandardWatchEventKinds.OVERFLOW => [
+						logger.warn('cannot keep up with file system events')
+					]
+				].map [
+					logger.info('''detected "«kind»" at path "«context»"''')
+					watchedDirectories.get(watchKey).resolve(context as Path)
+				].forEach[watchOrUpload]
 				logger.info('processed current batch of file system events')
 				key.reset
 			}
@@ -105,12 +97,16 @@ class TestResultWatcher {
 	private def void watchOrUpload(Path it) {
 		walk.forEach [
 			if (isRegularFile) {
-				if (isLogFile) {
-					handleLogs
-				} else if (isArtifactRegistry) {
-					handleArtifacts
+				if (currentJob !== null) {
+					if (isLogFile) {
+						handleLogs
+					} else if (isArtifactRegistry) {
+						handleArtifacts
+					} else {
+						logger.info('''ignoring file "«it»", not relevant for current job "«currentJob»"''')
+					}
 				} else {
-					logger.info('''ignoring file "«it»", not relevant for current job "«currentJob»"''')
+					logger.info('discarding event (no job to watch)')
 				}
 			} else {
 				logger.info('''watching directory "«toString»"''')
@@ -154,7 +150,7 @@ class TestResultWatcher {
 			logger.info('''skipping file "«relativePath»" (already uploaded)''')
 		} else if (!fileToStream.exists) {
 			logger.error('''cannot upload non-existing but registered test artifact file "«relativePath»"''')
-		} else{
+		} else {
 			logger.info('''starting to upload file «relativePath» to test execution manager''')
 			alreadyHandled.add(fileToStream)
 			managerClient.upload(workerUrl, key, relativePath, fileToStream.newInputStream(READ))
