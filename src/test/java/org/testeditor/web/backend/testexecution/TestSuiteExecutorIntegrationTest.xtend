@@ -25,13 +25,13 @@ import static org.assertj.core.api.Assertions.*
 class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 
 	val workerRule = createWorkerRule(
-		[workspaceRoot.root.path],
+		[workerWorkspace.root.path],
 		[setupRemoteGitRepository],
 		['''http://localhost:«serverPort»/testexecution/manager/workers''']
 	)
 
 	@Rule
-	public val extension SysIoPipeRuleChain = new SysIoPipeRuleChain(remoteGitFolder, workspaceRoot, dropwizardAppRule, workerRule)
+	public val extension SysIoPipeRuleChain = new SysIoPipeRuleChain(remoteGitFolder, managerWorkspace, workerWorkspace, dropwizardAppRule, workerRule)
 
 	@Before
 	def void waitForWorkerRegistration() {
@@ -155,7 +155,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	@Test
 	def void testThatTestexecutionIsInvoked() {
 		// given
-		val workspaceRootPath = workspaceRoot.root.toPath
+		val workspaceRootPath = managerWorkspace.root.toPath
 		val testFile = 'test.tcl'
 		remoteGitFolder.newFile(testFile).commitInRemoteRepository
 		remoteGitFolder.newFile('gradlew') => [
@@ -416,7 +416,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
 		response.status.assertEquals(CREATED.statusCode)
 		createTestRequest(testKey).get // wait for completion
-		new File(workspaceRoot.root, '.testexecution/artifacts/0/0/1/ID2.yaml').exists.assertTrue(
+		new File(managerWorkspace.root, '.testexecution/artifacts/0/0/1/ID2.yaml').exists.assertTrue(
 			'Mocked process did not write yaml file with screenshot information.')
 
 		// when
@@ -477,7 +477,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
 		response.status.assertEquals(CREATED.statusCode)
 		createTestRequest(testKey).get // wait for completion
-		childKeys.forall[new File(workspaceRoot.root, '''.testexecution/artifacts/0/0/1/«it».yaml''').exists].assertTrue(
+		childKeys.forall[new File(managerWorkspace.root, '''.testexecution/artifacts/0/0/1/«it».yaml''').exists].assertTrue(
 			'Mocked process did not write yaml file with screenshot information.')
 
 		// when
@@ -757,7 +757,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
 		response.status.assertEquals(CREATED.statusCode)
 		createTestRequest(testKey).get // wait for completion
-		new File(workspaceRoot.root, '.testexecution/artifacts/0/0/1/ID9.yaml').exists.assertTrue(
+		new File(managerWorkspace.root, '.testexecution/artifacts/0/0/1/ID9.yaml').exists.assertTrue(
 			'Mocked process did not write yaml file with screenshot information.')
 
 		// when
@@ -849,7 +849,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
 		response.status.assertEquals(CREATED.statusCode)
 		createTestRequest(testKey).get // wait for completion
-		new File(workspaceRoot.root, '.testexecution/artifacts/0/0/1/ID9.yaml').exists.assertTrue(
+		new File(workerWorkspace.root, '.testexecution/artifacts/0/0/1/ID9.yaml').exists.assertTrue(
 			'Mocked process did not write yaml file with screenshot information.')
 
 		// when
@@ -924,9 +924,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	def void testThatfAllRunningAndTerminatedTestsIsReturned() {
+	def void testThatAllRunningAndTerminatedTestsAreReturned() {
 		// given
-		new File(workspaceRoot.root, '''calledCount.txt''').delete
+		new File(managerWorkspace.root, '''calledCount.txt''').delete
 		remoteGitFolder.newFile('''gradlew''') => [
 			executable = true
 			JGitTestUtil.write(it, '''
@@ -952,7 +952,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 			remoteGitFolder.newFile('''Test«name».tcl''').commitInRemoteRepository
 			return '''Test«name».tcl'''
 		].forEach [ name, index |
-			new File(workspaceRoot.root, '''finished.txt''').delete
+			new File(managerWorkspace.root, '''finished.txt''').delete
 			val response = createLaunchNewRequest().post(Entity.entity(#[name], MediaType.APPLICATION_JSON_TYPE))
 			assertThat(response.status).isEqualTo(CREATED.statusCode)
 			sysIoPipeRule.systemOut.println(
@@ -1010,7 +1010,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 			commitInRemoteRepository
 		]
 		val launchResponse = createLaunchNewRequest().buildPost(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE)).submit.get
-		
+
 		val testRunIdMatcher = Pattern.compile("\\[http://localhost:[0-9]+/test-suite/(\\d+)/(\\d+)\\]").matcher(
 			launchResponse.headers.get("Location").toString)
 		testRunIdMatcher.find.assertTrue
@@ -1080,7 +1080,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 
 		// then
 		assertThat(actualTestStatus.readEntity(String)).isEqualTo('SUCCESS')
-		val executionResult = workspaceRoot.root.toPath.resolve('updated.state').toFile
+		val executionResult = workerWorkspace.root.toPath.resolve('updated.state').toFile
 		assertThat(executionResult).exists
 	}
 

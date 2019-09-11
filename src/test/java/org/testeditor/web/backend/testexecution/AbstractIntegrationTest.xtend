@@ -16,7 +16,6 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.junit.JGitTestUtil
 import org.eclipse.jgit.revwalk.RevCommit
 import org.glassfish.jersey.client.ClientProperties
-import org.junit.After
 import org.junit.Before
 import org.junit.rules.TemporaryFolder
 import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionApplication
@@ -32,14 +31,14 @@ abstract class AbstractIntegrationTest {
 	protected val String serverPort = freePort
 	protected val String token = createToken
 
-	protected val TemporaryFolder workspaceRoot = new TemporaryFolder
-
+	protected val TemporaryFolder managerWorkspace = new TemporaryFolder
+	protected val TemporaryFolder workerWorkspace = new TemporaryFolder
 	protected val TemporaryFolder remoteGitFolder = new TemporaryFolder
 
 	protected def List<ConfigOverride> getConfigs() {
 		return #[
 			config('server.applicationConnectors[0].port', serverPort),
-			config('localRepoFileRoot', [workspaceRoot.root.path]),
+			config('localRepoFileRoot', [managerWorkspace.root.path]),
 			config('remoteRepoUrl', [setupRemoteGitRepository])
 		]
 	}

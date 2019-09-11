@@ -16,13 +16,13 @@ import static org.assertj.core.api.Assertions.*
 class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 
 	val workerRule = createWorkerRule(
-		[workspaceRoot.root.path],
+		[workerWorkspace.root.path],
 		[setupRemoteGitRepository],
 		['''http://localhost:«serverPort»/testexecution/manager/workers''']
 	)
 
 	@Rule
-	public val extension SysIoPipeRuleChain = new SysIoPipeRuleChain(remoteGitFolder, workspaceRoot, dropwizardAppRule, workerRule)
+	public val extension SysIoPipeRuleChain = new SysIoPipeRuleChain(remoteGitFolder, managerWorkspace, workerWorkspace, dropwizardAppRule, workerRule)
 
 	@Test(timeout=5000)
 	def void workerRegistersWithManagerAtStartup() {
@@ -37,7 +37,7 @@ class TestExecutionManagerIntegrationTest extends AbstractIntegrationTest {
 		// given
 		waitForLogLine('''«TestExecutionManagerClient.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"''')
 
-		val workspaceRootPath = workspaceRoot.root.toPath
+		val workspaceRootPath = managerWorkspace.root.toPath
 		val testFile = 'test.tcl'
 		remoteGitFolder.newFile(testFile).commitInRemoteRepository
 		remoteGitFolder.newFile('gradlew') => [
