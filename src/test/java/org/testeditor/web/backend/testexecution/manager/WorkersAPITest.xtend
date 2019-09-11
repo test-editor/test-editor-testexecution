@@ -1,28 +1,43 @@
 package org.testeditor.web.backend.testexecution.manager
 
+import java.io.File
 import java.net.URI
+import javax.inject.Provider
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriBuilder
+import org.apache.commons.io.IOUtils
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
+import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.manager.TestExecutionManager.AlreadyRegisteredException
 import org.testeditor.web.backend.testexecution.manager.TestExecutionManager.NoSuchWorkerException
 
+import static java.nio.charset.StandardCharsets.UTF_8
 import static org.assertj.core.api.Assertions.assertThat
 import static org.mockito.ArgumentMatchers.*
 import static org.mockito.Mockito.doNothing
 import static org.mockito.Mockito.doThrow
 import static org.mockito.Mockito.when
 
+import static extension java.nio.file.Files.readAllLines
+
 abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
+	
+	@Rule
+	public TemporaryFolder workspace = new TemporaryFolder
 
 	@Mock
 	protected TestExecutionManager manager
 	@Mock
 	protected UriAppender appender
+	
+	@Mock
+	protected Provider<File> workspaceProvider
 
 	@InjectMocks
 	protected WorkersResource _workersResource
@@ -31,11 +46,11 @@ abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
 		initMocks
 		return _workersResource
 	}
-	
+
 	def void initMocks() {
 		if (_workersResource === null) {
 			MockitoAnnotations.initMocks(this)
-		}		
+		}
 	}
 
 	@Before
@@ -44,6 +59,12 @@ abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
 		when(appender.append(any, anyString)).then [
 			UriBuilder.fromUri(baseUrl).path(arguments.get(1) as String).build
 		]
+	}
+	
+	@Before
+	def void setupWorkspace() {
+		initMocks
+		when(workspaceProvider.get).thenReturn(workspace.root)
 	}
 
 	@Test
@@ -66,8 +87,7 @@ abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
 		val workerUri = new URI('http://worker.example.org')
 		val firstWorker = new WorkerClient(workerUri, emptySet)
 		val secondWorker = new WorkerClient(workerUri, #{'linux', 'chrome76'})
-		when(manager.addWorker(any(WorkerClient))).thenReturn('http://worker.example.org').thenThrow(
-			new AlreadyRegisteredException(workerUri))
+		when(manager.addWorker(any(WorkerClient))).thenReturn('http://worker.example.org').thenThrow(new AlreadyRegisteredException(workerUri))
 
 		// when
 		val firstResponse = systemUnderTest.registerWorker(firstWorker)
@@ -111,9 +131,12 @@ abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
 	}
 
 	@Test
-	def void workersCannotBeDeletedTwice() { // Note: DELETE should be idempotent, and it is (deleting multiple times does not change the server state).
-	// The response is _not_ considered for idempotency, see 
-	// given							//       https://stackoverflow.com/questions/24713945/does-idempotency-include-response-codes/24713946#24713946
+	def void workersCannotBeDeletedTwice() {
+		// Note: DELETE should be idempotent, and it is (deleting multiple times does not change the server state).
+		// The response is _not_ considered for idempotency, see 
+		// https://stackoverflow.com/questions/24713945/does-idempotency-include-response-codes/24713946#24713946
+		//
+		// given								 
 		val worker = new WorkerClient(new URI('http://worker.example.org'), emptySet)
 		when(manager.addWorker(any(WorkerClient))).thenReturn('http://worker.example.org')
 		doNothing.doThrow(NoSuchWorkerException).when(manager).removeWorker(any(String))
@@ -129,6 +152,27 @@ abstract class WorkersAPITest extends AbstractResourceTest<WorkersAPI> {
 		assertThat(firstResponse.status).isEqualTo(200)
 		assertThat(secondResponse.status).isEqualTo(404)
 		assertThat(secondResponse.getBody(String)).isEqualTo('Worker does not exist. It may have already been deleted.')
+	}
+
+	@Test
+	def void uploadedTestResultsAreStoredAsFiles() {
+		// given
+		val workerId = 'http://worker.example.org'
+		val jobId = new TestExecutionKey('jobId')
+		val fileName = 'logs/jobId.log'
+		val content = '''
+			Hello
+			World
+		'''
+		// when
+		val response = systemUnderTest.upload(workerId, jobId, fileName, IOUtils.toInputStream(content, UTF_8))
+
+		// then
+		assertThat(response.status).isEqualTo(200)
+		val file = workspace.root.toPath.resolve(fileName)
+		assertThat(file).exists
+		assertThat(file.readAllLines).containsExactly(#['Hello', 'World'])
+		
 	}
 
 	private def <T> T getBody(Response response, Class<T> type) {

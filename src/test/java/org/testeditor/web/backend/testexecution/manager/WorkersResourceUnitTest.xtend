@@ -46,7 +46,7 @@ class WorkersResourceUnitTest extends WorkersAPITest implements WorkersAPI {
 	}
 	
 	override upload(String workerId, TestExecutionKey jobId, String fileName, InputStream content) {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		return workersResource.upload(workerId, jobId, fileName, content)
 	}
 	
 	override updateStatus(String workerId, TestExecutionKey jobId, TestStatus status) {

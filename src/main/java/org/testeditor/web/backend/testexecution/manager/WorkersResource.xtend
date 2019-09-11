@@ -1,7 +1,10 @@
 package org.testeditor.web.backend.testexecution.manager
 
+import java.io.File
 import java.io.InputStream
 import javax.inject.Inject
+import javax.inject.Named
+import javax.inject.Provider
 import javax.ws.rs.DELETE
 import javax.ws.rs.Encoded
 import javax.ws.rs.POST
@@ -19,18 +22,23 @@ import org.testeditor.web.backend.testexecution.worker.WorkerResource
 import static java.net.URLEncoder.encode
 import static java.nio.charset.StandardCharsets.UTF_8
 
+import static extension java.nio.file.Files.copy
+import static extension java.nio.file.Files.createDirectories
+
 @Path('/testexecution/manager/workers')
 class WorkersResource implements WorkersAPI {
 
 	static val logger = LoggerFactory.getLogger(WorkerResource)
+
+	@Inject @Named("workspace") Provider<File> workspace
 
 	@Inject
 	TestExecutionManager manager
 
 	@Inject
 	extension UriAppender uriAppender
-	
-	@Context 
+
+	@Context
 	UriInfo uriInfo
 
 	@POST
@@ -48,15 +56,22 @@ class WorkersResource implements WorkersAPI {
 		manager.removeWorker(id)
 		return Response.ok.build
 	}
+
 	@Path('/{workerId}/{jobId}/{file}')
 	@POST
-	override upload(@PathParam(value='workerId') @Encoded String workerId, @PathParam(value='jobId') TestExecutionKey jobId, @PathParam('file') String fileName, InputStream content) {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+	override upload(@PathParam(value='workerId') @Encoded String workerId, @PathParam(value='jobId') TestExecutionKey jobId,
+		@PathParam('file') String fileName, InputStream content) {
+		val targetFile = workspace.get.toPath.resolve(fileName)
+		targetFile.parent.createDirectories
+		content.copy(targetFile)
+
+		return Response.ok.build
 	}
-	
+
 	@Path('/{workerId}/{jobId}')
 	@PUT
-	override updateStatus(@PathParam(value='workerId') @Encoded String workerId, @PathParam(value='jobId') TestExecutionKey jobId, TestStatus status) {
+	override updateStatus(@PathParam(value='workerId') @Encoded String workerId, @PathParam(value='jobId') TestExecutionKey jobId,
+		TestStatus status) {
 		manager.update(jobId)
 		return Response.ok.build
 	}
