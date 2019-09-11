@@ -55,13 +55,14 @@ class TestExecutionManagerClient {
 		throw new UnsupportedOperationException("TODO: auto-generated method stub")
 	}
 
-	def void upload(String workerId, TestExecutionKey jobId, String fileName, InputStream content) {
+	def void upload(String workerId, TestExecutionKey jobId, String fileName, StreamingOutput content) {
 		val uri = UriBuilder.fromUri(testExecutionManagerUrl).path(encode(workerUri.get.toString, UTF_8)).path(jobId.toString).path(
 			encode(fileName, UTF_8)).build
-		val body = [ OutputStream out |
-			content.transferTo(out)
-		] as StreamingOutput
-		client.get.postAsync(uri, body)
+		client.get.postAsync(uri, content)
+	}
+
+	def void upload(String workerId, TestExecutionKey jobId, String fileName, InputStream content) {
+		upload(workerId, jobId, fileName, [OutputStream out|content.transferTo(out)] as StreamingOutput)
 	}
 
 	def void updateStatus(TestExecutionKey jobId, TestStatus status) {

@@ -1,5 +1,6 @@
 package org.testeditor.web.backend.testexecution.worker
 
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.net.URL
@@ -83,7 +84,7 @@ class TestResultWatcherTest {
 		// then
 		executor.shutdown()
 		executor.awaitTermination(5, TimeUnit.SECONDS)
-		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString), any(InputStream))
+		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString), any(LogTail2Stream))
 	}
 
 	@Test
@@ -105,7 +106,7 @@ class TestResultWatcherTest {
 		executor.shutdown()
 		executor.awaitTermination(5, TimeUnit.SECONDS)
 		verify(managerClientMock).upload(eq(configuredWorkerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString),
-			any(InputStream))
+			any(LogTail2Stream))
 	}
 
 	@Test
@@ -156,8 +157,8 @@ class TestResultWatcherTest {
 		// then
 		executor.shutdown()
 		executor.awaitTermination(5, TimeUnit.SECONDS)
-		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString), any(InputStream))
-		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(yamlFile).toString), any(InputStream))
+		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString), any(LogTail2Stream))
+		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(yamlFile).toString), any(LogTail2Stream))
 	}
 
 	@Test
@@ -197,7 +198,7 @@ class TestResultWatcherTest {
 		verify(managerClientMock).upload(eq(workerUrl.toString), eq(fullId), eq(workspace.root.toPath.relativize(secondScreenshotFile).toString),
 			any(InputStream))
 	}
-	
+
 	@Test
 	def void uploadsArtifactRegistryFiles() {
 		// given
@@ -219,8 +220,8 @@ class TestResultWatcherTest {
 		when(screenshotFinderMock.toTestExecutionKey(eq(callTreeNodeArtifactFile))).thenReturn(fullId)
 		when(screenshotFinderMock.getScreenshotPathsForTestStep(eq(fullId))).thenReturn(
 			#['screenshots/firstScreenshot.png', 'screenshots/secondScreenshot.png'])
-		
-		val content = #[ '"screenshot": "screenshots/firstScreenshot.png"', '"screenshot": "screenshots/secondScreenshot.png"' ]
+
+		val content = #['"screenshot": "screenshots/firstScreenshot.png"', '"screenshot": "screenshots/secondScreenshot.png"']
 
 		// when
 		callTreeNodeArtifactFile.write(content, UTF_8, WRITE, APPEND, CREATE)
@@ -234,7 +235,7 @@ class TestResultWatcherTest {
 			contentCaptor.capture)
 		assertThat(IOUtils.readLines(contentCaptor.value, UTF_8)).containsExactly(content)
 	}
-	
+
 	@Test
 	def void skipsOverNonExistingTestArtifactsGracefully() {
 		val baseId = new TestExecutionKey('suiteId', 'suiteRunId')
@@ -254,8 +255,8 @@ class TestResultWatcherTest {
 		when(screenshotFinderMock.toTestExecutionKey(eq(callTreeNodeArtifactFile))).thenReturn(fullId)
 		when(screenshotFinderMock.getScreenshotPathsForTestStep(eq(fullId))).thenReturn(
 			#['screenshots/nonExistingScreenshot.png', 'screenshots/existingScreenshot.png'])
-		
-		val content = #[ '"screenshot": "screenshots/nonExistingScreenshot.png"', '"screenshot": "screenshots/existingScreenshot.png"' ]
+
+		val content = #['"screenshot": "screenshots/nonExistingScreenshot.png"', '"screenshot": "screenshots/existingScreenshot.png"']
 
 		// when
 		callTreeNodeArtifactFile.write(content, UTF_8, WRITE, APPEND, CREATE)
@@ -274,7 +275,7 @@ class TestResultWatcherTest {
 		val jobId = new TestExecutionKey('jobId')
 		testResultWatcher.watch(jobId)
 		val logFile = new File(workspace.newFolder('logs'), '''testrun.«jobId.toString».1912-06-23.log''').toPath
-		val uploadStream = ArgumentCaptor.forClass(InputStream)
+		val uploadStream = ArgumentCaptor.forClass(LogTail2Stream)
 
 		// when
 		logFile.createFile
@@ -285,10 +286,17 @@ class TestResultWatcherTest {
 		executor.awaitTermination(5, TimeUnit.SECONDS)
 		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString),
 			uploadStream.capture)
-		assertThat(IOUtils.toString(uploadStream.value, UTF_8)).isEqualTo('''
-			Hello
-			World
-		'''.toString)
+
+		val out = new ByteArrayOutputStream
+		uploadStream.value => [
+			stop
+			write(out)
+			assertThat(out.toString(UTF_8)).isEqualTo('''
+				Hello
+				World
+			'''.toString)
+
+		]
 	}
 
 	@Test
@@ -297,7 +305,7 @@ class TestResultWatcherTest {
 		val jobId = new TestExecutionKey('jobId')
 		testResultWatcher.watch(jobId)
 		val logFile = new File(workspace.newFolder('logs'), '''testrun.«jobId.toString».1912-06-23.log''').toPath
-		val uploadStream = ArgumentCaptor.forClass(InputStream)
+		val uploadStream = ArgumentCaptor.forClass(LogTail2Stream)
 
 		// when
 		logFile.createFile
@@ -309,33 +317,39 @@ class TestResultWatcherTest {
 		executor.awaitTermination(5, TimeUnit.SECONDS)
 		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString),
 			uploadStream.capture)
-		assertThat(IOUtils.toString(uploadStream.value, UTF_8)).isEqualTo('''
-			Hello
-			World
-		'''.toString)
+		val out = new ByteArrayOutputStream
+		uploadStream.value => [
+			stop
+			write(out)
+			assertThat(out.toString(UTF_8)).isEqualTo('''
+				Hello
+				World
+			'''.toString)
+
+		]
 	}
-	
+
 	@Test
 	def void registersToWatchAllSubdirectoriesRecursively() {
 		// given
 		val jobId = new TestExecutionKey('jobId')
 		val logDir = workspace.newFolder('logs')
 		val nestedDir = workspace.newFolder('sampleDir', 'nestedDir')
-		
+
 		val logFile = new File(logDir, '''testrun.«jobId.toString».1912-06-23.log''').toPath
 		val anotherFile = new File(nestedDir, '''testrun.«jobId.toString».1912-06-23.another.log''').toPath
 
-		
 		// when
 		testResultWatcher.watch(jobId)
 		logFile.createFile
 		anotherFile.createFile
-		
+
 		// then
 		executor.shutdown()
 		executor.awaitTermination(5, TimeUnit.SECONDS)
-		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString), any(InputStream))
-		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(anotherFile).toString), any(InputStream))
+		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(logFile).toString), any(LogTail2Stream))
+		verify(managerClientMock).upload(eq(workerUrl.toString), eq(jobId), eq(workspace.root.toPath.relativize(anotherFile).toString),
+			any(LogTail2Stream))
 	}
 
 }

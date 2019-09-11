@@ -33,14 +33,14 @@ import static java.nio.file.StandardOpenOption.CREATE
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
 import static javax.ws.rs.core.Response.Status.CONFLICT
 import static javax.ws.rs.core.Response.Status.NOT_FOUND
-import static org.testeditor.web.backend.testexecution.worker.WorkerState.*
+import static org.testeditor.web.backend.testexecution.worker.WorkerStateEnum.*
 
 @Path('/worker')
 @Singleton
 class WorkerResource implements WorkerAPI, WorkerStateContext {
 
-	val Map<WorkerState, WorkerAPI> states
-	var WorkerAPI state
+	val Map<WorkerStateEnum, WorkerState> states
+	var WorkerState state
 
 	@Inject
 	new(TestExecutionManagerClient executionManager, TestExecutorProvider executorProvider, WorkerStatusManager statusManager, TestLogWriter logWriter, TestResultWatcher watcher) {
@@ -48,11 +48,12 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 			IDLE -> new IdleWorker(this, executionManager, logWriter, executorProvider, statusManager, watcher),
 			BUSY -> new BusyWorker(this, statusManager)
 		}
-		state = states.get(IDLE)
+		setState(IDLE)
 	}
 
-	override setState(WorkerState state) {
+	override setState(WorkerStateEnum state) {
 		this.state = states.get(state)
+		this.state.onEntry
 	}
 
 	static val logger = LoggerFactory.getLogger(WorkerResource)
@@ -78,39 +79,48 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 		return state.cancelTestJob
 	}
 
-	override transitionTo(WorkerState state, ()=>Void action) {
-		this.state = state
+	override transitionTo(WorkerStateEnum state, ()=>Void action) {
+		setState(state)
 		action.apply
 	}
 
 }
 
-enum WorkerState {
+enum WorkerStateEnum {
 
 	IDLE,
 	BUSY
 
 }
 
+interface WorkerState extends WorkerAPI {
+	def void onEntry()
+}
+
 interface WorkerStateContext {
 
-	def void setState(WorkerState state)
+	def void setState(WorkerStateEnum state)
 
-	def void transitionTo(WorkerState state, ()=>Void action)
+	def void transitionTo(WorkerStateEnum state, ()=>Void action)
 
 	def Logger getLogger()
 
 }
 
 @FinalFieldsConstructor
-class IdleWorker implements WorkerAPI {
+class IdleWorker implements WorkerState {
 
 	val extension WorkerStateContext
 	val TestExecutionManagerClient executionManager
 	val extension TestLogWriter logWriter
 	val TestExecutorProvider executorProvider
 	val WorkerStatusManager statusManager
-	val extension TestResultWatcher
+	val TestResultWatcher testResultWatcher
+	
+	
+	override onEntry() {
+		testResultWatcher.stopWatching
+	}
 
 	override Response executeTestJob(TestJob job) {
 		try {
@@ -124,7 +134,7 @@ class IdleWorker implements WorkerAPI {
 			val callTreeFile = new File(callTreeFileName)
 			callTreeFile.writeCallTreeYamlPrefix(executorProvider.yamlFileHeader(executionKey, Instant.now, job.resourcePaths))
 			
-			job.id.watch // TODO or is it executionKey? Clean that up!!
+			testResultWatcher.watch(job.id) // TODO or is it executionKey? Clean that up!!
 			
 			val testProcess = builder.start
 			statusManager.addTestSuiteRun(testProcess) [ status |
@@ -167,7 +177,7 @@ class IdleWorker implements WorkerAPI {
 }
 
 @FinalFieldsConstructor
-class BusyWorker implements WorkerAPI {
+class BusyWorker implements WorkerState {
 
 	extension val WorkerStateContext context
 	val WorkerStatusManager statusManager
@@ -194,6 +204,10 @@ class BusyWorker implements WorkerAPI {
 		}
 
 		return Response.ok(status.name).build
+	}
+	
+	override onEntry() {
+		
 	}
 
 }

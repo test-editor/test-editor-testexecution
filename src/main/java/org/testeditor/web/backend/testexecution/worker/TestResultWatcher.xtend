@@ -7,6 +7,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardWatchEventKinds
 import java.nio.file.WatchKey
+import java.util.Set
 import java.util.concurrent.Executor
 import javax.inject.Inject
 import javax.inject.Named
@@ -42,6 +43,7 @@ class TestResultWatcher {
 	val String workerUrl
 	val watchedDirectories = <WatchKey, Path>newHashMap
 	val alreadyHandled = <Path>newHashSet
+	val Set<LogTail2Stream> logtails = <LogTail2Stream>newHashSet
 
 	@Inject
 	new(@Named("workspace") Provider<File> workspaceProvider, TestExecutionManagerClient managerClient, @Named("watcherExecutor") Executor executor,
@@ -57,6 +59,14 @@ class TestResultWatcher {
 	def void watch(TestExecutionKey currentJob) {
 		logger.info('''Watching files created by job "«currentJob»"''')
 		this.currentJob = currentJob
+	}
+
+	def void stopWatching() {
+		if (!logtails.empty) {
+			logger.info('''Stopping log tails''')
+			logtails.forEach[stop]
+			logtails.clear
+		}
 	}
 
 	private def void startWatching() {
@@ -116,7 +126,7 @@ class TestResultWatcher {
 	}
 
 	private def boolean isLogFile(Path it) {
-		return fileName.toString.matches('''.*«currentJob».*''')
+		return fileName.toString.matches('''.*«currentJob».*(log|yaml|yml)''')
 	}
 
 	private def boolean isArtifactRegistry(Path it) {
@@ -142,10 +152,14 @@ class TestResultWatcher {
 	}
 
 	private def void handleLogs(Path it) {
-		upload(currentJob, workspace.relativize(it).toString)
+		upload(currentJob, workspace.relativize(it).toString, true)
 	}
 
 	private def upload(Path fileToStream, TestExecutionKey key, String relativePath) {
+		fileToStream.upload(key, relativePath, false)
+	}
+
+	private def upload(Path fileToStream, TestExecutionKey key, String relativePath, boolean tail) {
 		if (alreadyHandled.contains(fileToStream)) {
 			logger.info('''skipping file "«relativePath»" (already uploaded)''')
 		} else if (!fileToStream.exists) {
@@ -153,7 +167,14 @@ class TestResultWatcher {
 		} else {
 			logger.info('''starting to upload file «relativePath» to test execution manager''')
 			alreadyHandled.add(fileToStream)
-			managerClient.upload(workerUrl, key, relativePath, fileToStream.newInputStream(READ))
+			if (tail) {
+				val logTail = new LogTail2Stream(fileToStream.toFile /*, [statusManager.status !== TestStatus.RUNNING]*/ )
+				this.logtails.add(logTail)
+				managerClient.upload(workerUrl, key, relativePath, logTail)
+			} else {
+				managerClient.upload(workerUrl, key, relativePath, fileToStream.newInputStream(READ))
+			}
+
 		}
 	}
 
