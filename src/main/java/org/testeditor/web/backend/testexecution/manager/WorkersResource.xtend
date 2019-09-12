@@ -17,7 +17,6 @@ import javax.ws.rs.core.UriInfo
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.TestStatus
-import org.testeditor.web.backend.testexecution.worker.WorkerResource
 
 import static java.net.URLEncoder.encode
 import static java.nio.charset.StandardCharsets.UTF_8
@@ -28,7 +27,7 @@ import static extension java.nio.file.Files.createDirectories
 @Path('/testexecution/manager/workers')
 class WorkersResource implements WorkersAPI {
 
-	static val logger = LoggerFactory.getLogger(WorkerResource)
+	static val logger = LoggerFactory.getLogger(WorkersResource)
 
 	@Inject @Named("workspace") Provider<File> workspace
 
@@ -72,6 +71,7 @@ class WorkersResource implements WorkersAPI {
 	@PUT
 	override updateStatus(@PathParam(value='workerId') @Encoded String workerId, @PathParam(value='jobId') TestExecutionKey jobId,
 		TestStatus status) {
+		logger.info('''status update for job "«jobId»" received: "«status»"''')
 		manager.update(jobId)
 		return Response.ok.build
 	}

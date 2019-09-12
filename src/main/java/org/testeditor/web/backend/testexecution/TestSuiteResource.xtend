@@ -194,8 +194,10 @@ class TestSuiteResource {
 	}
 
 	private def void waitForStatus(TestExecutionKey executionKey, AsyncResponse response) {
+		logger.info('''waiting for status of job "«executionKey»"''')
 		response.setTimeout(LONG_POLLING_TIMEOUT_SECONDS, TimeUnit.SECONDS)
 		response.timeoutHandler = [
+			logger.info('''timed out while waiting for status of job "«executionKey»", assume job is still running''')
 			resume(Response.ok(TestStatus.RUNNING.name).build)
 		]
 
@@ -203,6 +205,8 @@ class TestSuiteResource {
 			val status = statusMapper.waitForStatus(executionKey)
 			response.resume(Response.ok(status.name).build)
 		} catch (InterruptedException ex) {
+			logger.warn('''interrupted while waiting for status of job "«executionKey»"''')
+			response.resume(Response.ok(TestStatus.RUNNING.name).build)
 		} // timeout handler takes care of response
 	}
 

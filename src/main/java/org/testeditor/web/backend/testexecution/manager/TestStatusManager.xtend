@@ -12,6 +12,7 @@ import org.testeditor.web.backend.testexecution.TestStatusMapper
 import org.testeditor.web.backend.testexecution.TestSuiteStatusInfo
 
 import static org.testeditor.web.backend.testexecution.TestStatus.*
+import org.slf4j.LoggerFactory
 
 /**
  * Keeps a record of running tests and their current execution status.
@@ -40,6 +41,8 @@ import static org.testeditor.web.backend.testexecution.TestStatus.*
  */
 @Singleton
 class TestStatusManager implements TestStatusMapper {
+	
+	static val logger = LoggerFactory.getLogger(TestStatusManager)
 
 	@FinalFieldsConstructor
 	private static class FinishedTest implements RunningTest { //TODO reconsider class names!
@@ -81,10 +84,16 @@ class TestStatusManager implements TestStatusMapper {
 	}
 
 	override TestStatus waitForStatus(TestExecutionKey executionKey) {
+		logger.info('''waiting for status of job "«executionKey»"''')
 		return if (executionKey.presentOrGetsInsertedBeforeTimeout) {
+			logger.info('''asking worker for status of job "«executionKey»"''')
 			val workerStatus = suiteStatusMap.get(executionKey)
-			workerStatus.key.waitForStatus => [doOnComplete(executionKey, workerStatus.value)]
+			workerStatus.key.waitForStatus => [
+				logger.info('''worker reported status "«it»" for job "«executionKey»"''')
+				doOnComplete(executionKey, workerStatus.value)
+			]
 		} else {
+			logger.info('''unaware of job "«executionKey»", assuming idle''')
 			IDLE
 		}
 	}
