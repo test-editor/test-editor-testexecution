@@ -30,15 +30,15 @@ import org.testeditor.web.backend.testexecution.workspace.WorkspaceProvider
 
 import static com.google.inject.name.Names.named
 
-class TestExecutionModule extends AbstractModule {
+class TestExecutionWorkerModule extends AbstractModule {
 
 	var RxClient<RxCompletionStageInvoker> rxClient = null
 
 	override protected configure() {
 		binder => [
 			bind(Executor).toInstance(ForkJoinPool.commonPool)
-			bind(Executor).annotatedWith(named("TestExecutionManagerExecutor")).toInstance(ForkJoinPool.commonPool)
 			bind(Executor).annotatedWith(named("watcherExecutor")).toInstance(Executors.newSingleThreadExecutor)
+			bind(ForkJoinPool).annotatedWith(named("httpClientExecutor")).toInstance(new ForkJoinPool)
 			bind(ScreenshotFinder).to(SubStepAggregatingScreenshotFinder)
 			bind(LogFinder).to(ScanningLogFinder)
 			bind(HierarchicalLineSkipper).to(RecursiveHierarchicalLineSkipper)

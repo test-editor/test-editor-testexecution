@@ -4,7 +4,10 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import java.net.URI
 import java.util.concurrent.CompletionStage
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.ForkJoinPool
 import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 import javax.ws.rs.client.Entity
@@ -18,6 +21,7 @@ import org.slf4j.LoggerFactory
 import static javax.ws.rs.client.Entity.json
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
 import static org.glassfish.jersey.client.ClientProperties.READ_TIMEOUT
+import static org.glassfish.jersey.client.ClientProperties.CONNECT_TIMEOUT
 import static org.glassfish.jersey.client.HttpUrlConnectorProvider.USE_FIXED_LENGTH_STREAMING
 
 /**
@@ -81,10 +85,12 @@ class JerseyBasedRestClient extends AbstractRestClient {
 	static val logger = LoggerFactory.getLogger(JerseyBasedRestClient)
 
 	val Provider<RxClient<RxCompletionStageInvoker>> httpClientProvider
+	val ExecutorService executor
 
 	@Inject
-	new(Provider<RxClient<RxCompletionStageInvoker>> httpClientProvider) {
+	new(Provider<RxClient<RxCompletionStageInvoker>> httpClientProvider, @Named('httpClientExecutor') ForkJoinPool executor) {
 		this.httpClientProvider = httpClientProvider
+		this.executor = executor
 	}
 
 	override <T> CompletionStage<Response> postAsync(URI uri, T body) {
@@ -123,12 +129,12 @@ class JerseyBasedRestClient extends AbstractRestClient {
 
 	private def getInvoker(URI uri, MediaType accept) {
 		return httpClientProvider.get.property(READ_TIMEOUT, READ_TIMEOUT_MILLIS).target(uri).request(accept).header(
-			'Authorization', '''Bearer «dummyToken»''').rx
+			'Authorization', '''Bearer «dummyToken»''').rx(executor)
 	}
-	
+
 	private def getStreamingInvoker(URI uri) {
-		return httpClientProvider.get.property(USE_FIXED_LENGTH_STREAMING, true).property(READ_TIMEOUT, READ_TIMEOUT_MILLIS).target(uri).request.header(
-			'Authorization', '''Bearer «dummyToken»''').rx
+		return httpClientProvider.get.property(USE_FIXED_LENGTH_STREAMING, true).property(READ_TIMEOUT, 0).property(CONNECT_TIMEOUT, 0).target(uri).
+			request.header('Authorization', '''Bearer «dummyToken»''').rx(executor)
 	}
 
 	val static String dummyToken = createToken('test.execution', 'Test Execution User', 'testeditor.eng@gmail.com')

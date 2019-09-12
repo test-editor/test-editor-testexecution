@@ -2,7 +2,6 @@ package org.testeditor.web.backend.testexecution.dropwizard
 
 import com.google.inject.Module
 import io.dropwizard.setup.Environment
-import java.net.URL
 import java.util.List
 import javax.inject.Inject
 import javax.inject.Provider
@@ -28,7 +27,7 @@ class WorkerApplication extends DropwizardApplication<TestExecutionDropwizardCon
 
 	override protected collectModules(List<Module> modules) {
 		super.collectModules(modules)
-		modules += new TestExecutionModule
+		modules += new TestExecutionWorkerModule
 	}
 
 	override run(TestExecutionDropwizardConfiguration configuration, Environment environment) throws Exception {

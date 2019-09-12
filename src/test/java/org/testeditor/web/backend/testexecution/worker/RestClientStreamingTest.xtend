@@ -31,6 +31,7 @@ import org.testeditor.web.backend.testexecution.dropwizard.RestClient
 import static java.nio.charset.StandardCharsets.UTF_8
 import static org.assertj.core.api.Assertions.assertThat
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.ForkJoinPool
 
 /**
  * Tests that RestClient can post data as chunked stream.
@@ -80,7 +81,7 @@ class RestClientStreamingTest {
 		RxCompletionStage.from(ClientBuilder.newClient(clientConfig))
 	]
 
-	RestClient client = new JerseyBasedRestClient(rxClientProvider)
+	RestClient client = new JerseyBasedRestClient(rxClientProvider, ForkJoinPool.commonPool)
 
 	@Test
 	def void streamsDataContinuously() {

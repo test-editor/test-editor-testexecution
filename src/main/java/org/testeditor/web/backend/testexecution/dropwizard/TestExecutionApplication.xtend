@@ -41,7 +41,7 @@ class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwi
 
 	override protected collectModules(List<Module> modules) {
 		super.collectModules(modules)
-		modules += new TestExecutionModule
+		modules += new TestExecutionManagerModule
 		modules += new AbstractModule {
 			override configure() {
 //				bind(UriAppender).toProvider(UriAppenderProvider).in(ServletScopes.REQUEST)

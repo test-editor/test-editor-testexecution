@@ -6,7 +6,10 @@ import java.net.URLEncoder
 import java.nio.file.Files
 import java.time.Instant
 import java.util.Map
+import java.util.concurrent.ExecutorCompletionService
+import java.util.concurrent.ForkJoinPool
 import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Singleton
 import javax.ws.rs.DELETE
 import javax.ws.rs.GET
@@ -34,6 +37,7 @@ import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
 import static javax.ws.rs.core.Response.Status.CONFLICT
 import static javax.ws.rs.core.Response.Status.NOT_FOUND
 import static org.testeditor.web.backend.testexecution.worker.WorkerStateEnum.*
+import java.util.concurrent.TimeUnit
 
 @Path('/worker')
 @Singleton
@@ -43,9 +47,10 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 	var WorkerState state
 
 	@Inject
-	new(TestExecutionManagerClient executionManager, TestExecutorProvider executorProvider, WorkerStatusManager statusManager, TestLogWriter logWriter, TestResultWatcher watcher) {
+	new(TestExecutionManagerClient executionManager, TestExecutorProvider executorProvider, WorkerStatusManager statusManager,
+		TestLogWriter logWriter, TestResultWatcher watcher, @Named('httpClientExecutor') ForkJoinPool jobExecutor) {
 		states = #{
-			IDLE -> new IdleWorker(this, executionManager, logWriter, executorProvider, statusManager, watcher),
+			IDLE -> new IdleWorker(this, executionManager, logWriter, executorProvider, statusManager, watcher, jobExecutor),
 			BUSY -> new BusyWorker(this, statusManager)
 		}
 		setState(IDLE)
@@ -94,7 +99,9 @@ enum WorkerStateEnum {
 }
 
 interface WorkerState extends WorkerAPI {
+
 	def void onEntry()
+
 }
 
 interface WorkerStateContext {
@@ -116,10 +123,10 @@ class IdleWorker implements WorkerState {
 	val TestExecutorProvider executorProvider
 	val WorkerStatusManager statusManager
 	val TestResultWatcher testResultWatcher
-	
-	
+	val ForkJoinPool jobExecutor
+
 	override onEntry() {
-		testResultWatcher.stopWatching
+		logger.info('''worker has entered idle state''')
 	}
 
 	override Response executeTestJob(TestJob job) {
@@ -133,12 +140,17 @@ class IdleWorker implements WorkerState {
 				info('''Starting test for resourcePaths='«job.resourcePaths.join(',')»' logging into logFile='«logFile»', callTreeFile='«callTreeFileName»'.''')
 			val callTreeFile = new File(callTreeFileName)
 			callTreeFile.writeCallTreeYamlPrefix(executorProvider.yamlFileHeader(executionKey, Instant.now, job.resourcePaths))
-			
+
 			testResultWatcher.watch(job.id) // TODO or is it executionKey? Clean that up!!
-			
 			val testProcess = builder.start
 			statusManager.addTestSuiteRun(testProcess) [ status |
+				logger.info('''process executing job "«job.id»" has completed with status "«status»""''')
 				callTreeFile.writeCallTreeYamlSuffix(status)
+				testResultWatcher.stopWatching
+				logger.info('waiting for background tasks uploading test artifacts to finish')
+				if (!jobExecutor.awaitQuiescence(2, TimeUnit.SECONDS)) {
+					logger.warn('timed out while waiting for upload tasks to finish')
+				}
 				executionManager.updateStatus(job.id, statusManager.getStatus)
 			]
 			testProcess.logToStandardOutAndIntoFile(new File(logFile))
@@ -182,6 +194,10 @@ class BusyWorker implements WorkerState {
 	extension val WorkerStateContext context
 	val WorkerStatusManager statusManager
 
+	override onEntry() {
+		logger.info('''worker has entered busy state''')
+	}
+
 	override executeTestJob(TestJob job) {
 		return Response.status(CONFLICT).entity('worker is busy').build
 	}
@@ -204,10 +220,6 @@ class BusyWorker implements WorkerState {
 		}
 
 		return Response.ok(status.name).build
-	}
-	
-	override onEntry() {
-		
 	}
 
 }
