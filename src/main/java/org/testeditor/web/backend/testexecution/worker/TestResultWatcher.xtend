@@ -36,7 +36,7 @@ class TestResultWatcher {
 
 	val watchService = FileSystems.getDefault.newWatchService
 	val TestExecutionManagerClient managerClient
-	var TestExecutionKey currentJob
+	volatile TestExecutionKey currentJob
 	val Path workspace
 	val extension ScreenshotFinder screenshotFinder
 	val testArtifactRegistryMatcher = FileSystems.getDefault().getPathMatcher('''glob:**/«artifactRegistryPath»/**.yaml''')
@@ -57,8 +57,12 @@ class TestResultWatcher {
 	}
 
 	def void watch(TestExecutionKey currentJob) {
-		logger.info('''Watching files created by job "«currentJob»"''')
-		this.currentJob = currentJob
+		if (currentJob !== null) {
+			logger.info('''Watching files created by job "«currentJob»"''')
+			this.currentJob = currentJob
+		} else {
+			throw new NullPointerException('the job to watch must never be set to null')
+		}
 	}
 
 	def void stopWatching() {
