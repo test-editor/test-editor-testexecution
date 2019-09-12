@@ -162,7 +162,7 @@ class TestExecutionManager {
 			idleWorkers.findFirst[providedCapabilities.containsAll(job.requiredCapabilities)]?.assign(job)
 		}
 
-		def void jobProgressed(TestExecutionKey jobId) {
+		def synchronized void jobProgressed(TestExecutionKey jobId) {
 			jobs.get(jobId) => [
 				switch (state) {
 					case PENDING:
@@ -175,7 +175,6 @@ class TestExecutionManager {
 						throw new AlreadyCompletedException(jobId)
 				}
 			]
-
 		}
 
 		def synchronized void jobCancelled(TestExecutionKey jobId) {
@@ -201,19 +200,23 @@ class TestExecutionManager {
 		}
 
 		private synchronized def void assign(OperableWorker worker, TestJobInfo job) {
-			val assignment = worker.assigning(job)
+			if (jobs.get(job.id).state === JobState.PENDING) { // double-check isn't already being assigned
+				val assignment = worker.assigning(job)
 
-			worker.startJob(job).thenAcceptAsync([ success |
-				if (success) {
-					job.assigned
-					statusManager.addTestSuiteRun(job.id, worker) [
-						assignment.completed
-					]
-					logger.info('''assignment of job «job.id» to worker «worker.uri» was successful''')
-				} else {
-					assignment.failed
-				}
-			], executor)
+				worker.startJob(job).thenAcceptAsync([ success |
+					if (success) {
+						job.assigned
+						statusManager.addTestSuiteRun(job.id, worker) [
+							assignment.completed
+						]
+						logger.info('''assignment of job «job.id» to worker «worker.uri» was successful''')
+					} else {
+						assignment.failed
+					}
+				], executor)
+			} else {
+				logger.info('''job "«job.id»" is already being assigned''')
+			}
 		}
 
 		private synchronized def Assignment assigning(OperableWorker worker, TestJobInfo pendingJob) {
@@ -234,7 +237,6 @@ class TestExecutionManager {
 			jobs.replace(job.id, job.state = JobState.PENDING)
 
 			// TODO how to avoid loops of endlessly trying to reassign the same job to a worker that won't accept it (but isn't reporting to be busy, either)?
-
 			if (worker.checkStatus === TestStatus.IDLE) {
 				reassignOrMarkIdle
 			} else {
@@ -243,13 +245,17 @@ class TestExecutionManager {
 		}
 
 		private synchronized def void completed(Assignment it) {
-			logger.info('''worker «worker.uri» completed job «job.id»''')
-			jobs.replace(job.id, job.state = JobState.COMPLETED)
-			reassignOrMarkIdle
+			if (it === null) {
+				logger.error('cannot mark non-existing job assignment as completed')
+			} else {
+				logger.info('''worker «worker?.uri» completed job «job?.id»''')
+				jobs.replace(job.id, job.state = JobState.COMPLETED)
+				reassignOrMarkIdle
+			}
 		}
 
 		private synchronized def void reassignOrMarkIdle(Assignment it) {
-			logger.info('''worker «worker.uri» is idle''')
+			logger.info('''worker «worker?.uri» is idle''')
 			assignments.remove(job.id)
 			worker.getProvidedCapabilities.findMatchingJob.ifPresent[job|worker.assign(job)]
 		}
