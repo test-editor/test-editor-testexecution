@@ -5,7 +5,10 @@ import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.net.URI
 import java.util.Set
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriBuilder
@@ -15,10 +18,8 @@ import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.RunningTest
 import org.testeditor.web.backend.testexecution.TestStatus
 import org.testeditor.web.backend.testexecution.dropwizard.RestClient
-import org.testeditor.web.backend.testexecution.manager.TestJobInfo
 
 import static javax.ws.rs.core.Response.Status.CREATED
-import java.util.concurrent.CompletableFuture
 
 interface WorkerInfo {
 
@@ -45,13 +46,18 @@ class WorkerClient implements OperableWorker {
 	val URI uri
 	val Set<String> providedCapabilities
 	val transient extension RestClient client
-	var transient CompletionStage<?> asyncCallStage = CompletableFuture.completedStage(null)
+	val transient ExecutorService executor
 
-	@JsonCreator
-	new(@JsonProperty('uri') URI uri, @JsonProperty('capabilities') Set<String> capabilities, @JacksonInject('restClient') RestClient client) {
+	new(URI uri, Set<String> capabilities, RestClient client, ExecutorService executor) {
 		this.uri = uri
 		this.providedCapabilities = capabilities
 		this.client = client
+		this.executor = executor
+	}
+
+	@JsonCreator
+	new(@JsonProperty('uri') URI uri, @JsonProperty('capabilities') Set<String> capabilities, @JacksonInject('restClient') RestClient client) {
+		this(uri, capabilities, client, Executors.newSingleThreadExecutor)
 	}
 
 	new(URI uri) {
@@ -63,44 +69,42 @@ class WorkerClient implements OperableWorker {
 	}
 
 	override CompletionStage<Boolean> startJob(TestJobInfo job) {
-		synchronized (asyncCallStage) {
-			val result = asyncCallStage.thenCompose [
-				jobUri.build.postAsync(job).exceptionally [
-					logger.error('''exception occurred while trying to assign job "«job?.id»" to worker at "«uri»"''', it)
-					Response.serverError.entity('exception thrown on client side').build
-				].thenApplyAsync [
-					return (status === CREATED.statusCode) => [ success |
-						if (!success) {
-							logger.warn('''job "«job?.id»" was rejected by worker at "«uri»" with status code «status»: «readEntity(String)»''')
-						}
-					]
+
+		return CompletableFuture.supplyAsync([
+			jobUri.build.postAsync(job).exceptionally [
+				logger.error('''exception occurred while trying to assign job "«job?.id»" to worker at "«uri»"''', it)
+				Response.serverError.entity('exception thrown on client side').build
+			].thenApplyAsync [
+				return (status === CREATED.statusCode) => [ success |
+					if (!success) {
+						logger.warn('''job "«job?.id»" was rejected by worker at "«uri»" with status code «status»: «readEntity(String)»''')
+					}
 				]
-			]
-			asyncCallStage = result
-			return result
-		}
+			].toCompletableFuture.get
+		], executor)
 	}
 
 	override checkStatus() {
-		synchronized (asyncCallStage) {
-			val result = asyncCallStage.thenCompose[jobUri.build.getAsync(MediaType.TEXT_PLAIN_TYPE)]
-			asyncCallStage = result
-			return TestStatus.valueOf(result.toCompletableFuture.get.readEntity(String))
-		}
+		return TestStatus.valueOf(executor.submit [
+			jobUri.build.getAsync(MediaType.TEXT_PLAIN_TYPE).toCompletableFuture.get.readEntity(String)
+		].get)
 	}
 
 	override waitForStatus() {
-		synchronized (asyncCallStage) {
-			val result = asyncCallStage.thenCompose[jobUri.queryParam('wait', true).build.getAsync(MediaType.TEXT_PLAIN_TYPE)]
-			asyncCallStage = result
-			return TestStatus.valueOf(result.toCompletableFuture.get.readEntity(String))
-		}
+		logger.info('''enqueueing request to wait for status of worker at "«uri»"''')
+		return TestStatus.valueOf(executor.submit [
+			logger.info('''now requesting to wait for status of worker at "«uri»"''')
+			val status = jobUri.queryParam('wait', true).build.getAsync(MediaType.TEXT_PLAIN_TYPE).toCompletableFuture.get.readEntity(String)
+			logger.info('''received status "«status»" of worker at "«uri»"''')
+			return status
+		].get)
 	}
 
 	override kill() {
-		synchronized (asyncCallStage) {
-			asyncCallStage = asyncCallStage.thenCompose[jobUri.build.deleteAsync]
-		}
+		executor.submit [
+			jobUri.build.deleteAsync
+		]
+
 	}
 
 	private def UriBuilder jobUri() {
