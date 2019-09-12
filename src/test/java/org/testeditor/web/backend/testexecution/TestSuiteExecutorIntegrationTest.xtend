@@ -936,7 +936,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				echo "called $called times"
 				if [ "$called" = "3" ]; then
 				  echo "lastcall" > finished.txt
-				  sleep 30; exit 0
+				  sleep 20; exit 0
 				elif [ "$called" = "2" ]; then
 				  echo "secondcall" > finished.txt
 				  exit 0
@@ -980,6 +980,10 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		val actuals = response.readEntity(new GenericType<Iterable<Object>>() {
 		})
 		assertThat(actuals).size.isEqualTo(3)
+		
+		// cleanup -- kill the 
+		createCallTreeRequest(TestExecutionKey.valueOf('0-2')).delete
+		Thread.sleep(2000)
 	}
 
 	@Test
