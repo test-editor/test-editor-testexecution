@@ -46,8 +46,10 @@ ext.versions = [
 ext.configPath = "./"
 if (project.hasProperty('localconfig')) {
     ext.configFile = 'config.local.yml'
+    ext.workerConfig = 'workerConfig.local.yml'
 } else {
     ext.configFile = 'config.yml'
+    ext.workerConfig = 'workerConfig.yml'
 }
 
 sourceSets {
@@ -76,11 +78,17 @@ dependencies {
 
 }
 
-mainClassName = 'org.testeditor.web.backend.testexecution.dropwizard.TestExecutionApplication'
+mainClassName = 'org.testeditor.web.backend.testexecution.dropwizard.Main'
 
 run {
     main mainClassName
     args 'server', configPath + configFile
+}
+
+task runWorker(dependsOn: 'classes', type: JavaExec) {
+	classpath sourceSets.main.runtimeClasspath
+	main mainClassName
+	args 'worker', 'server', configPath + workerConfig
 }
 
 test {

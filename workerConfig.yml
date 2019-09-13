@@ -1,9 +1,10 @@
 remoteRepoUrl: git@github.com:test-editor/test-editor-examples.git
+testExecutionManagerUrl: 'http://localhost:10080/testexecution/manager/workers'
 applicationId: org.testeditor.web.backend.testexecution
 server:
   applicationConnectors:
   - type: http 
-    port: 10080
+    port: 11080
   adminConnectors:
   - type: http
-    port: 10081
+    port: 11081
