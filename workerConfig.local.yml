@@ -1,4 +1,4 @@
-remoteRepoUrl: git@github.com:test-editor/test-editor-examples.git
+remoteRepoUrl: file:///Users/jjelschen/projects/signal-iduna/language-examples
 testExecutionManagerUrl: 'http://localhost:10080/testexecution/manager/workers'
 workerUrl: 'http://localhost:11080'
 applicationId: org.testeditor.web.backend.testexecution

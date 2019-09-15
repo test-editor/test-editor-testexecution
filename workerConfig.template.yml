@@ -1,0 +1,14 @@
+remoteRepoUrl: %TARGET_REPO%
+branchName: %BRANCH_NAME%
+privateKeyLocation: %KEY_LOCATION%
+knownHostsLocation: %KNOWN_HOSTS%
+testExecutionManagerUrl: %TEST_EXECUTION_MANAGER_URL%
+workerUrl: %WORKER_URL%
+applicationId: org.testeditor.web.backend.testexecution
+server:
+  applicationConnectors:
+  - type: http 
+    port: 8080
+  adminConnectors:
+  - type: http
+    port: 8081

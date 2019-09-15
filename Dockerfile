@@ -22,7 +22,9 @@ ENV PROG_DIR=/opt/testeditor \
 
 COPY testeditor/ \
      config.template.yml \
+     workerConfig.template.yml \
      run.sh \
+     runWorker.sh \
      gradle.properties \
      ${PROG_DIR}/
 

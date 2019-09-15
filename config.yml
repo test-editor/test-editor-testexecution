@@ -1,5 +1,6 @@
 remoteRepoUrl: git@github.com:test-editor/test-editor-examples.git
 applicationId: org.testeditor.web.backend.testexecution
+localRepoFileRoot: managerRepo
 server:
   applicationConnectors:
   - type: http 
