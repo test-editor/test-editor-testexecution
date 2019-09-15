@@ -137,7 +137,7 @@ class TestSuiteResource {
 				val mapper = new ObjectMapper(new YAMLFactory)
 				val jsonTree = mapper.readTree(latestCallTree)
 				response.resume(
-					Response.ok(jsonTree.toString).build
+					Response.ok(jsonTree?.toString ?: '').build
 				)
 			} else {
 				response.resume(
