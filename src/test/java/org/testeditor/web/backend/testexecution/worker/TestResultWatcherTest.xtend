@@ -62,6 +62,7 @@ class TestResultWatcherTest {
 		this.initMocks
 		when(workspaceProviderMock.get).thenReturn(workspace.root)
 		when(configMock.workerUrl).thenReturn(workerUrl)
+		when(configMock.useLogTailing).thenReturn(true)
 		executor = Executors.newSingleThreadExecutor()
 	}
 
@@ -93,6 +94,7 @@ class TestResultWatcherTest {
 		configMock = mock(TestExecutionDropwizardConfiguration)
 		val configuredWorkerUrl = new URL('http://worker.example.com:4242/testWorker')
 		when(configMock.workerUrl).thenReturn(configuredWorkerUrl)
+		when(configMock.useLogTailing).thenReturn(true)
 		val watcher = new TestResultWatcher(workspaceProviderMock, managerClientMock, executor, screenshotFinderMock, configMock)
 
 		val jobId = new TestExecutionKey('jobId')

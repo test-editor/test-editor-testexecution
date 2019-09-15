@@ -44,6 +44,7 @@ class TestResultWatcher {
 	val watchedDirectories = <WatchKey, Path>newHashMap
 	val alreadyHandled = <Path>newHashSet
 	val Set<LogTail2Stream> logtails = <LogTail2Stream>newHashSet
+	val boolean useLogTailing
 
 	@Inject
 	new(@Named("workspace") Provider<File> workspaceProvider, TestExecutionManagerClient managerClient, @Named("watcherExecutor") Executor executor,
@@ -54,6 +55,7 @@ class TestResultWatcher {
 		executor.execute[startWatching]
 		this.screenshotFinder = screenshotFinder
 		this.workerUrl = config.workerUrl.toString
+		this.useLogTailing = config.useLogTailing
 	}
 
 	def void watch(TestExecutionKey currentJob) {
@@ -156,7 +158,7 @@ class TestResultWatcher {
 	}
 
 	private def void handleLogs(Path it) {
-		upload(currentJob, workspace.relativize(it).toString, true)
+		upload(currentJob, workspace.relativize(it).toString, useLogTailing)
 	}
 
 	private def upload(Path fileToStream, TestExecutionKey key, String relativePath) {

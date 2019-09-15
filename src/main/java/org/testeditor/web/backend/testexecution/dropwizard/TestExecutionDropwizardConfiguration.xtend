@@ -72,4 +72,7 @@ class TestExecutionDropwizardConfiguration extends DropwizardApplicationConfigur
     
     @Accessors
     URL workerUrl = new URL('http://localhost')
+    
+    @Accessors
+    boolean useLogTailing = false
 }
