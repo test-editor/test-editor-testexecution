@@ -20,6 +20,7 @@ import org.testeditor.web.backend.testexecution.TestStatus
 
 import static java.net.URLEncoder.encode
 import static java.nio.charset.StandardCharsets.UTF_8
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING
 
 import static extension java.nio.file.Files.copy
 import static extension java.nio.file.Files.createDirectories
@@ -62,7 +63,7 @@ class WorkersResource implements WorkersAPI {
 		@PathParam('file') String fileName, InputStream content) {
 		val targetFile = workspace.get.toPath.resolve(fileName)
 		targetFile.parent.createDirectories
-		content.copy(targetFile)
+		content.copy(targetFile, REPLACE_EXISTING)
 
 		return Response.ok.build
 	}
