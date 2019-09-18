@@ -13,7 +13,7 @@ class WorkspaceProvider implements Provider<File> {
 	
 	override get() {
 		return new File(localRepoFileRoot) => [
-			git.pull			
+			git.pull.call		
 		]
 	}	
 }

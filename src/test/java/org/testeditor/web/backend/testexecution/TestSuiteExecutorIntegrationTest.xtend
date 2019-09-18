@@ -1027,5 +1027,38 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		val actualTestStatus = createTestRequest(testRun).get
 		assertThat(actualTestStatus.readEntity(String)).isEqualTo('FAILED')
 	}
+	
+	@Test
+	def void testThatLatestWorkspaceIsPulledFromRepositoryBeforeTestExecution() {
+		// given
+		val testFile = 'test.tcl'
+		remoteGitFolder.newFile(testFile).commitInRemoteRepository
+		val gradlew = remoteGitFolder.newFile('gradlew') => [
+			executable = true
+			JGitTestUtil.write(it, '''
+				#!/bin/sh
+				echo "Hello World"
+			''')
+			commitInRemoteRepository
+		]
+		createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
+		createTestRequest(TestExecutionKey.valueOf('0-0')).get
+
+		// when
+		gradlew => [
+			JGitTestUtil.write(it, '''
+				#!/bin/sh
+				echo "Hello Update" | tee updated.state
+			''')
+			commitInRemoteRepository
+		]
+		createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
+		val actualTestStatus = createTestRequest(TestExecutionKey.valueOf('0-1')).get
+
+		// then
+		assertThat(actualTestStatus.readEntity(String)).isEqualTo('SUCCESS')
+		val executionResult = workspaceRoot.root.toPath.resolve('updated.state').toFile
+		assertThat(executionResult).exists
+	}
 
 }
