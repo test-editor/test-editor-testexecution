@@ -2,22 +2,27 @@ package org.testeditor.web.backend.testexecution.worker
 
 import com.sun.nio.file.SensitivityWatchEventModifier
 import java.io.File
+import java.io.IOException
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardWatchEventKinds
 import java.nio.file.WatchKey
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.Set
 import java.util.concurrent.Executor
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
+import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionDropwizardConfiguration
 import org.testeditor.web.backend.testexecution.screenshots.ScreenshotFinder
 
+import static java.nio.file.FileVisitResult.*
 import static java.nio.file.StandardOpenOption.READ
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
@@ -27,6 +32,7 @@ import static extension java.nio.file.Files.isDirectory
 import static extension java.nio.file.Files.isRegularFile
 import static extension java.nio.file.Files.newInputStream
 import static extension java.nio.file.Files.walk
+import static extension java.nio.file.Files.walkFileTree
 
 @Singleton
 class TestResultWatcher {
@@ -51,7 +57,7 @@ class TestResultWatcher {
 		ScreenshotFinder screenshotFinder, TestExecutionDropwizardConfiguration config) {
 		this.managerClient = managerClient
 		this.workspace = workspaceProvider.get.toPath
-		workspace.walk.filter[isDirectory].forEach[watchDirectory]
+		workspace.walk.filter[isDirectory && fileName.toString != '.git'].forEach[watchDirectory]
 		executor.execute[startWatching]
 		this.screenshotFinder = screenshotFinder
 		this.workerUrl = config.workerUrl.toString
@@ -111,7 +117,7 @@ class TestResultWatcher {
 	}
 
 	private def void watchOrUpload(Path it) {
-		walk.forEach [
+		walkFileTree(new WorkspaceVisitor(workspace)[
 			if (isRegularFile) {
 				if (currentJob !== null) {
 					if (isLogFile) {
@@ -128,7 +134,7 @@ class TestResultWatcher {
 				logger.info('''watching directory "«toString»"''')
 				watchDirectory
 			}
-		]
+		])
 	}
 
 	private def boolean isLogFile(Path it) {
@@ -182,6 +188,38 @@ class TestResultWatcher {
 			}
 
 		}
+	}
+
+	@FinalFieldsConstructor
+	static class WorkspaceVisitor extends SimpleFileVisitor<Path> {
+		static val logger = LoggerFactory.getLogger(WorkspaceVisitor)
+
+		val Path workspaceRoot
+		val (Path)=>void action
+
+		override preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+			return if (dir.isDirectory) {
+				if (dir.parent == workspaceRoot && dir.fileName.toString == ".git") {
+					SKIP_SUBTREE
+				} else {
+					action.apply(dir)
+					CONTINUE
+				}
+			} else {
+				CONTINUE
+			}
+		}
+		
+		override visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+			action.apply(file)
+			return CONTINUE
+		}
+		
+		override visitFileFailed(Path file, IOException exc) throws IOException {
+			logger.warn('''problem occurred when trying to access file «file»: «exc.message»''', exc)
+			return CONTINUE
+		}
+
 	}
 
 }
