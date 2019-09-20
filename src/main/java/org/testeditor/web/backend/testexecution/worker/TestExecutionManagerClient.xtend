@@ -24,6 +24,7 @@ import org.testeditor.web.backend.testexecution.manager.WorkerInfo
 
 import static java.net.URLEncoder.encode
 import static java.nio.charset.StandardCharsets.UTF_8
+import org.eclipse.xtend.lib.annotations.Accessors
 
 @Singleton
 class TestExecutionManagerClient {
@@ -33,6 +34,9 @@ class TestExecutionManagerClient {
 	val registrationScheduler = Executors.newSingleThreadScheduledExecutor
 	var ScheduledFuture<?> registrationTask
 	var registrationRetries = 0
+	
+	@Accessors(PUBLIC_GETTER)
+	var registered = false
 
 	@Inject
 	Provider<RestClient> client
@@ -75,6 +79,7 @@ class TestExecutionManagerClient {
 			logger.info('''trying to register with test execution manager at "«testExecutionManagerUrl»"''')
 			val response = client.get.postAsync(testExecutionManagerUrl, worker).toCompletableFuture.join
 			if (response.statusInfo == Status.CREATED) {
+				registered = true
 				logger.info('''successfully registered at "«response.location.toString»"''')
 				registrationTask.cancel(false)
 			} else if (response.statusInfo == Status.CONFLICT) {

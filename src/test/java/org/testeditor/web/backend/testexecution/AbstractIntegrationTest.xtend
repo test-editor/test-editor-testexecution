@@ -108,18 +108,36 @@ abstract class AbstractIntegrationTest {
 	def Builder createRequest(String relativePath) {
 		return createRequest(relativePath, token)
 	}
+	
+
+	def Builder createRequest(String relativePath, DropwizardAppRule<TestExecutionDropwizardConfiguration> appRule) {
+		return createRequest(relativePath, token, appRule)
+	}
 
 	protected def Builder createRequest(String relativePath, String customToken) {
 		val uri = '''http://localhost:«dropwizardAppRule.localPort»/«relativePath»'''
 		return createUrlRequest(uri, customToken)
 	}
+	
+	protected def Builder createRequest(String relativePath, String customToken, DropwizardAppRule<TestExecutionDropwizardConfiguration> appRule) {
+		val uri = '''http://localhost:«appRule.localPort»/«relativePath»'''
+		return createUrlRequest(uri, customToken, appRule)
+	}
 
 	protected def Builder createUrlRequest(String uri) {
 		return createUrlRequest(uri, token)
 	}
+	
+	protected def Builder createUrlRequest(String uri, DropwizardAppRule<TestExecutionDropwizardConfiguration> appRule) {
+		return createUrlRequest(uri, token, appRule)
+	}
 
 	protected def Builder createUrlRequest(String uri, String customToken) {
-		val builder = dropwizardAppRule.client.target(uri).request
+		return createUrlRequest(uri, customToken, dropwizardAppRule)
+	}
+	
+	protected def Builder createUrlRequest(String uri, String customToken, DropwizardAppRule<TestExecutionDropwizardConfiguration> appRule) {
+		val builder = appRule.client.target(uri).request
 		builder.header('Authorization', '''Bearer «customToken»''')
 		return builder
 	}

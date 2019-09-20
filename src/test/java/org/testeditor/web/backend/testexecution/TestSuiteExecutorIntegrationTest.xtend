@@ -14,16 +14,14 @@ import javax.ws.rs.core.MediaType
 import org.assertj.core.api.SoftAssertions
 import org.eclipse.jgit.junit.JGitTestUtil
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
-import org.testeditor.web.backend.testexecution.TestUtils.SysIoPipeRuleChain
-import org.testeditor.web.backend.testexecution.worker.TestExecutionManagerClient
+import org.junit.rules.RuleChain
 
 import static javax.ws.rs.core.Response.Status.*
 import static org.assertj.core.api.Assertions.*
 
-@Ignore('temporarily ignored as the worker infrastructure introduced very deep changes; these tests may have to be recreated from scratch')
+//@Ignore('temporarily ignored as the worker infrastructure introduced very deep changes; these tests may have to be recreated from scratch')
 class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 
 	val workerRule = createWorkerRule(
@@ -33,11 +31,21 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	)
 
 	@Rule
-	public val extension SysIoPipeRuleChain = new SysIoPipeRuleChain(remoteGitFolder, managerWorkspace, workerWorkspace, dropwizardAppRule, workerRule)
-
+	public val extension RuleChain = RuleChain.outerRule(remoteGitFolder).around(managerWorkspace).around(workerWorkspace).around(dropwizardAppRule).around(workerRule)
+	
 	@Before
 	def void waitForWorkerRegistration() {
-		waitForLogLine('''«TestExecutionManagerClient.name»: successfully registered at "http://localhost:«serverPort»/testexecution/manager/workers/http%3A%2F%2Flocalhost%3A«workerRule.localPort»%2Fworker"''')
+		var retries = 0
+		var isRegistered = false
+		do {
+			Thread.sleep(2000)
+			val request = createRequest('worker/registered', workerRule)
+			assertThat(request).isNotNull
+			val response = request.get
+			isRegistered = response.readEntity(Boolean)
+			retries++
+		} while (!isRegistered && retries < 3)
+		assertThat(isRegistered).^as('worker registration').isTrue
 	}
 
 	@Test
@@ -914,12 +922,12 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 			assertThat(pollResponse.status).isEqualTo(OK.statusCode)
 			statusList.offerFirst(pollResponse.readEntity(String))
 			pollResponse.close
-			sysIoPipeRule.systemOut.println('still running, sleeping 5 seconds ...')
+			println('still running, sleeping 5 seconds ...')
 			Thread.sleep(5000)
 		}
 
 		// then
-		sysIoPipeRule.systemOut.println('no longer running.')
+		println('no longer running.')
 		assertThat(statusList.size).isGreaterThan(3)
 		assertThat(statusList.tail).allMatch['RUNNING'.equals(it)]
 		assertThat(statusList.head).isEqualTo('SUCCESS')
@@ -957,9 +965,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 			new File(managerWorkspace.root, '''finished.txt''').delete
 			val response = createLaunchNewRequest().post(Entity.entity(#[name], MediaType.APPLICATION_JSON_TYPE))
 			assertThat(response.status).isEqualTo(CREATED.statusCode)
-			sysIoPipeRule.systemOut.println(
-				'Job added here: ' + response.stringHeaders.get('Location')
-			)
+			System.out.println('Job added here: ' + response.stringHeaders.get('Location'))
 
 			if (createTestRequest(TestExecutionKey.valueOf('''0-«index»''')).get.readEntity(String) == 'RUNNING') {
 				Thread.yield

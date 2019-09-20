@@ -45,13 +45,15 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 
 	val Map<WorkerStateEnum, WorkerState> states
 	var WorkerState state
+	val TestExecutionManagerClient executionManager
 
 	@Inject
 	new(TestExecutionManagerClient executionManager, TestExecutorProvider executorProvider, WorkerStatusManager statusManager,
 		TestLogWriter logWriter, TestResultWatcher watcher, @Named('httpClientExecutor') ForkJoinPool jobExecutor) {
+		this.executionManager = executionManager
 		states = #{
-			IDLE -> new IdleWorker(this, executionManager, logWriter, executorProvider, statusManager, watcher, jobExecutor),
-			BUSY -> new BusyWorker(this, statusManager)
+			IDLE -> new IdleWorker(executionManager, this, logWriter, executorProvider, statusManager, watcher, jobExecutor),
+			BUSY -> new BusyWorker(executionManager, this, statusManager)
 		}
 		setState(IDLE)
 	}
@@ -64,6 +66,12 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 	static val logger = LoggerFactory.getLogger(WorkerResource)
 
 	override Logger getLogger() { return logger }
+
+	@GET
+	@Path('registered')
+	override isRegistered() {
+		return state.isRegistered
+	}
 
 	@GET
 	@Path('job')
@@ -88,7 +96,6 @@ class WorkerResource implements WorkerAPI, WorkerStateContext {
 		setState(state)
 		action.apply
 	}
-
 }
 
 enum WorkerStateEnum {
@@ -115,10 +122,19 @@ interface WorkerStateContext {
 }
 
 @FinalFieldsConstructor
-class IdleWorker implements WorkerState {
+abstract class BaseWorkerState implements WorkerState {
+	protected val TestExecutionManagerClient executionManager
+	
+	override isRegistered() {
+		return Response.ok(executionManager.registered).build
+	}
+	
+}
 
-	val extension WorkerStateContext
-	val TestExecutionManagerClient executionManager
+@FinalFieldsConstructor
+class IdleWorker extends BaseWorkerState {
+
+	val extension WorkerStateContext 
 	val extension TestLogWriter logWriter
 	val TestExecutorProvider executorProvider
 	val WorkerStatusManager statusManager
@@ -189,7 +205,7 @@ class IdleWorker implements WorkerState {
 }
 
 @FinalFieldsConstructor
-class BusyWorker implements WorkerState {
+class BusyWorker extends BaseWorkerState {
 
 	extension val WorkerStateContext context
 	val WorkerStatusManager statusManager
