@@ -34,7 +34,6 @@ import static extension java.nio.file.Files.getLastModifiedTime
 import static extension java.nio.file.Files.isDirectory
 import static extension java.nio.file.Files.isRegularFile
 import static extension java.nio.file.Files.newInputStream
-import static extension java.nio.file.Files.walk
 import static extension java.nio.file.Files.walkFileTree
 
 @Singleton
@@ -42,6 +41,7 @@ class TestResultWatcher {
 
 	static val logger = LoggerFactory.getLogger(TestResultWatcher)
 	static val artifactRegistryPath = Paths.get('.testexecution/artifacts')
+	static val IGNORE_PATTERN = '\\._.+\\.tmp'
 
 	val watchService = FileSystems.getDefault.newWatchService
 	val TestExecutionManagerClient managerClient
@@ -60,7 +60,11 @@ class TestResultWatcher {
 		ScreenshotFinder screenshotFinder, TestExecutionDropwizardConfiguration config) {
 		this.managerClient = managerClient
 		this.workspace = workspaceProvider.get.toPath
-		workspace.walk.filter[isDirectory && fileName.toString != '.git'].forEach[watchDirectory]
+		workspace.walkFileTree(new WorkspaceVisitor(workspace) [
+			if (isDirectory) {
+				watchDirectory
+			}
+		])
 		executor.execute[startWatching]
 		this.screenshotFinder = screenshotFinder
 		this.workerUrl = config.workerUrl.toString
@@ -116,6 +120,7 @@ class TestResultWatcher {
 	}
 
 	private def void watchDirectory(Path dir) {
+		logger.info('''watching directory «dir»''')
 		watchedDirectories.put(dir.register(watchService, #[ENTRY_CREATE, ENTRY_MODIFY], SensitivityWatchEventModifier.HIGH), dir)
 	}
 
@@ -134,7 +139,6 @@ class TestResultWatcher {
 					logger.info('discarding event (no job to watch)')
 				}
 			} else {
-				logger.info('''watching directory "«toString»"''')
 				watchDirectory
 			}
 		])
@@ -226,12 +230,16 @@ class TestResultWatcher {
 		}
 
 		override visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-			action.apply(file)
+			if (!file.fileName.toString.matches(IGNORE_PATTERN)) {
+				action.apply(file)
+			}
 			return CONTINUE
 		}
 
 		override visitFileFailed(Path file, IOException exc) throws IOException {
-			logger.warn('''problem occurred when trying to access file «file»: «exc.message»''', exc)
+			if (!file.fileName.toString.matches(IGNORE_PATTERN)) {
+				logger.warn('''problem occurred when trying to access file «file»: «exc.message»''', exc)
+			}
 			return CONTINUE
 		}
 
