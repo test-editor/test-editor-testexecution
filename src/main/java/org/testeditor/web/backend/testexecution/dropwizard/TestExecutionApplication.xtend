@@ -6,6 +6,7 @@ import java.util.List
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.servlet.FilterRegistration.Dynamic
+import org.testeditor.web.backend.testexecution.TestArtifactResource
 import org.testeditor.web.backend.testexecution.TestExecutionExceptionMapper
 import org.testeditor.web.backend.testexecution.TestSuiteResource
 import org.testeditor.web.dropwizard.DropwizardApplication
@@ -30,6 +31,7 @@ class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwi
 		environment.jersey => [
 			register(TestExecutionExceptionMapper)
 			register(TestSuiteResource)
+			register(TestArtifactResource)
 		]
 
 		environment.healthChecks.register('execution', executionHealthCheckProvider.get)
