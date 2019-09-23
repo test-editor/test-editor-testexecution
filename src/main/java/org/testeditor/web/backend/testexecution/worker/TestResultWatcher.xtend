@@ -10,6 +10,8 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardWatchEventKinds
 import java.nio.file.WatchKey
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileTime
+import java.time.Instant
 import java.util.Set
 import java.util.concurrent.Executor
 import javax.inject.Inject
@@ -28,6 +30,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
 
 import static extension java.nio.file.Files.exists
+import static extension java.nio.file.Files.getLastModifiedTime
 import static extension java.nio.file.Files.isDirectory
 import static extension java.nio.file.Files.isRegularFile
 import static extension java.nio.file.Files.newInputStream
@@ -48,7 +51,7 @@ class TestResultWatcher {
 	val testArtifactRegistryMatcher = FileSystems.getDefault().getPathMatcher('''glob:**/«artifactRegistryPath»/**.yaml''')
 	val String workerUrl
 	val watchedDirectories = <WatchKey, Path>newHashMap
-	val alreadyHandled = <Path>newHashSet
+	val lastHandled = <Path, FileTime>newHashMap
 	val Set<LogTail2Stream> logtails = <LogTail2Stream>newHashSet
 	val boolean useLogTailing
 
@@ -117,7 +120,7 @@ class TestResultWatcher {
 	}
 
 	private def void watchOrUpload(Path it) {
-		walkFileTree(new WorkspaceVisitor(workspace)[
+		walkFileTree(new WorkspaceVisitor(workspace) [
 			if (isRegularFile) {
 				if (currentJob !== null) {
 					if (isLogFile) {
@@ -172,26 +175,38 @@ class TestResultWatcher {
 	}
 
 	private def upload(Path fileToStream, TestExecutionKey key, String relativePath, boolean tail) {
-		if (alreadyHandled.contains(fileToStream)) {
-			logger.info('''skipping file "«relativePath»" (already uploaded)''')
-		} else if (!fileToStream.exists) {
+		if (!fileToStream.exists) {
 			logger.error('''cannot upload non-existing but registered test artifact file "«relativePath»"''')
 		} else {
-			logger.info('''starting to upload file «relativePath» to test execution manager''')
-			alreadyHandled.add(fileToStream)
-			if (tail) {
-				val logTail = new LogTail2Stream(fileToStream.toFile /*, [statusManager.status !== TestStatus.RUNNING]*/ )
-				this.logtails.add(logTail)
-				managerClient.upload(workerUrl, key, relativePath, logTail)
-			} else {
-				managerClient.upload(workerUrl, key, relativePath, fileToStream.newInputStream(READ))
-			}
+			fileToStream.uploadExisting(key, relativePath, tail)
+		}
+	}
 
+	private def uploadExisting(Path fileToStream, TestExecutionKey key, String relativePath, boolean tail) {
+		val lastUploadedVersion = lastHandled.getOrDefault(fileToStream, FileTime.from(Instant.MIN))
+		val lastModified = fileToStream.lastModifiedTime
+		if (lastUploadedVersion > lastModified) {
+			logger.info('''skipping file "«relativePath»" (already uploaded)''')
+		} else {
+			lastHandled.put(fileToStream, lastModified)
+			fileToStream.uploadNewer(key, relativePath, tail)
+		}
+	}
+
+	private def uploadNewer(Path fileToStream, TestExecutionKey key, String relativePath, boolean tail) {
+		logger.info('''starting to upload file «relativePath» to test execution manager''')
+		if (tail) {
+			val logTail = new LogTail2Stream(fileToStream.toFile /*, [statusManager.status !== TestStatus.RUNNING]*/ )
+			this.logtails.add(logTail)
+			managerClient.upload(workerUrl, key, relativePath, logTail)
+		} else {
+			managerClient.upload(workerUrl, key, relativePath, fileToStream.newInputStream(READ))
 		}
 	}
 
 	@FinalFieldsConstructor
 	static class WorkspaceVisitor extends SimpleFileVisitor<Path> {
+
 		static val logger = LoggerFactory.getLogger(WorkspaceVisitor)
 
 		val Path workspaceRoot
@@ -209,12 +224,12 @@ class TestResultWatcher {
 				CONTINUE
 			}
 		}
-		
+
 		override visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 			action.apply(file)
 			return CONTINUE
 		}
-		
+
 		override visitFileFailed(Path file, IOException exc) throws IOException {
 			logger.warn('''problem occurred when trying to access file «file»: «exc.message»''', exc)
 			return CONTINUE
