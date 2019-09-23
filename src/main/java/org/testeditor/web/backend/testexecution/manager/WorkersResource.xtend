@@ -61,9 +61,11 @@ class WorkersResource implements WorkersAPI {
 	@POST
 	override upload(@PathParam(value='workerId') @Encoded String workerId, @PathParam(value='jobId') TestExecutionKey jobId,
 		@PathParam('file') String fileName, InputStream content) {
+		logger.info('''receiving file "«fileName»" produced by job "«jobId»" from worker "«workerId»"''')
 		val targetFile = workspace.get.toPath.resolve(fileName)
 		targetFile.parent.createDirectories
 		content.copy(targetFile, REPLACE_EXISTING)
+		logger.info('''successfully saved "«fileName»" produced by job "«jobId»" from worker "«workerId»"''')
 
 		return Response.ok.build
 	}

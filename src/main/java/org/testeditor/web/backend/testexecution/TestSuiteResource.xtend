@@ -136,10 +136,12 @@ class TestSuiteResource {
 			if (latestCallTree !== null) {
 				val mapper = new ObjectMapper(new YAMLFactory)
 				val jsonTree = mapper.readTree(latestCallTree)
+				logger.info('latest call tree: ' + jsonTree?.toString)
 				response.resume(
 					Response.ok(jsonTree?.toString ?: '').build
 				)
 			} else {
+				logger.info('could not find call tree')
 				response.resume(
 					Response.status(Status.NOT_FOUND).build
 				)
