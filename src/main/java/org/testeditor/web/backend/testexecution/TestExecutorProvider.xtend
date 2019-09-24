@@ -167,7 +167,7 @@ class TestExecutorProvider {
 	def Iterable<File> getTestFiles(TestExecutionKey executionKey) {
 		val testPath = workspaceProvider.get.toPath.resolve(LOG_FOLDER)
 		val unfilteredtestFiles = testPath.toFile.listFiles
-		val testFiles = unfilteredtestFiles.filter[name.startsWith('''testrun.«executionKey.toString».''')]
+		val testFiles = unfilteredtestFiles?.filter[name.startsWith('''testrun.«executionKey.toString».''')] ?: #[]
 		return testFiles
 	}
 
