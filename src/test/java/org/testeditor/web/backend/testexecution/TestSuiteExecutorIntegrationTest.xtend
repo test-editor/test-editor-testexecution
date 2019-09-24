@@ -165,7 +165,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	@Test
 	def void testThatTestexecutionIsInvoked() {
 		// given
-		val workspaceRootPath = managerWorkspace.root.toPath
+		val workspaceRootPath = workerWorkspace.root.toPath
 		val testFile = 'test.tcl'
 		remoteGitFolder.newFile(testFile).commitInRemoteRepository
 		remoteGitFolder.newFile('gradlew') => [
