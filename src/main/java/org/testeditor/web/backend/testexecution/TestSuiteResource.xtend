@@ -119,7 +119,7 @@ class TestSuiteResource {
 		@QueryParam("wait") String wait,
 		@Suspended AsyncResponse response
 	) {
-		if (status !== null) {			
+		if (status !== null) {
 			val executionKey = new TestExecutionKey(suiteId, suiteRunId)
 			if (wait !== null) {
 				executor.execute [
@@ -148,8 +148,7 @@ class TestSuiteResource {
 			}
 		}
 	}
-	
-	
+
 	@DELETE
 	@Path("{suiteId}/{suiteRunId}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -159,12 +158,10 @@ class TestSuiteResource {
 	) {
 		val executionKey = new TestExecutionKey(suiteId, suiteRunId)
 		manager.cancelJob(executionKey)
-		return if (statusMapper.getStatus(executionKey) === TestStatus.RUNNING) {
+		if (statusMapper.getStatus(executionKey) === TestStatus.RUNNING) {
 			statusMapper.terminateTestSuiteRun(executionKey)
-			Response.ok.build
-		} else {
-			Response.status(Status.NOT_FOUND).build	
 		}
+		return Response.ok.build
 	}
 
 	@POST
