@@ -18,8 +18,11 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 
+import static java.nio.charset.StandardCharsets.UTF_8
 import static javax.ws.rs.core.Response.Status.*
 import static org.assertj.core.api.Assertions.*
+
+import static extension org.apache.commons.io.FileUtils.writeStringToFile
 
 //@Ignore('temporarily ignored as the worker infrastructure introduced very deep changes; these tests may have to be recreated from scratch')
 class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
@@ -114,9 +117,9 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		// given
 		val mapper = new ObjectMapper(new JsonFactory)
 		remoteGitFolder.newFile('SomeTest.tcl').commitInRemoteRepository
-		remoteGitFolder.newFolder(TestExecutorProvider.LOG_FOLDER)
-		remoteGitFolder.newFile(TestExecutorProvider.LOG_FOLDER + '/testrun.0-0--.200001011200123.yaml') => [
-			JGitTestUtil.write(it, '''
+		managerWorkspace.newFolder(TestExecutorProvider.LOG_FOLDER)
+		managerWorkspace.newFile(TestExecutorProvider.LOG_FOLDER + '/testrun.0-0--.200001011200123.yaml') => [
+			writeStringToFile('''
 				"started": "on some instant"
 				"resourcePaths": [ "one", "two" ]
 				"testRuns":
@@ -133,8 +136,8 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				    "status": "OK"
 				    "postVariables":
 				    - { "a": "some" }
-			''')
-			commitInRemoteRepository
+			''', UTF_8)
+			
 		]
 
 		// when
