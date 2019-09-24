@@ -162,6 +162,7 @@ class IdleWorker extends BaseWorkerState {
 			statusManager.addTestSuiteRun(testProcess) [ status |
 				logger.info('''process executing job "«job.id»" has completed with status "«status»""''')
 				callTreeFile.writeCallTreeYamlSuffix(status)
+				testResultWatcher.waitForWatchPhase
 				testResultWatcher.stopWatching
 				logger.info('waiting for background tasks uploading test artifacts to finish')
 				if (!jobExecutor.awaitQuiescence(2, TimeUnit.SECONDS)) {

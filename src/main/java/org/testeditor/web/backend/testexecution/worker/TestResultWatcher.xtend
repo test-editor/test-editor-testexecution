@@ -35,6 +35,8 @@ import static extension java.nio.file.Files.isDirectory
 import static extension java.nio.file.Files.isRegularFile
 import static extension java.nio.file.Files.newInputStream
 import static extension java.nio.file.Files.walkFileTree
+import java.util.concurrent.Phaser
+import java.util.concurrent.TimeUnit
 
 @Singleton
 class TestResultWatcher {
@@ -45,6 +47,8 @@ class TestResultWatcher {
 
 	val watchService = FileSystems.getDefault.newWatchService
 	val TestExecutionManagerClient managerClient
+	val Phaser phaser = new Phaser
+	volatile int startPhase
 	volatile TestExecutionKey currentJob
 	val Path workspace
 	val extension ScreenshotFinder screenshotFinder
@@ -54,6 +58,7 @@ class TestResultWatcher {
 	val lastHandled = <Path, FileTime>newHashMap
 	val Set<LogTail2Stream> logtails = <LogTail2Stream>newHashSet
 	val boolean useLogTailing
+
 
 	@Inject
 	new(@Named("workspace") Provider<File> workspaceProvider, TestExecutionManagerClient managerClient, @Named("watcherExecutor") Executor executor,
@@ -73,11 +78,20 @@ class TestResultWatcher {
 
 	def void watch(TestExecutionKey currentJob) {
 		if (currentJob !== null) {
+			this.startPhase = phaser.phase
 			logger.info('''Watching files created by job "«currentJob»"''')
 			this.currentJob = currentJob
 		} else {
 			throw new NullPointerException('the job to watch must never be set to null')
 		}
+	}
+	
+	def boolean hasAdvanced() {
+		return phaser.phase > startPhase
+	}
+	
+	def void waitForWatchPhase() {
+		phaser.awaitAdvanceInterruptibly(phaser.phase, 2200, TimeUnit.MILLISECONDS)
 	}
 
 	def void stopWatching() {
@@ -92,6 +106,7 @@ class TestResultWatcher {
 		var WatchKey key
 		try {
 			while ((key = watchService.take) !== null) {
+				phaser.register
 				val watchKey = key
 				val events = key.pollEvents
 				logger.info('''received new batch of file system events («key»)''')
@@ -107,6 +122,7 @@ class TestResultWatcher {
 					watchedDirectories.get(watchKey).resolve(context as Path)
 				].forEach[watchOrUpload]
 				logger.info('processed current batch of file system events')
+				phaser.arriveAndDeregister
 				key.reset
 			}
 		} catch (InterruptedException ex) {
