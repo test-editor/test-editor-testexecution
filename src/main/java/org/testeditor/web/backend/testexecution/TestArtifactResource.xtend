@@ -14,10 +14,10 @@ import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 import javax.ws.rs.ext.Provider
-import org.testeditor.web.backend.testexecution.workspace.MaliciousPathException
-import org.testeditor.web.backend.testexecution.workspace.MissingFileException
-import org.testeditor.web.backend.testexecution.workspace.TestArtifactAccessException
-import org.testeditor.web.backend.testexecution.workspace.WorkspaceProvider
+import org.testeditor.web.backend.testexecution.manager.MaliciousPathException
+import org.testeditor.web.backend.testexecution.manager.ManagerWorkspaceProvider
+import org.testeditor.web.backend.testexecution.manager.MissingFileException
+import org.testeditor.web.backend.testexecution.manager.TestArtifactAccessException
 
 import static javax.ws.rs.core.Response.Status.OK
 import static javax.ws.rs.core.Response.status
@@ -28,7 +28,7 @@ import static extension java.nio.file.Files.probeContentType
 @Produces(MediaType.TEXT_PLAIN)
 class TestArtifactResource {
 
-	@Inject WorkspaceProvider workspaceProvider
+	@Inject ManagerWorkspaceProvider workspaceProvider
 
 	@GET
 	def Response loadLocal(@PathParam("resourcePath") String resourcePath, @Context HttpHeaders headers) {

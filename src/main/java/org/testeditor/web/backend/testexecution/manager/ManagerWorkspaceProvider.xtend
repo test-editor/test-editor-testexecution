@@ -1,4 +1,4 @@
-package org.testeditor.web.backend.testexecution.workspace
+package org.testeditor.web.backend.testexecution.manager
 
 import java.io.File
 import javax.inject.Inject
@@ -14,25 +14,15 @@ import org.testeditor.web.dropwizard.auth.User
 
 import static org.eclipse.jgit.api.ResetCommand.ResetType.HARD
 
-class WorkspaceProvider implements Provider<File> {
+class ManagerWorkspaceProvider implements Provider<File> {
 
-	static val logger = LoggerFactory.getLogger(WorkspaceProvider)
+	static val logger = LoggerFactory.getLogger(ManagerWorkspaceProvider)
 
 	@Inject extension GitConfiguration
-	@Inject extension GitProvider
 	@Inject Provider<User> userProvider
 
 	override get() {
-		return new File(localRepoFileRoot) => [
-			logger.info('fetching latest changes from remote repository')
-			git.fetch.configureTransport.call
-			val remoteTrackingBranch = new BranchConfig(git.repository.config, git.repository.branch).remoteTrackingBranch
-			git.reset => [
-				mode = HARD
-				ref = remoteTrackingBranch
-				call
-			]
-		]
+		return new File(localRepoFileRoot)
 	}
 
 	/**

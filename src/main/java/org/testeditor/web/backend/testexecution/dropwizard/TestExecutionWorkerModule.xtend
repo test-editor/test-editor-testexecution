@@ -26,7 +26,7 @@ import org.testeditor.web.backend.testexecution.screenshots.ScreenshotFinder
 import org.testeditor.web.backend.testexecution.screenshots.SubStepAggregatingScreenshotFinder
 import org.testeditor.web.backend.testexecution.util.HierarchicalLineSkipper
 import org.testeditor.web.backend.testexecution.util.RecursiveHierarchicalLineSkipper
-import org.testeditor.web.backend.testexecution.workspace.WorkspaceProvider
+import org.testeditor.web.backend.testexecution.worker.WorkerWorkspaceProvider
 
 import static com.google.inject.name.Names.named
 
@@ -43,7 +43,7 @@ class TestExecutionWorkerModule extends AbstractModule {
 			bind(LogFinder).to(ScanningLogFinder)
 			bind(HierarchicalLineSkipper).to(RecursiveHierarchicalLineSkipper)
 			bind(LogFilter).to(Log4JDefaultFilter)
-			bind(File).annotatedWith(named("workspace")).toProvider(WorkspaceProvider)
+			bind(File).annotatedWith(named("workspace")).toProvider(WorkerWorkspaceProvider)
 			bind(TestExecutionConfiguration).to(TestExecutionDropwizardConfiguration)
 			bind(GitConfiguration).to(TestExecutionDropwizardConfiguration)
 			bind(RestClient).to(JerseyBasedRestClient)

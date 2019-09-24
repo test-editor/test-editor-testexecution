@@ -7,7 +7,6 @@ import io.dropwizard.client.JerseyClientBuilder
 import io.dropwizard.setup.Environment
 import java.io.File
 import java.util.concurrent.Executor
-import java.util.concurrent.Executors
 import java.util.concurrent.ForkJoinPool
 import org.glassfish.jersey.client.ClientProperties
 import org.glassfish.jersey.client.RequestEntityProcessing
@@ -20,13 +19,13 @@ import org.testeditor.web.backend.testexecution.loglines.LogFilter
 import org.testeditor.web.backend.testexecution.loglines.LogFinder
 import org.testeditor.web.backend.testexecution.loglines.ScanningLogFinder
 import org.testeditor.web.backend.testexecution.manager.DefaultUriAppender
+import org.testeditor.web.backend.testexecution.manager.ManagerWorkspaceProvider
 import org.testeditor.web.backend.testexecution.manager.TestStatusManager
 import org.testeditor.web.backend.testexecution.manager.UriAppender
 import org.testeditor.web.backend.testexecution.screenshots.ScreenshotFinder
 import org.testeditor.web.backend.testexecution.screenshots.SubStepAggregatingScreenshotFinder
 import org.testeditor.web.backend.testexecution.util.HierarchicalLineSkipper
 import org.testeditor.web.backend.testexecution.util.RecursiveHierarchicalLineSkipper
-import org.testeditor.web.backend.testexecution.workspace.WorkspaceProvider
 
 import static com.google.inject.name.Names.named
 
@@ -43,7 +42,7 @@ class TestExecutionManagerModule extends AbstractModule {
 			bind(LogFinder).to(ScanningLogFinder)
 			bind(HierarchicalLineSkipper).to(RecursiveHierarchicalLineSkipper)
 			bind(LogFilter).to(Log4JDefaultFilter)
-			bind(File).annotatedWith(named("workspace")).toProvider(WorkspaceProvider)
+			bind(File).annotatedWith(named("workspace")).toProvider(ManagerWorkspaceProvider)
 			bind(TestExecutionConfiguration).to(TestExecutionDropwizardConfiguration)
 			bind(GitConfiguration).to(TestExecutionDropwizardConfiguration)
 			bind(RestClient).to(JerseyBasedRestClient)
