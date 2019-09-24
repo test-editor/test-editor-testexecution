@@ -1036,6 +1036,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 
 		// then
 		assertThat(response.status).isEqualTo(OK.statusCode)
+		createTestRequest(testRun).get
 	}
 
 	@Test
