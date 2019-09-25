@@ -203,11 +203,12 @@ class TestResultWatcher {
 	}
 
 	private def uploadExisting(Path fileToStream, TestExecutionKey key, String relativePath, boolean tail) {
+		val alreadyUploaded = lastHandled.containsKey(fileToStream)
 		val lastUploadedVersion = lastHandled.getOrDefault(fileToStream, FileTime.from(Instant.MIN))
 		val lastModified = fileToStream.lastModifiedTime
-		if (lastUploadedVersion > lastModified) {
+		if ((alreadyUploaded && tail) || lastUploadedVersion > lastModified) {
 			logger.info('''skipping file "«relativePath»" (already uploaded)''')
-		} else {
+		} else { // TODO when tailing is false, files may get uploaded repeatedly
 			lastHandled.put(fileToStream, lastModified)
 			fileToStream.uploadNewer(key, relativePath, tail)
 		}
