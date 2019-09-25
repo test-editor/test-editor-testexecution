@@ -68,33 +68,30 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	def void testThatCallTreeOfLastRunReturnsLatestJson() {
 		// given
 		val mapper = new ObjectMapper(new JsonFactory)
-		remoteGitFolder.newFile('SomeTest.tcl').commitInRemoteRepository
-		remoteGitFolder.newFolder(TestExecutorProvider.LOG_FOLDER)
+		managerWorkspace.newFolder(TestExecutorProvider.LOG_FOLDER)
 		// latest (12 o'clock)
 		val latestCommitID = 'abcd'
 		val previousCommitID = '1234'
-		remoteGitFolder.newFile(TestExecutorProvider.LOG_FOLDER + '/testrun.0-0--.200001011200123.yaml') => [
-			JGitTestUtil.write(it, '''
+		managerWorkspace.newFile(TestExecutorProvider.LOG_FOLDER + '/testrun.0-0--.200001011200123.yaml') => [
+			writeStringToFile('''
 				"started": "on some instant"
 				"resourcePaths": [ "o'ne/two/three", "two/three.tcl" ]
 				"testRuns":
 				- "source": "SomeTest"
 				  "commitId": "«latestCommitID»"
 				  "children":
-			''')
-			commitInRemoteRepository
+			''', UTF_8)
 		]
 		// previous (11 o'clock)
-		remoteGitFolder.newFile(TestExecutorProvider.LOG_FOLDER + '/testrun.0-0--.200001011100123.yaml') => [
-			JGitTestUtil.write(it, '''
+		managerWorkspace.newFile(TestExecutorProvider.LOG_FOLDER + '/testrun.0-0--.200001011100123.yaml') => [
+			writeStringToFile('''
 				"started": "on some instant"
 				"resourcePaths": [ "one", "two" ]
 				"testRuns":
 				- "source": "SomeTest"
 				  "commitId": "«previousCommitID»"
 				  "children":
-			''')
-			commitInRemoteRepository
+			''', UTF_8)
 		]
 
 		// when
