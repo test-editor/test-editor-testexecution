@@ -869,11 +869,11 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 		assertThat(response.status).isEqualTo(CREATED.statusCode)
 
 		val longPollingRequest = createAsyncTestRequest(TestExecutionKey.valueOf('0-0')).async
-		val statusList = <String>newLinkedList('RUNNING')
+		val statusList = <String>newLinkedList('IDLE')
 
 		// when
 		// wait until either the status inidcates it is no longer running, or until near infinity (100) was reached
-		for (var i = 0; i < 100 && statusList.head.equals('RUNNING'); i++) {
+		for (var i = 0; i < 100 && statusList.head.equals('IDLE') || statusList.head.equals('RUNNING'); i++) {
 			val future = longPollingRequest.get
 			val pollResponse = future.get(120, TimeUnit.SECONDS)
 			assertThat(pollResponse.status).isEqualTo(OK.statusCode)
@@ -885,9 +885,14 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 
 		// then
 		println('no longer running.')
-		assertThat(statusList.size).isGreaterThan(3)
-		assertThat(statusList.tail).allMatch['RUNNING'.equals(it)]
-		assertThat(statusList.head).isEqualTo('SUCCESS')
+		statusList => [
+			assertThat(head).isEqualTo('SUCCESS')
+			tail => [
+				val numRunningStatus = takeWhile[it == 'RUNNING'].size
+				assertThat(numRunningStatus).isGreaterThanOrEqualTo(2)
+				assertThat(drop(numRunningStatus)).allMatch[it == 'IDLE']
+			]
+		]
 	}
 
 	@Test
