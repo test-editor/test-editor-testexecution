@@ -273,12 +273,10 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	@Test
 	def void testThatNodeDetailsAreProvided() {
 		val testKey = TestExecutionKey.valueOf('1-5')
-		val testFile = 'test.tcl'
-		remoteGitFolder.newFile(testFile).commitInRemoteRepository
-		remoteGitFolder.newFolder('logs')
-		remoteGitFolder.newFile('''logs/testrun.«testKey».200000000000.yaml''') => [
+		managerWorkspace.newFolder('logs')
+		managerWorkspace.newFile('''logs/testrun.«testKey».200000000000.yaml''') => [
 			executable = true
-			JGitTestUtil.write(it, '''
+			writeStringToFile('''
 				"testRuns":
 				- "source": "test.tcl"
 				  "testRunId": "1"
@@ -295,54 +293,10 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 				      - "id": "IDYZ"
 				    - "node": "SPECIFICATION"
 				      "id": "ID3"
-			''')
-			commitInRemoteRepository
+			''', UTF_8)
 		]
-		remoteGitFolder.newFile('gradlew') => [
-			executable = true
-			JGitTestUtil.write(it, '''
-				#!/bin/sh
-				echo ">>>>>>>>>>>>>>>> got the following test class: org.testeditor.Minimal with id 1.5.1"
-				echo ""
-				echo "org.testeditor.Minimal > execute STANDARD_OUT"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase @TEST:ENTER:2e86865c:IDROOT"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase ****************************************************"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase Running test for org.testeditor.Minimal"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase ****************************************************"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase   @SPECIFICATION_STEP:ENTER:e9f5018e:ID1"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase     @MACRO_LIB:ENTER:f960cf39:ID2"
-				(>&2 echo "Test message to standard error")
-				echo "  some regular message"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase       @STEP:ENTER:c8b68596:ID3"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase         @MACRO:ENTER:1cbd1de8:ID4"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase           @MACRO_LIB:ENTER:f960cf39:ID5"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase             @STEP:ENTER:2f1c1f5f:ID6"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase               @MACRO:ENTER:d295d64c:ID7"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase                 @COMPONENT:ENTER:2aa6f5bc:ID8"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase                   @STEP:ENTER:44e5ddd2:ID9"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] HftFixture actionWithStringParam(aString)"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase                   @STEP:LEAVE:44e5ddd2:ID9"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase                 @COMPONENT:LEAVE:2aa6f5bc:ID8"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase               @MACRO:LEAVE:d295d64c:ID7"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase             @STEP:LEAVE:2f1c1f5f:ID6"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase           @MACRO_LIB:LEAVE:f960cf39:ID5"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase         @MACRO:LEAVE:1cbd1de8:ID4"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase       @STEP:LEAVE:c8b68596:ID3"
-				echo "   tailing output"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase     @MACRO_LIB:LEAVE:f960cf39:ID2"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase   @SPECIFICATION_STEP:LEAVE:e9f5018e:ID1"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase ****************************************************"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase Test org.testeditor.Minimal finished with 0 sec. duration."
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase ****************************************************"
-				echo "    08:24:02 INFO  [Test worker]  [TE-Test: Minimal] AbstractTestCase @TEST:LEAVE:2e86865c:IDROOT"
-				echo ":testTask2Picked up _JAVA_OPTIONS: -Djdk.http.auth.tunneling.disabledSchemes="
-			''')
-			commitInRemoteRepository
-		]
+		managerWorkspace.newFile('''logs/testrun.«testKey».200000000000.log''')
 
-		val response = createLaunchNewRequest().post(Entity.entity(#[testFile], MediaType.APPLICATION_JSON_TYPE))
-		response.status.assertEquals(CREATED.statusCode)
-		createTestRequest(testKey).get // wait for completion
 		// when
 		val result = createNodeRequest(testKey.deriveWithCaseRunId('1').deriveWithCallTreeId('ID2')).get.readEntity(String)
 
