@@ -147,17 +147,15 @@ class IdleWorker extends BaseWorkerState {
 
 	override Response executeTestJob(TestJob job) {
 		try {
-			val suiteKey = new TestExecutionKey("0") // default suite
-			val executionKey = statusManager.deriveFreshRunId(suiteKey)
-			val builder = executorProvider.testExecutionBuilder(executionKey, job.resourcePaths, '') // commit id unknown
+			val builder = executorProvider.testExecutionBuilder(job.id, job.resourcePaths, '') // commit id unknown
 			val logFile = builder.environment.get(TestExecutorProvider.LOGFILE_ENV_KEY)
 			val callTreeFileName = builder.environment.get(TestExecutorProvider.CALL_TREE_YAML_FILE)
 			logger.
 				info('''Starting test for resourcePaths='«job.resourcePaths.join(',')»' logging into logFile='«logFile»', callTreeFile='«callTreeFileName»'.''')
 			val callTreeFile = new File(callTreeFileName)
-			callTreeFile.writeCallTreeYamlPrefix(executorProvider.yamlFileHeader(executionKey, Instant.now, job.resourcePaths))
+			callTreeFile.writeCallTreeYamlPrefix(executorProvider.yamlFileHeader(job.id, Instant.now, job.resourcePaths))
 
-			testResultWatcher.watch(job.id) // TODO or is it executionKey? Clean that up!!
+			testResultWatcher.watch(job.id)
 			val testProcess = builder.start
 			statusManager.addTestSuiteRun(testProcess) [ status |
 				logger.info('''process executing job "«job.id»" has completed with status "«status»""''')
@@ -172,7 +170,7 @@ class IdleWorker extends BaseWorkerState {
 			]
 			testProcess.logToStandardOutAndIntoFile(new File(logFile))
 			val uri = new URI(UriBuilder.fromResource(TestSuiteResource).build.toString +
-				'''/«URLEncoder.encode(executionKey.suiteId, "UTF-8")»/«URLEncoder.encode(executionKey.suiteRunId,"UTF-8")»''')
+				'''/«URLEncoder.encode(job.id.suiteId, "UTF-8")»/«URLEncoder.encode(job.id.suiteRunId,"UTF-8")»''')
 
 			state = BUSY
 
