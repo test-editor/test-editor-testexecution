@@ -2,20 +2,10 @@ package org.testeditor.web.backend.testexecution
 
 import io.dropwizard.testing.ConfigOverride
 import io.dropwizard.testing.junit.DropwizardAppRule
-import java.io.BufferedReader
 import java.io.IOException
-import java.io.InputStreamReader
-import java.io.PipedInputStream
-import java.io.PipedOutputStream
-import java.io.PrintStream
 import java.net.ServerSocket
 import java.util.function.Supplier
-import org.apache.commons.io.output.TeeOutputStream
-import org.eclipse.xtend.lib.annotations.Accessors
-import org.eclipse.xtend.lib.annotations.Delegate
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
-import org.junit.rules.RuleChain
-import org.junit.rules.TestRule
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import org.slf4j.event.Level
@@ -24,78 +14,27 @@ import org.testeditor.web.backend.testexecution.dropwizard.WorkerApplication
 
 import static io.dropwizard.testing.ConfigOverride.config
 import static io.dropwizard.testing.ResourceHelpers.resourceFilePath
-import static java.util.concurrent.CompletableFuture.runAsync
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class TestUtils {
-	
+
 	@FinalFieldsConstructor
 	static class BeforeRule extends TestWatcher {
+
 		val ()=>void before
-		
+
 		override protected starting(Description description) {
 			before.apply
 		}
+
 	}
-	
+
 	@FinalFieldsConstructor
 	static class AfterRule extends TestWatcher {
+
 		val ()=>void after
-		
+
 		override protected finished(Description description) {
 			after.apply
-		}
-	}
-
-	@Accessors
-	static class SysIoPipeRule extends TestWatcher {
-
-		val PrintStream systemOut = System.out
-		val PipedInputStream sysioPipe = new PipedInputStream
-
-		override protected starting(Description description) {
-			val tee = new TeeOutputStream(systemOut, new PipedOutputStream(sysioPipe))
-			System.setOut(new PrintStream(tee))
-		}
-
-	}
-
-	@FinalFieldsConstructor
-	static class SysIoPipeCloseAndRestoreRule extends TestWatcher {
-
-		val PipedInputStream sysioPipe
-		val PrintStream systemOut
-
-		override protected finished(Description description) {
-			sysioPipe.close
-			System.setOut(systemOut)
-		}
-
-	}
-
-	static class SysIoPipeRuleChain implements TestRule {
-
-		@Delegate
-		val RuleChain ruleChain
-		@Accessors
-		val SysIoPipeRule sysIoPipeRule
-
-		new(TestRule... innerRules) {
-			sysIoPipeRule = new SysIoPipeRule
-			ruleChain = innerRules.fold(RuleChain.outerRule(sysIoPipeRule)) [ RuleChain chain, TestRule innerRule |
-				chain.around(innerRule)
-			].around(new SysIoPipeCloseAndRestoreRule(sysIoPipeRule.sysioPipe, sysIoPipeRule.systemOut))
-		}
-
-		def void waitForLogLine(String expectedLogLine) {
-			waitForLogLine(expectedLogLine, 5)
-		}
-
-		def void waitForLogLine(String expectedLogLine, int timeoutSecs) {
-			runAsync[
-				val sysioReader = new BufferedReader(new InputStreamReader(sysIoPipeRule.sysioPipe))
-				sysioReader.lines.anyMatch[contains(expectedLogLine)]
-			].get(timeoutSecs, SECONDS)
 		}
 
 	}
@@ -104,16 +43,12 @@ class TestUtils {
 		Supplier<String> testExecutionManagerUrl, ConfigOverride... overrides) {
 		val port = freePort
 		return createWorkerRule('worker-config.yml', #[
-			config('server.applicationConnectors[0].port',port),
+			config('server.applicationConnectors[0].port', port),
 			config('localRepoFileRoot', localRepoFileRoot),
 			config('remoteRepoUrl', remoteRepoUrl),
 			config('testExecutionManagerUrl', testExecutionManagerUrl),
 			config('workerUrl', '''http://localhost:«port»''')
 		] + overrides)
-	}
-
-	def DropwizardAppRule<TestExecutionDropwizardConfiguration> createWorkerRule(ConfigOverride... overrides) {
-		return createWorkerRule('worker-config.yml', overrides)
 	}
 
 	def DropwizardAppRule<TestExecutionDropwizardConfiguration> createWorkerRule(String configFile, ConfigOverride... overrides) {
