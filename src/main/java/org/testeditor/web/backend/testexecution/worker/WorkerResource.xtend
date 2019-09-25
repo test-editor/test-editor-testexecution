@@ -188,7 +188,7 @@ class IdleWorker extends BaseWorkerState {
 	}
 
 	override getTestJobState(Boolean wait) {
-		return Response.ok(TestStatus.IDLE.name).build
+		return Response.ok(statusManager.getStatus.name).build
 	}
 
 	private def File writeCallTreeYamlPrefix(File callTreeYamlFile, String fileHeader) {

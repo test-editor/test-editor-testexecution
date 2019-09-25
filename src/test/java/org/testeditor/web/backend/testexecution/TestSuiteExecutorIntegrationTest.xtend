@@ -996,7 +996,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	def void testThatTestRunIsIdleAfterBeingDeleted() {
+	def void testThatTestRunIsFailedAfterBeingDeleted() {
 		// given
 		val testFile = 'test.tcl'
 		remoteGitFolder.newFile(testFile).commitInRemoteRepository
@@ -1014,12 +1014,17 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 			launchResponse.headers.get("Location").toString)
 		testRunIdMatcher.find.assertTrue
 		val testRun = TestExecutionKey.valueOf('''«testRunIdMatcher.group(1)»-«testRunIdMatcher.group(2)»''')
+		val statusRequest = createTestRequest(testRun)
+		while(statusRequest.get(String) == 'IDLE') {
+			println('waiting for worker to accept the test job...')
+			Thread.sleep(100)
+		}
 
 		// when
 		createCallTreeRequest(testRun).delete
 
 		// then
-		val actualTestStatus = createTestRequest(testRun).get
+		val actualTestStatus = statusRequest.get
 		assertThat(actualTestStatus.readEntity(String)).isEqualTo('FAILED')
 	}
 	
