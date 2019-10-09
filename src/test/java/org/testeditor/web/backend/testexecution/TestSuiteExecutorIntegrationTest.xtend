@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeType
 import java.io.File
+import java.nio.file.Paths
 import java.util.List
 import java.util.Map
 import java.util.concurrent.TimeUnit
@@ -13,12 +14,29 @@ import javax.ws.rs.core.GenericType
 import javax.ws.rs.core.MediaType
 import org.assertj.core.api.SoftAssertions
 import org.eclipse.jgit.junit.JGitTestUtil
+import org.junit.After
 import org.junit.Test
 
 import static javax.ws.rs.core.Response.Status.*
 import static org.assertj.core.api.Assertions.*
 
+import static extension java.nio.file.Files.exists
+import static extension java.nio.file.Files.lines
+
 class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
+	
+	@After
+	def void printXvfbLog() {
+		Paths.get(workspaceRoot.root.absolutePath, 'xvfb.error.log') => [
+			if (exists) {
+				lines.forEach[logLine | 
+					println('''xvfb.error.log: «logLine»''')
+				]
+			} else {
+				println('no "xvfb.error.log" file has been written.')
+			}
+		]
+	}
 
 	@Test
 	def void testThatCallTreeIsNotFoundIfNotExistent() {
