@@ -213,20 +213,19 @@ class TestExecutorProvider {
 	}
 
 	private def String[] constructCommandLine(String testClass) {
-		if (System.getenv('TRAVIS').isNullOrEmpty) {
-			return #[whichNice, '-n', '10', whichXvfbrun, '-e', 'xvfb.error.log', '--server-args=-screen 0 1920x1080x16', whichSh, '-c',
-				testClass.gradleTestCommandLine]
-		} else {
-			return #[whichSh, '-c', testClass.gradleTestCommandLine]
-		}
+		return testClass.gradleTestCommandLine.withEnclosingCommands
 	}
 
 	private def String[] constructCommandLine(TestExecutionKey key, Iterable<String> testCases) {
+		return key.gradleTestCommandLine(testCases).withEnclosingCommands
+	}
+	
+	private def String[] withEnclosingCommands(String gradleTestCommandLine) {
 		if (System.getenv('TRAVIS').isNullOrEmpty) {
-			return #[whichNice, '-n', '10', whichXvfbrun, '-e', 'xvfb.error.log', '--server-args=-screen 0 1920x1080x16', whichSh, '-c',
-				key.gradleTestCommandLine(testCases)]
+			return #[whichNice, '-n', '10', whichXvfbrun, '-d', '-e', 'xvfb.error.log', '--server-args=-screen 0 1920x1080x16', whichSh, '-c',
+				gradleTestCommandLine]
 		} else {
-			return #[whichSh, '-c', key.gradleTestCommandLine(testCases)]
+			return #[whichSh, '-c', gradleTestCommandLine]
 		}
 	}
 
