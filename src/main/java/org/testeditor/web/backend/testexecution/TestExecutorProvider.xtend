@@ -48,11 +48,11 @@ class TestExecutorProvider {
 	}
 
 	private def String getWhichSh() {
-		return commandPaths.computeIfAbsent('sh')[configuration.nicePath.getIfPresentOrElse[runShellCommand('which', 'sh')]]
+		return commandPaths.computeIfAbsent('sh')[configuration.shPath.getIfPresentOrElse[runShellCommand('which', 'sh')]]
 	}
 
 	private def String getWhichXvfbrun() {
-		return commandPaths.computeIfAbsent('xvfbrun')[configuration.nicePath.getIfPresentOrElse[runShellCommand('which', 'xvfb-run')]]
+		return commandPaths.computeIfAbsent('xvfbrun')[configuration.xvfbrunPath.getIfPresentOrElse[runShellCommand('which', 'xvfb-run')]]
 	}
 
 	private def <T> T getOrDefault(T value, (T)=>Boolean condition, ()=>T defaultValue) {
