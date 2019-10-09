@@ -1,5 +1,7 @@
 package org.testeditor.web.backend.testexecution
 
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.io.File
 import java.io.FileNotFoundException
 import java.nio.file.FileSystems
@@ -35,7 +37,13 @@ class TestExecutionKey {
 		this(suiteId, suiteRunId, caseRunId, "")
 	}
 
-	new(String suiteId, String suiteRunId, String caseRunId, String callTreeId) {
+	@JsonCreator
+	new(
+		@JsonProperty('suiteId') String suiteId,
+		@JsonProperty('suiteRunId') String suiteRunId,
+		@JsonProperty('caseRunId') String caseRunId,
+		@JsonProperty('callTreeId') String callTreeId
+	) {
 		this.suiteId = suiteId
 		this.suiteRunId = suiteRunId
 		this.caseRunId = caseRunId
