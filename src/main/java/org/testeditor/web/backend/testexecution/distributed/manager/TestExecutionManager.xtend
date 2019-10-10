@@ -8,6 +8,7 @@ import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.TestExecutorProvider
 import org.testeditor.web.backend.testexecution.TestLogWriter
 import org.testeditor.web.backend.testexecution.TestStatusMapper
+import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 import org.testeditor.web.backend.testexecution.util.CallTreeYamlUtil
 
 import static org.testeditor.web.backend.testexecution.TestExecutorProvider.CALL_TREE_YAML_FILE
