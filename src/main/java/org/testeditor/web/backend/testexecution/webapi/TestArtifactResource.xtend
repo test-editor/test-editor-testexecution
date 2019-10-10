@@ -1,4 +1,4 @@
-package org.testeditor.web.backend.testexecution
+package org.testeditor.web.backend.testexecution.webapi
 
 import io.dropwizard.jersey.errors.LoggingExceptionMapper
 import java.io.FileInputStream
