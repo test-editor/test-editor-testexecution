@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import org.junit.Test
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
+import org.testeditor.web.backend.testexecution.webapi.TestSuiteResource
 
 import static org.assertj.core.api.Assertions.*
 import static org.mockito.ArgumentMatchers.*
