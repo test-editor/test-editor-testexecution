@@ -6,6 +6,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameter
 import org.junit.runners.Parameterized.Parameters
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.dropwizard.testing.AbstractTest
 
 @RunWith(Parameterized)

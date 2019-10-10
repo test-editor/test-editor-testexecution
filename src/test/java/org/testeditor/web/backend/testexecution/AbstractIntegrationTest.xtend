@@ -6,6 +6,8 @@ import de.xtendutils.junit.AssertionHelper
 import io.dropwizard.testing.ConfigOverride
 import io.dropwizard.testing.ResourceHelpers
 import io.dropwizard.testing.junit.DropwizardAppRule
+import java.io.File
+import java.nio.file.Path
 import java.util.List
 import javax.ws.rs.client.Entity
 import javax.ws.rs.client.Invocation.Builder
@@ -18,13 +20,11 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import org.testeditor.web.backend.testexecution.TestExecutionKey
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
+import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionApplication
+import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionDropwizardConfiguration
 
 import static io.dropwizard.testing.ConfigOverride.config
-import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionDropwizardConfiguration
-import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionApplication
-import java.io.File
-import java.nio.file.Path
 
 abstract class AbstractIntegrationTest {
 

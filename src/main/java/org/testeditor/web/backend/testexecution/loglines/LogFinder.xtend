@@ -1,6 +1,6 @@
 package org.testeditor.web.backend.testexecution.loglines
 
-import org.testeditor.web.backend.testexecution.TestExecutionKey
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 
 interface LogFinder {
 

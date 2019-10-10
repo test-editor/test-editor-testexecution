@@ -3,6 +3,7 @@ package org.testeditor.web.backend.testexecution
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Singleton
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 
 import static org.testeditor.web.backend.testexecution.TestStatus.*
 
