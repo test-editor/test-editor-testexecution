@@ -2,11 +2,17 @@ package org.testeditor.web.backend.testexecution
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.google.inject.Module
 import java.util.ArrayList
+import java.util.List
 import java.util.Map
 import javax.inject.Inject
 import org.junit.Test
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
+import org.testeditor.web.backend.testexecution.util.serialization.Json
+import org.testeditor.web.backend.testexecution.util.serialization.JsonWriter
+import org.testeditor.web.backend.testexecution.util.serialization.Yaml
+import org.testeditor.web.backend.testexecution.util.serialization.YamlReader
 import org.testeditor.web.dropwizard.testing.AbstractTest
 
 import static org.assertj.core.api.Assertions.assertThat
@@ -87,6 +93,13 @@ class TestExecutionCallTreeTest extends AbstractTest {
 		          "status": "OK"
 	'''
 
+	override protected void collectModules(List<Module> modules) {
+		modules += [ binder |
+			binder.bind(JsonWriter).to(Json)
+			binder.bind(YamlReader).to(Yaml)
+		]
+	}
+	
 	@Test
 	def void testJacksonYamlParseProvidesMapsAndArrayLists() {
 		val yamlObject = objectMapper.readValue('''

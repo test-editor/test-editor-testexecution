@@ -1,16 +1,19 @@
 package org.testeditor.web.backend.testexecution
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import java.io.File
 import java.util.ArrayList
 import java.util.List
 import java.util.Map
+import javax.inject.Inject
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
+import org.testeditor.web.backend.testexecution.util.serialization.JsonWriter
+import org.testeditor.web.backend.testexecution.util.serialization.YamlReader
 
 class TestExecutionCallTree {
 
-	static val objectMapper = new ObjectMapper(new YAMLFactory)
+	@Inject extension YamlReader
+	@Inject extension JsonWriter
+
 	static val childrenKey = 'children'
 	static val idKey = 'id'
 
@@ -18,7 +21,7 @@ class TestExecutionCallTree {
 	var Map<String, Object> yamlObject
 
 	def void readFile(TestExecutionKey executionKey, File yaml) {
-		yamlObject = objectMapper.readValue(yaml, Map)
+		yamlObject = yaml.readYaml
 		this.executionKey = executionKey
 	}
 
@@ -26,7 +29,7 @@ class TestExecutionCallTree {
 		if (yaml.nullOrEmpty) {
 			throw new IllegalArgumentException('Yaml string must not be null nor empty')
 		} else {
-			yamlObject = objectMapper.readValue(yaml, Map)
+			yamlObject = yaml.readYaml
 			this.executionKey = executionKey
 		}
 	}
@@ -34,8 +37,7 @@ class TestExecutionCallTree {
 	def String getCompleteTestCallTreeJson(TestExecutionKey executionKey) {
 		val test = executionKey.testNode
 		if (test !== null) {
-			val objectWriter = new ObjectMapper().writer
-			return objectWriter.writeValueAsString(test)
+			return test.writeJson
 		} else {
 			throw new IllegalArgumentException('''test for passed executionKey = '«executionKey»' cannot be found.''')
 		}
@@ -50,7 +52,7 @@ class TestExecutionCallTree {
 			throw new IllegalArgumentException('''TestExecutionKey = '«executionKey»' cannot be found in call tree.''')
 		}
 	}
-	
+
 	def Iterable<TestExecutionKey> getDescendantsKeys(TestExecutionKey key) {
 		val node = key.testNode.typedMapGetArray(childrenKey)?.findNode(key.callTreeId)
 		return if (node !== null && !node.empty) {
@@ -59,11 +61,11 @@ class TestExecutionCallTree {
 			#[]
 		}
 	}
-	
+
 	private def Iterable<TestExecutionKey> getDescendantsKeys(Map<String, Object> node) {
 		val keys = newLinkedList()
 		if (node.get(childrenKey) !== null) {
-			node.<Map<String, Object>>typedMapGetArray(childrenKey).forEach[
+			node.<Map<String, Object>>typedMapGetArray(childrenKey).forEach [
 				keys += executionKey.deriveWithCallTreeId(get(idKey) as String)
 				keys += descendantsKeys
 			]
@@ -82,8 +84,8 @@ class TestExecutionCallTree {
 		val test = testRuns.findFirst [ test |
 			executionKey.caseRunId.equals(test.get("testRunId"))
 		]
-		
-		if (test===null) {
+
+		if (test === null) {
 			throw new IllegalArgumentException('''could not find test run with id = '«executionKey.caseRunId»' in testRuns = '«testRuns.join(', ')»' ''')
 		} else {
 			return test
@@ -93,8 +95,7 @@ class TestExecutionCallTree {
 	private def String writeToJsonHidingChildren(Map<String, Object> node) {
 		val children = node.get(childrenKey)
 		node.remove(childrenKey)
-		val objectWriter = new ObjectMapper().writer
-		val result = objectWriter.writeValueAsString(node)
+		val result = node.writeJson
 		node.put(childrenKey, children)
 
 		return result
@@ -108,7 +109,8 @@ class TestExecutionCallTree {
 			if (nodeFound !== null) {
 				return nodeFound
 			} else {
-				val recursivelyFoundNode = nodes.map[node|(node.get(childrenKey) as ArrayList<Map<String, Object>>)?.findNode(callTreeId)].filterNull.head
+				val recursivelyFoundNode = nodes.map[node|(node.get(childrenKey) as ArrayList<Map<String, Object>>)?.findNode(callTreeId)].filterNull.
+					head
 				return recursivelyFoundNode
 			}
 		}
