@@ -5,6 +5,8 @@ import com.google.inject.Provides
 import java.io.File
 import java.util.concurrent.Executor
 import java.util.concurrent.ForkJoinPool
+import org.testeditor.web.backend.testexecution.distributed.manager.LocalSingleWorkerExecutionManager
+import org.testeditor.web.backend.testexecution.distributed.manager.TestExecutionManager
 import org.testeditor.web.backend.testexecution.loglines.Log4JDefaultFilter
 import org.testeditor.web.backend.testexecution.loglines.LogFilter
 import org.testeditor.web.backend.testexecution.loglines.LogFinder
@@ -28,6 +30,7 @@ class TestExecutionModule extends AbstractModule {
 			bind(File).annotatedWith(named("workspace")).toProvider(WorkspaceProvider)
 			bind(TestExecutionConfiguration).to(TestExecutionDropwizardConfiguration)
 			bind(GitConfiguration).to(TestExecutionDropwizardConfiguration)
+			bind(TestExecutionManager).to(LocalSingleWorkerExecutionManager)
 		]
 	}
 
