@@ -3,7 +3,7 @@ package org.testeditor.web.backend.testexecution.distributed.common
 import java.net.URI
 import java.util.Set
 import java.util.concurrent.CompletionStage
-import org.testeditor.web.backend.testexecution.RunningTest
+import org.testeditor.web.backend.testexecution.common.RunningTest
 
 interface WorkerInfo {
 

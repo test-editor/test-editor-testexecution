@@ -18,6 +18,7 @@ import org.eclipse.xtext.xbase.lib.Procedures.Procedure1
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.testeditor.web.backend.testexecution.common.TestStatus
 
 import static java.nio.charset.StandardCharsets.UTF_8
 import static java.util.concurrent.TimeUnit.MILLISECONDS

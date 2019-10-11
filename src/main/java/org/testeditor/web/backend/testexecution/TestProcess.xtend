@@ -6,9 +6,11 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.stream.Collectors
 import org.slf4j.LoggerFactory
+import org.testeditor.web.backend.testexecution.common.RunningTest
+import org.testeditor.web.backend.testexecution.common.TestStatus
 import org.testeditor.web.backend.testexecution.webapi.TestSuiteResource
 
-import static org.testeditor.web.backend.testexecution.TestStatus.*
+import static org.testeditor.web.backend.testexecution.common.TestStatus.*
 
 /**
  * Keeps track of the status of a single test execution.
