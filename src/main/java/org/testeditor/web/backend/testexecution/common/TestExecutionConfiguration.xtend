@@ -5,6 +5,8 @@ interface TestExecutionConfiguration {
 	def String getNicePath()
 	def String getShPath()
 	
+	def int getLongPollingTimeoutSeconds()
+	
 	/**
      * Whether to skip over log entries produced by subordinate test steps.
      * 
