@@ -6,8 +6,8 @@ import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
 import org.apache.commons.lang3.Validate
+import org.testeditor.web.backend.testexecution.common.TestExecutionConfiguration
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
-import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionConfiguration
 import org.testeditor.web.backend.testexecution.util.HierarchicalLineSkipper
 
 /**

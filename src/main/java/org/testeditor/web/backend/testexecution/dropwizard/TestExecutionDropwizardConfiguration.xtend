@@ -3,6 +3,8 @@ package org.testeditor.web.backend.testexecution.dropwizard
 import javax.inject.Singleton
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.hibernate.validator.constraints.NotEmpty
+import org.testeditor.web.backend.testexecution.common.GitConfiguration
+import org.testeditor.web.backend.testexecution.common.TestExecutionConfiguration
 import org.testeditor.web.dropwizard.DropwizardApplicationConfiguration
 
 @Singleton

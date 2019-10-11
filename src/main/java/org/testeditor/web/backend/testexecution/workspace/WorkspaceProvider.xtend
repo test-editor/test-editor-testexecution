@@ -8,7 +8,7 @@ import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.Data
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import org.slf4j.LoggerFactory
-import org.testeditor.web.backend.testexecution.dropwizard.GitConfiguration
+import org.testeditor.web.backend.testexecution.common.GitConfiguration
 import org.testeditor.web.backend.testexecution.git.GitProvider
 import org.testeditor.web.dropwizard.auth.User
 
