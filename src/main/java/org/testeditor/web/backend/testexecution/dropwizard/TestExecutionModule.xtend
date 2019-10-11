@@ -5,8 +5,6 @@ import com.google.inject.Provides
 import java.io.File
 import java.util.concurrent.Executor
 import java.util.concurrent.ForkJoinPool
-import org.testeditor.web.backend.testexecution.distributed.manager.LocalSingleWorkerExecutionManager
-import org.testeditor.web.backend.testexecution.distributed.manager.TestExecutionManager
 import org.testeditor.web.backend.testexecution.loglines.Log4JDefaultFilter
 import org.testeditor.web.backend.testexecution.loglines.LogFilter
 import org.testeditor.web.backend.testexecution.loglines.LogFinder
@@ -15,6 +13,10 @@ import org.testeditor.web.backend.testexecution.screenshots.ScreenshotFinder
 import org.testeditor.web.backend.testexecution.screenshots.SubStepAggregatingScreenshotFinder
 import org.testeditor.web.backend.testexecution.util.HierarchicalLineSkipper
 import org.testeditor.web.backend.testexecution.util.RecursiveHierarchicalLineSkipper
+import org.testeditor.web.backend.testexecution.util.serialization.Json
+import org.testeditor.web.backend.testexecution.util.serialization.JsonWriter
+import org.testeditor.web.backend.testexecution.util.serialization.Yaml
+import org.testeditor.web.backend.testexecution.util.serialization.YamlReader
 import org.testeditor.web.backend.testexecution.workspace.WorkspaceProvider
 
 import static com.google.inject.name.Names.named
@@ -30,6 +32,8 @@ class TestExecutionModule extends AbstractModule {
 			bind(File).annotatedWith(named("workspace")).toProvider(WorkspaceProvider)
 			bind(TestExecutionConfiguration).to(TestExecutionDropwizardConfiguration)
 			bind(GitConfiguration).to(TestExecutionDropwizardConfiguration)
+			bind(JsonWriter).to(Json)
+			bind(YamlReader).to(Yaml)
 		]
 	}
 
