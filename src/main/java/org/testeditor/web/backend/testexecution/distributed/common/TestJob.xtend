@@ -1,4 +1,4 @@
-package org.testeditor.web.backend.testexecution.distributed.manager
+package org.testeditor.web.backend.testexecution.distributed.common
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty

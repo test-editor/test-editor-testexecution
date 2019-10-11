@@ -30,7 +30,6 @@ class TestExecutionModule extends AbstractModule {
 			bind(File).annotatedWith(named("workspace")).toProvider(WorkspaceProvider)
 			bind(TestExecutionConfiguration).to(TestExecutionDropwizardConfiguration)
 			bind(GitConfiguration).to(TestExecutionDropwizardConfiguration)
-			bind(TestExecutionManager).to(LocalSingleWorkerExecutionManager)
 		]
 	}
 
