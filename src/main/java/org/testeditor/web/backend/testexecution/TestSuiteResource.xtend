@@ -25,8 +25,8 @@ import javax.ws.rs.core.Response
 import javax.ws.rs.core.Response.Status
 import javax.ws.rs.core.UriBuilder
 import org.slf4j.LoggerFactory
+import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 import org.testeditor.web.backend.testexecution.distributed.manager.TestExecutionManager
-import org.testeditor.web.backend.testexecution.distributed.manager.TestJob
 import org.testeditor.web.backend.testexecution.loglines.LogFinder
 import org.testeditor.web.backend.testexecution.loglines.LogLevel
 import org.testeditor.web.backend.testexecution.screenshots.ScreenshotFinder

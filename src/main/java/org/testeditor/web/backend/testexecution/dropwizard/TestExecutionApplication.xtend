@@ -23,7 +23,7 @@ class TestExecutionApplication extends DropwizardApplication<TestExecutionDropwi
 
 	override protected collectModules(List<Module> modules) {
 		super.collectModules(modules)
-		modules += new TestExecutionModule
+		modules += #[ new TestExecutionModule, new LocalSingleWorkerModule ]
 	}
 
 	override run(TestExecutionDropwizardConfiguration configuration, Environment environment) throws Exception {
