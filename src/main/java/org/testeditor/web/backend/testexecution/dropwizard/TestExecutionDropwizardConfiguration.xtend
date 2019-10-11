@@ -1,8 +1,8 @@
 package org.testeditor.web.backend.testexecution.dropwizard
 
 import javax.inject.Singleton
+import javax.validation.constraints.NotEmpty
 import org.eclipse.xtend.lib.annotations.Accessors
-import org.hibernate.validator.constraints.NotEmpty
 import org.testeditor.web.dropwizard.DropwizardApplicationConfiguration
 
 @Singleton
