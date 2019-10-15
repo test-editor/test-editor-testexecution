@@ -6,8 +6,8 @@ import java.util.List
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.servlet.FilterRegistration.Dynamic
-import org.testeditor.web.backend.testexecution.TestExecutionExceptionMapper
 import org.testeditor.web.backend.testexecution.webapi.TestArtifactResource
+import org.testeditor.web.backend.testexecution.webapi.TestExecutionExceptionMapper
 import org.testeditor.web.backend.testexecution.webapi.TestSuiteResource
 import org.testeditor.web.dropwizard.DropwizardApplication
 
