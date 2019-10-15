@@ -13,6 +13,7 @@ import javax.inject.Named
 import javax.inject.Provider
 import org.apache.commons.text.StringEscapeUtils
 import org.slf4j.LoggerFactory
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionConfiguration
 
 import static extension org.apache.commons.io.FileUtils.deleteDirectory

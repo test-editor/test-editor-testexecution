@@ -16,6 +16,7 @@ import org.assertj.core.api.SoftAssertions
 import org.eclipse.jgit.junit.JGitTestUtil
 import org.junit.After
 import org.junit.Test
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 
 import static javax.ws.rs.core.Response.Status.*
 import static org.assertj.core.api.Assertions.*

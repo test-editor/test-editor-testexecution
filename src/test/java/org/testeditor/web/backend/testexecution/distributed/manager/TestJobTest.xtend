@@ -3,7 +3,7 @@ package org.testeditor.web.backend.testexecution.distributed.manager
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.dropwizard.jackson.Jackson
 import org.junit.Test
-import org.testeditor.web.backend.testexecution.TestExecutionKey
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 
 import static io.dropwizard.testing.FixtureHelpers.*

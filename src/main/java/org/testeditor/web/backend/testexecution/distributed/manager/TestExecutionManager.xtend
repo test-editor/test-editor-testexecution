@@ -3,7 +3,7 @@ package org.testeditor.web.backend.testexecution.distributed.manager
 import java.util.Optional
 import javax.inject.Inject
 import javax.inject.Singleton
-import org.testeditor.web.backend.testexecution.TestExecutionKey
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 
 interface TestExecutionManager {

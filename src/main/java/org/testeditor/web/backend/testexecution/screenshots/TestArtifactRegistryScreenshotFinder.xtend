@@ -8,7 +8,7 @@ import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
 import org.slf4j.LoggerFactory
-import org.testeditor.web.backend.testexecution.TestExecutionKey
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 
 import static java.nio.charset.StandardCharsets.UTF_8
 
