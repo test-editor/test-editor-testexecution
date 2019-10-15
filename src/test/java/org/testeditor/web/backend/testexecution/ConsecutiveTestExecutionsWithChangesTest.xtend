@@ -11,6 +11,7 @@ import org.junit.runner.RunWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionConfiguration
 
 import static java.nio.charset.StandardCharsets.UTF_8

@@ -5,7 +5,7 @@ import java.util.regex.Pattern
 import java.util.stream.Collectors
 import java.util.stream.Stream
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
-import org.testeditor.web.backend.testexecution.TestExecutionKey
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 
 import static java.nio.charset.StandardCharsets.UTF_8
 

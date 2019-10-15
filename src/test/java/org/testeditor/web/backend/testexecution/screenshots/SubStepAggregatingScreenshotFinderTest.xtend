@@ -6,11 +6,11 @@ import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
 import org.testeditor.web.backend.testexecution.TestExecutionCallTree
-import org.testeditor.web.backend.testexecution.TestExecutionKey
+import org.testeditor.web.backend.testexecution.TestExecutorProvider
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 
 import static org.assertj.core.api.Assertions.assertThat
 import static org.mockito.Mockito.when
-import org.testeditor.web.backend.testexecution.TestExecutorProvider
 
 @RunWith(MockitoJUnitRunner)
 class SubStepAggregatingScreenshotFinderTest {

@@ -6,6 +6,7 @@ import java.util.ArrayList
 import java.util.Map
 import javax.inject.Inject
 import org.junit.Test
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.dropwizard.testing.AbstractTest
 
 import static org.assertj.core.api.Assertions.assertThat

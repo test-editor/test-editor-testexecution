@@ -3,8 +3,8 @@ package org.testeditor.web.backend.testexecution.screenshots
 import java.util.Optional
 import javax.inject.Inject
 import org.testeditor.web.backend.testexecution.TestExecutionCallTree
-import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.TestExecutorProvider
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 
 class SubStepAggregatingScreenshotFinder implements ScreenshotFinder {
 
