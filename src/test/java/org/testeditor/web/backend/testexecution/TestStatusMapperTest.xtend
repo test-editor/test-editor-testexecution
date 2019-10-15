@@ -3,7 +3,12 @@ package org.testeditor.web.backend.testexecution
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import javax.inject.Provider
+import org.junit.Before
 import org.junit.Test
+import org.mockito.InjectMocks
+import org.mockito.Mock
+import org.testeditor.web.backend.testexecution.common.TestExecutionConfiguration
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.common.TestStatus
 import org.testeditor.web.backend.testexecution.webapi.TestSuiteResource
@@ -13,14 +18,28 @@ import static org.mockito.ArgumentMatchers.*
 import static org.mockito.Mockito.*
 import static org.testeditor.web.backend.testexecution.common.TestStatus.*
 
+import static extension org.mockito.MockitoAnnotations.initMocks
+
 class TestStatusMapperTest {
 
 	static val EXIT_SUCCESS = 0;
 	static val EXIT_FAILURE = 1;
+	
+	@Mock
+	Provider<TestExecutionConfiguration> mockConfigProvider
 
+	@InjectMocks
 	TestStatusMapper statusMapperUnderTest = new TestStatusMapper
 	
 	extension TestProcessMocking = new TestProcessMocking
+	
+	@Before
+	def void setupMockConfig() {
+		initMocks
+		val mockConfig = mock(TestExecutionConfiguration)
+		when(mockConfigProvider.get).thenReturn(mockConfig)
+		when(mockConfig.longPollingTimeoutSeconds).thenReturn(5)
+	}
 
 	@Test
 	def void addTestRunAddsTestInRunningStatus() {

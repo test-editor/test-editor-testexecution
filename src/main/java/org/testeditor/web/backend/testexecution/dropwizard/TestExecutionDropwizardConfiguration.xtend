@@ -37,6 +37,9 @@ class TestExecutionDropwizardConfiguration extends DropwizardApplicationConfigur
 	@Accessors
 	String shPath	
 	
+	@Accessors
+	int longPollingTimeoutSeconds = 5
+	
     @Accessors
     Boolean filterTestSubStepsFromLogs = false
 
