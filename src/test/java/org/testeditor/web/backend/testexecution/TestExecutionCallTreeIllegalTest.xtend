@@ -7,16 +7,25 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
+import org.mockito.Spy
+import org.testeditor.web.backend.testexecution.util.serialization.JsonWriter
+import org.testeditor.web.backend.testexecution.util.serialization.Json
+import org.testeditor.web.backend.testexecution.util.serialization.YamlReader
+import org.testeditor.web.backend.testexecution.util.serialization.Yaml
+import org.mockito.InjectMocks
+import org.mockito.MockitoAnnotations
 
 @RunWith(Parameterized)
 class TestExecutionCallTreeIllegalTest {
-
+	
+	@Spy JsonWriter jsonWriter = new Json
+	@Spy YamlReader yamlReader = new Yaml
+	@InjectMocks
 	var testExecutionCallTreeUnderTest = new TestExecutionCallTree // needs to be initialized otherwise test invocation fails!
 
 	@Before
 	def void initWithNewInstance() {
-		// make sure to have a clean instance
-		testExecutionCallTreeUnderTest = new TestExecutionCallTree
+		MockitoAnnotations.initMocks(this)
 	}
 
 	@Parameters
