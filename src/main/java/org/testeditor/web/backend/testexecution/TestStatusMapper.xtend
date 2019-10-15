@@ -2,7 +2,10 @@ package org.testeditor.web.backend.testexecution
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
+import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
+import org.testeditor.web.backend.testexecution.common.TestExecutionConfiguration
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.common.TestStatus
 
@@ -35,13 +38,19 @@ import static org.testeditor.web.backend.testexecution.common.TestStatus.*
  */
 @Singleton
 class TestStatusMapper {
+	
+	@Inject Provider<TestExecutionConfiguration> configProvider
 
 	public static val TEST_STATUS_MAP_NAME = "testStatusMap"
 
 	var AtomicLong runningTestSuiteRunId = new AtomicLong(0)
 
 	val suiteStatusMap = new ConcurrentHashMap<TestExecutionKey, TestProcess>
-
+	
+	private def longPollingTimeoutSeconds() {
+		return configProvider.get.longPollingTimeoutSeconds
+	}
+	
 	def TestExecutionKey deriveFreshRunId(TestExecutionKey suiteKey) {
 		return suiteKey.deriveWithSuiteRunId(Long.toString(runningTestSuiteRunId.andIncrement))
 	}
@@ -70,7 +79,7 @@ class TestStatusMapper {
 		if (testExecutionKey.isRunning) {
 			throw new IllegalStateException('''TestSuite "«testExecutionKey»" is still running.''')
 		} else {
-			val testProcess = new TestProcess(runningTestSuite, onCompleted)
+			val testProcess = new TestProcess(runningTestSuite, longPollingTimeoutSeconds, onCompleted)
 			suiteStatusMap.put(testExecutionKey, testProcess)
 		}
 	}

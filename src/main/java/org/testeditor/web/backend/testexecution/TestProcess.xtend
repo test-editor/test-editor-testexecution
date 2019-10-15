@@ -31,29 +31,36 @@ class TestProcess implements RunningTest {
 	static val logger = LoggerFactory.getLogger(TestProcess)
 
 	public static val TestProcess DEFAULT_IDLE_TEST_PROCESS = new TestProcess()
-	public static val int WAIT_TIMEOUT_SECONDS = TestSuiteResource.LONG_POLLING_TIMEOUT_SECONDS
+	public static val int DEFAULT_WAIT_TIMEOUT_SECONDS = 5
 
 	val descendantsBeforeKill = <ProcessHandle>newLinkedList
 	var Process process
 	var TestStatus status
+	val int timeout
 	val (TestStatus)=>void onCompleted
 
 	new(Process process) {
-		this(process)[]
+		this(process, DEFAULT_WAIT_TIMEOUT_SECONDS)[]
 	}
 
 	new(Process process, (TestStatus)=>void onCompleted) {
+		this(process, DEFAULT_WAIT_TIMEOUT_SECONDS, onCompleted)
+	}
+
+	new(Process process, int timeoutSeconds, (TestStatus)=>void onCompleted) {
 		if (process === null) {
 			throw new NullPointerException("Process must initially not be null")
 		}
 		this.process = process
 		this.status = RUNNING
 		this.onCompleted = onCompleted
+		this.timeout = timeoutSeconds
 	}
 
 	private new() {
 		this.process = null
 		this.status = IDLE
+		this.timeout = DEFAULT_WAIT_TIMEOUT_SECONDS
 		this.onCompleted = []
 	}
 
@@ -76,7 +83,7 @@ class TestProcess implements RunningTest {
 	 */
 	override TestStatus waitForStatus() {
 		if (process !== null && testIsAlive) {
-			waitForAll(WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+			waitForAll(timeout, TimeUnit.SECONDS)
 		}
 		return this.checkStatus
 	}
@@ -152,7 +159,7 @@ class TestProcess implements RunningTest {
 
 	private def void killForciblyIfNotDeadAfterTimeout(ProcessHandle handle) {
 		try {
-			handle.onExit.get(WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+			handle.onExit.get(timeout, TimeUnit.SECONDS)
 		} catch (TimeoutException timeout) {
 			logger.info('''timeout reached while waiting for process with PID «handle.pid» to die. Killing forcibly...''')
 			handle.killForcibly
