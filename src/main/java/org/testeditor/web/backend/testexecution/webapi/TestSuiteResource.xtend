@@ -1,4 +1,4 @@
-package org.testeditor.web.backend.testexecution
+package org.testeditor.web.backend.testexecution.webapi
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
@@ -25,6 +25,11 @@ import javax.ws.rs.core.Response
 import javax.ws.rs.core.Response.Status
 import javax.ws.rs.core.UriBuilder
 import org.slf4j.LoggerFactory
+import org.testeditor.web.backend.testexecution.TestExecutionCallTree
+import org.testeditor.web.backend.testexecution.TestExecutorProvider
+import org.testeditor.web.backend.testexecution.TestStatus
+import org.testeditor.web.backend.testexecution.TestStatusMapper
+import org.testeditor.web.backend.testexecution.TestSuiteStatusInfo
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 import org.testeditor.web.backend.testexecution.distributed.manager.TestExecutionManager
@@ -37,7 +42,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND
 import static extension com.fasterxml.jackson.core.util.BufferRecyclers.quoteAsJsonText
 
 @Path("/test-suite")
-@Consumes(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN)
+@Consumes(#[MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN])
 class TestSuiteResource {
 
 	public static val LONG_POLLING_TIMEOUT_SECONDS = 5

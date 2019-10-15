@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.stream.Collectors
 import org.slf4j.LoggerFactory
+import org.testeditor.web.backend.testexecution.webapi.TestSuiteResource
 
 import static org.testeditor.web.backend.testexecution.TestStatus.*
 
