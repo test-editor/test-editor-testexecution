@@ -12,8 +12,8 @@ import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.Spy
 import org.mockito.junit.MockitoJUnitRunner
+import org.testeditor.web.backend.testexecution.common.TestExecutionConfiguration
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
-import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionConfiguration
 import org.testeditor.web.backend.testexecution.util.HierarchicalLineSkipper
 import org.testeditor.web.backend.testexecution.util.RecursiveHierarchicalLineSkipper
 

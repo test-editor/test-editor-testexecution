@@ -1,4 +1,4 @@
-package org.testeditor.web.backend.testexecution.dropwizard
+package org.testeditor.web.backend.testexecution.common
 
 interface GitConfiguration {
 	def String getLocalRepoFileRoot()

@@ -15,7 +15,7 @@ import org.eclipse.jgit.transport.OpenSshConfig.Host
 import org.eclipse.jgit.transport.SshTransport
 import org.eclipse.jgit.util.FS
 import org.slf4j.LoggerFactory
-import org.testeditor.web.backend.testexecution.dropwizard.GitConfiguration
+import org.testeditor.web.backend.testexecution.common.GitConfiguration
 
 import static java.util.concurrent.TimeUnit.MINUTES
 import static org.eclipse.jgit.lib.Constants.DOT_GIT
