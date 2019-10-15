@@ -6,9 +6,9 @@ import java.util.List
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.servlet.FilterRegistration.Dynamic
-import org.testeditor.web.backend.testexecution.TestArtifactResource
 import org.testeditor.web.backend.testexecution.TestExecutionExceptionMapper
-import org.testeditor.web.backend.testexecution.TestSuiteResource
+import org.testeditor.web.backend.testexecution.webapi.TestArtifactResource
+import org.testeditor.web.backend.testexecution.webapi.TestSuiteResource
 import org.testeditor.web.dropwizard.DropwizardApplication
 
 import static org.eclipse.jetty.servlets.CrossOriginFilter.EXPOSED_HEADERS_PARAM
