@@ -5,12 +5,13 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import org.junit.Test
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
+import org.testeditor.web.backend.testexecution.common.TestStatus
 import org.testeditor.web.backend.testexecution.webapi.TestSuiteResource
 
 import static org.assertj.core.api.Assertions.*
 import static org.mockito.ArgumentMatchers.*
 import static org.mockito.Mockito.*
-import static org.testeditor.web.backend.testexecution.TestStatus.*
+import static org.testeditor.web.backend.testexecution.common.TestStatus.*
 
 class TestStatusMapperTest {
 

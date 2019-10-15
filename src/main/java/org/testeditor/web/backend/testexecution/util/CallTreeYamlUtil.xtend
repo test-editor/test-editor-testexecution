@@ -2,13 +2,13 @@ package org.testeditor.web.backend.testexecution.util
 
 import java.io.File
 import java.nio.file.Files
-import org.testeditor.web.backend.testexecution.TestStatus
+import javax.inject.Singleton
+import org.testeditor.web.backend.testexecution.common.TestStatus
 
 import static java.nio.charset.StandardCharsets.UTF_8
 import static java.nio.file.StandardOpenOption.APPEND
 import static java.nio.file.StandardOpenOption.CREATE
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
-import javax.inject.Singleton
 
 @Singleton
 class CallTreeYamlUtil {
