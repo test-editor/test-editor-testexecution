@@ -22,7 +22,7 @@ import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.junit.MockitoJUnitRunner
 import org.slf4j.LoggerFactory
-import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionConfiguration
+import org.testeditor.web.backend.testexecution.common.TestExecutionConfiguration
 
 import static org.assertj.core.api.Assertions.*
 import static org.mockito.Mockito.*
