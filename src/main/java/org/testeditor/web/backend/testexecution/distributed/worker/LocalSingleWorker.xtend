@@ -9,8 +9,8 @@ import javax.inject.Provider
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.TestExecutorProvider
 import org.testeditor.web.backend.testexecution.TestLogWriter
-import org.testeditor.web.backend.testexecution.TestStatus
 import org.testeditor.web.backend.testexecution.TestStatusMapper
+import org.testeditor.web.backend.testexecution.common.TestStatus
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo
 import org.testeditor.web.backend.testexecution.distributed.common.Worker
 import org.testeditor.web.backend.testexecution.util.CallTreeYamlUtil

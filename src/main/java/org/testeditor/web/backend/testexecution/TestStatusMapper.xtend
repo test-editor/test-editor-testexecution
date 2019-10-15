@@ -4,8 +4,9 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Singleton
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
+import org.testeditor.web.backend.testexecution.common.TestStatus
 
-import static org.testeditor.web.backend.testexecution.TestStatus.*
+import static org.testeditor.web.backend.testexecution.common.TestStatus.*
 
 /**
  * Keeps a record of running tests and their current execution status.
