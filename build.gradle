@@ -35,6 +35,9 @@ repositories {
 	maven {
 		url  "http://dl.bintray.com/franzbecker/maven"
 	}
+	maven {
+		url 'https://jitpack.io' 
+	}
 }
 
 ext.versions = [
@@ -71,6 +74,7 @@ dependencies {
 	testImplementation "org.testeditor.web:org.testeditor.web.dropwizard.testing:$versions.testEditorDropwizard"
 	testImplementation 'org.eclipse.jgit:org.eclipse.jgit.junit:5.1.2.201810061102-r'
 
+	annotationProcessor 'com.github.moditect.deptective:deptective-javac-plugin:master-SNAPSHOT'
 }
 
 mainClassName = 'org.testeditor.web.backend.testexecution.dropwizard.TestExecutionApplication'
@@ -128,3 +132,14 @@ release {
 }
 
 afterReleaseBuild.dependsOn bintrayUpload
+
+/**
+ * Deptective settings
+ */
+compileJava {
+    options.compilerArgs += '-Xplugin:Deptective ' + 
+                             'mode=VALIDATE ' +
+                             'reporting_policy=WARN ' +
+                             'visualize=true ' +
+                             "config_file=${projectDir}/src/main/resources/META-INF/deptective.json"
+}

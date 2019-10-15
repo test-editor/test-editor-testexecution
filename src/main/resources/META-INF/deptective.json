@@ -1,0 +1,131 @@
+{
+	"components": [
+		{
+			"name": "DropwizardApplication",
+			"contains": ["org.testeditor.web.backend.testexecution.dropwizard"],
+			"reads": ["Apache Commons IO",
+                      "CommonAPI", 
+                      "Commons", 
+                      "Dropwizard",
+                      "GitAccess",
+                      "Guice",
+                      "IO", 
+                      "TestEditorDropwizard",
+                      "TestExecutionManager",
+                      "TestExecutionWorker",
+			          "TestProcessExecution",
+			          "WebAPI"]
+		},
+		{
+			"name": "WebAPI",
+			"contains": ["org.testeditor.web.backend.testexecution.webapi"],
+			"reads": ["TestExecutionManager", "CommonAPI", "Commons", "Dropwizard", "JAX-RS", "Jackson", "IO", "Network"
+			]
+		},
+		{
+			"name": "CommonAPI",
+			"contains": ["org.testeditor.web.backend.testexecution.distributed.common"],
+			"reads": ["Commons", "Jackson", "Network"]
+		},
+		{
+			"name": "TestExecutionManager",
+			"contains": ["org.testeditor.web.backend.testexecution.distributed.manager"],
+			"reads": ["CommonAPI", "Commons"]
+		},
+		{
+			"name": "TestExecutionWorker",
+			"contains": ["org.testeditor.web.backend.testexecution.distributed.worker"],
+			"reads": ["CommonAPI", "TestProcessExecution", "Commons", "IO", "Network"]
+		},
+		{
+			"name": "TestProcessExecution",
+			"contains": ["org.testeditor.web.backend.testexecution",
+				         "org.testeditor.web.backend.testexecution.loglines",
+				         "org.testeditor.web.backend.testexecution.screenshots",
+				         "org.testeditor.web.backend.testexecution.workspace"
+			],
+			"reads": ["GitAccess", "Commons", "IO", "TestEditorDropwizard", "ApacheCommonsText", "ApacheCommonsLang"]
+		},
+		{
+			"name": "GitAccess",
+			"contains": ["org.testeditor.web.backend.testexecution.git",
+			             "com.jcraft.jsch",
+			             "org.eclipse.jgit.api",
+			             "org.eclipse.jgit.lib",
+			             "org.eclipse.jgit.transport",
+			             "org.eclipse.jgit.util"],
+            "reads": ["Commons", "IO"]
+		},
+		{
+			"name": "Commons",
+			"contains": ["org.testeditor.web.backend.testexecution.common",
+			             "org.testeditor.web.backend.testexecution.util",
+			             "org.testeditor.web.backend.testexecution.util.serialization"],
+			"reads": ["IO", "Jackson"]
+		},
+		{
+			"name": "TestEditorDropwizard",
+			"contains": ["org.testeditor.web.dropwizard*"]
+		},
+		{
+			"name": "Dropwizard",
+			"contains": ["com.codahale.metrics.health",
+					     "io.dropwizard*",
+					     "javax.servlet",
+					     "org.eclipse.jetty.servlets"]
+		},
+		{
+			"name": "Guice",
+			"contains": ["com.google.inject", "com.google.inject.name"]
+		},
+		{
+			"name": "JAX-RS",
+			"contains": ["javax.ws.rs", "javax.ws.rs.container", "javax.ws.rs.core", "javax.ws.rs.ext", "javax.ws.rs.container.ext"]
+		},
+		{
+			"name": "Jackson",
+			"contains": ["com.fasterxml.jackson.core.util", "com.fasterxml.jackson.databind", "com.fasterxml.jackson.dataformat.yaml"]
+		},
+		{
+			"name": "ApacheCommonsLang",
+			"contains": ["org.apache.commons.lang3"]
+		},
+		{
+			"name": "ApacheCommonsText",
+			"contains": ["org.apache.commons.text"]
+		},
+		{
+			"name": "IO",
+			"contains": ["java.io", "java.nio*", "org.apache.commons.io", "org.apache.commons.io.output"]
+		},
+		{
+			"name": "Network",
+			"contains": ["java.net*"]
+		}
+	],
+	"whitelisted" : [
+		"### JSON annotations ###",
+		"com.fasterxml.jackson.annotation*",
+		
+		"com.google.common*",
+		
+		"### JDK utilities ###",
+		"java.time*",
+		"java.util*",
+		
+		"### dependency injection ###",
+		"javax.inject",
+		
+		"### Bean Validation API ###",
+		"javax.validation*",
+		
+		"### utilities used by Xtend-to-Java code generation ###",
+		"org.eclipse.xtend*",
+		"org.eclipse.xtend2*",
+		"org.eclipse.xtext.xbase*",
+		
+		"### logging framework SLF4J ###",
+		"org.slf4j"
+
+	]
+}
