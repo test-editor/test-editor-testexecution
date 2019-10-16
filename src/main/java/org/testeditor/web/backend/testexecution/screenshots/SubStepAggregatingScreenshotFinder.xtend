@@ -1,9 +1,10 @@
 package org.testeditor.web.backend.testexecution.screenshots
 
+import java.io.File
 import java.util.Optional
 import javax.inject.Inject
+import javax.inject.Named
 import org.testeditor.web.backend.testexecution.TestExecutionCallTree
-import org.testeditor.web.backend.testexecution.TestExecutorProvider
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 
 class SubStepAggregatingScreenshotFinder implements ScreenshotFinder {
@@ -12,13 +13,13 @@ class SubStepAggregatingScreenshotFinder implements ScreenshotFinder {
 	TestArtifactRegistryScreenshotFinder delegateFinder
 	@Inject
 	TestExecutionCallTree callTree
-	@Inject
-	TestExecutorProvider executorProvider
+	@Inject @Named('workspace')
+	File workspace
 
 	override getScreenshotPathsForTestStep(TestExecutionKey key) {
 		var result = delegateFinder.getScreenshotPathsForTestStep(key)
 		if (result.nullOrEmpty) {
-			val latestCallTree = executorProvider.getTestFiles(new TestExecutionKey(key.suiteId, key.suiteRunId)) //
+			val latestCallTree = new TestExecutionKey(key.suiteId, key.suiteRunId).getTestFiles(workspace) //
 			.filter[name.endsWith('.yaml')].sortBy[name].last
 			callTree.readFile(key, latestCallTree)
 

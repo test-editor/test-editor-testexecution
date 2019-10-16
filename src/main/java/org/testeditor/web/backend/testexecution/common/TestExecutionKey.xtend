@@ -17,6 +17,7 @@ import static extension java.nio.file.Files.list
 @Data
 class TestExecutionKey {
 	static val logger = LoggerFactory.getLogger(TestExecutionKey)
+	static val LOG_FOLDER = 'logs' // TODO replace w/ app config field!!
 
 	static val PATTERN = Pattern.compile('([^-\\s]+)(-([^-\\s]*)(-([^-\\s]*)(-([^-\\s]*))?)?)?')
 	
@@ -110,5 +111,12 @@ class TestExecutionKey {
 		logger.debug('retrieved log file "{}" for test execution key "{}".', logFile.fileName, keyName)
 
 		return logFile
+	}
+	
+	def Iterable<File> getTestFiles(File workspace) {
+		val testPath = workspace.toPath.resolve(LOG_FOLDER)
+		val unfilteredtestFiles = testPath.toFile.listFiles
+		val testFiles = unfilteredtestFiles.filter[name.startsWith('''testrun.«this.toString».''')]
+		return testFiles
 	}
 }
