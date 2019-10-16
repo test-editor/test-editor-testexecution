@@ -25,7 +25,6 @@ import javax.ws.rs.core.Response
 import javax.ws.rs.core.Response.Status
 import javax.ws.rs.core.UriBuilder
 import org.slf4j.LoggerFactory
-import org.testeditor.web.backend.testexecution.TestExecutionCallTree
 import org.testeditor.web.backend.testexecution.TestExecutorProvider
 import org.testeditor.web.backend.testexecution.TestStatusMapper
 import org.testeditor.web.backend.testexecution.TestSuiteStatusInfo
@@ -51,7 +50,6 @@ class TestSuiteResource {
 	@Inject TestExecutorProvider executorProvider
 	@Inject TestStatusMapper statusMapper
 	@Inject Executor executor
-	@Inject TestExecutionCallTree testExecutionCallTree
 	@Inject ScreenshotFinder screenshotFinder
 	@Inject LogFinder logFinder
 	@Inject TestExecutionManager manager
@@ -69,8 +67,7 @@ class TestSuiteResource {
 	) {
 		var response = Response.status(Status.NOT_FOUND).build
 		var executionKey = new TestExecutionKey(suiteId, suiteRunId)
-		val latestCallTree = executorProvider.getTestFiles(executionKey).filter[name.endsWith('.yaml')].sortBy[name].last
-		if (latestCallTree !== null) {
+		if (manager.testJobExists(executionKey)) {
 			if (!caseRunId.nullOrEmpty) {
 				executionKey = executionKey.deriveWithCaseRunId(caseRunId)
 				if (!callTreeId.nullOrEmpty) {
@@ -87,25 +84,25 @@ class TestSuiteResource {
 				warning = '''No log file for test execution key '«executionKey.toString»'.'''
 				logger.warn(warning, e)
 			}
-
+	
 			val resultList = newLinkedList('''{ "type": "text", "content": ["«logLines.join('", "')»"]}''')
-
+	
 			if (!logOnly) {
-				testExecutionCallTree.readFile(executionKey, latestCallTree)
-				val callTreeResultString = testExecutionCallTree.getNodeJson(executionKey)
+				val callTreeResultString = manager.getJsonCallTree(executionKey)
 				resultList += '''{ "type": "properties", "content": «callTreeResultString» }'''
 				resultList += screenshotFinder.getScreenshotPathsForTestStep(executionKey).map [
 					'''{ "type": "image", "content": "«it»" }'''
 				]
 			}
 			val jsonResultString = '[' + resultList.join(',') + ']'
-
+	
 			val responseBuilder = Response.ok(jsonResultString)
 			response = if (warning.nullOrEmpty) {
 				responseBuilder.build
 			} else {
 				responseBuilder.header('Warning', '''299 «warning»''').build
 			}
+			
 		}
 
 		return response

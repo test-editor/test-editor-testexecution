@@ -7,9 +7,11 @@ import java.util.concurrent.CompletableFuture
 import javax.inject.Inject
 import javax.inject.Provider
 import org.slf4j.LoggerFactory
+import org.testeditor.web.backend.testexecution.TestExecutionCallTree
 import org.testeditor.web.backend.testexecution.TestExecutorProvider
 import org.testeditor.web.backend.testexecution.TestLogWriter
 import org.testeditor.web.backend.testexecution.TestStatusMapper
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.common.TestStatus
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo
 import org.testeditor.web.backend.testexecution.distributed.common.Worker
@@ -21,6 +23,7 @@ import static org.testeditor.web.backend.testexecution.TestExecutorProvider.LOGF
 class LocalSingleWorker implements Worker {
 	static val logger = LoggerFactory.getLogger(LocalSingleWorker)
 
+	@Inject TestExecutionCallTree testExecutionCallTree
 	@Inject extension TestStatusMapper statusMapper
 	@Inject Provider<TestExecutorProvider> _executorProvider // eager initialization causes injection trouble due to Dropwizard env not being set
 	@Inject extension TestLogWriter
@@ -68,6 +71,16 @@ class LocalSingleWorker implements Worker {
 
 	override getProvidedCapabilities() {
 		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+	}
+	
+	override getJsonCallTree(TestExecutionKey key) {
+		val latestCallTree = executorProvider.getTestFiles(new TestExecutionKey(key.suiteId, key.suiteRunId)).filter[name.endsWith('.yaml')].sortBy[name].last
+		testExecutionCallTree.readFile(key, latestCallTree)
+		return testExecutionCallTree.getNodeJson(key)
+	}
+	
+	override testJobExists(TestExecutionKey key) {
+		currentJob.map[id.equals(key)].orElse(false)
 	}
 
 }
