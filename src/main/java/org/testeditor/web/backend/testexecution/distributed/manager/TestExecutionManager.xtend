@@ -9,6 +9,7 @@ import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo.JobState
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobStore
+import org.testeditor.web.backend.testexecution.distributed.common.WritableTestJobStore
 
 interface TestExecutionManager extends TestJobStore {
 
@@ -20,9 +21,9 @@ interface TestExecutionManager extends TestJobStore {
 
 @Singleton
 class LocalSingleWorkerExecutionManager implements TestExecutionManager {
-	@Inject @Delegate(TestJobStore) extension WorkerProvider workerProvider
-
-	val jobLog = <TestExecutionKey, TestJobInfo>newHashMap
+	@Inject extension WorkerProvider workerProvider
+	@Inject @Delegate(TestJobStore) WritableTestJobStore jobStore
+	
 	var Optional<TestExecutionKey> currentJob = Optional.empty
 
 	override cancelJob(TestExecutionKey key) {
@@ -37,6 +38,12 @@ class LocalSingleWorkerExecutionManager implements TestExecutionManager {
 		jobLog.put(id, it)
 		workers.head.assign(it)
 		currentJob = Optional.of(id)
+	}
+	
+	override boolean testJobExists(TestExecutionKey key) {
+		jobLog.computeIfAbsent(key)[
+			
+		] !== TestJob.NONE
 	}
 
 }

@@ -6,3 +6,7 @@ interface TestJobStore {
 	def boolean testJobExists(TestExecutionKey key)
 	def String getJsonCallTree(TestExecutionKey key)
 }
+
+interface WritableTestJobStore extends TestJobStore {
+	def void store(TestExecutionKey key, TestJob job)
+}
