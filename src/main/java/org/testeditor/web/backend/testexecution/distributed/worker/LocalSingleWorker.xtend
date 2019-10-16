@@ -43,7 +43,7 @@ class LocalSingleWorker implements Worker {
 		logger.
 			info('''Starting test for resourcePaths='«resourcePaths.join(',')»' logging into logFile='«logFile»', callTreeFile='«callTreeFileName»'.''')
 		val callTreeFile = new File(callTreeFileName)
-		callTreeFile.writeCallTreeYamlPrefix(executorProvider.yamlFileHeader(id, Instant.now, resourcePaths))
+		callTreeFile.writeCallTreeYamlPrefix(id, Instant.now, resourcePaths)
 		val testProcess = builder.start
 		statusMapper.addTestSuiteRun(id, testProcess)[status|callTreeFile.writeCallTreeYamlSuffix(status)]
 		testProcess.logToStandardOutAndIntoFile(new File(logFile))

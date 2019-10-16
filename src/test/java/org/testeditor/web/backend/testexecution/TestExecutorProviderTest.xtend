@@ -2,15 +2,12 @@ package org.testeditor.web.backend.testexecution
 
 import java.time.Instant
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.InjectMocks
-import org.mockito.junit.MockitoJUnitRunner
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
+import org.testeditor.web.backend.testexecution.util.CallTreeYamlUtil
 
-@RunWith(MockitoJUnitRunner)
 class TestExecutorProviderTest {
 
-	@InjectMocks TestExecutorProvider testExecutorProviderUnderTest
+	val callTreeYamlUtil = new CallTreeYamlUtil
 
 	@Test
 	def void testYamlHeaderDoesEscaping() {
@@ -23,7 +20,7 @@ class TestExecutorProviderTest {
 		val now = Instant.now
 
 		// when
-		val result = testExecutorProviderUnderTest.yamlFileHeader(executionKey, now, resourcePaths)
+		val result = callTreeYamlUtil.yamlFileHeader(executionKey, now, resourcePaths)
 
 		// then
 		result.equals('''
