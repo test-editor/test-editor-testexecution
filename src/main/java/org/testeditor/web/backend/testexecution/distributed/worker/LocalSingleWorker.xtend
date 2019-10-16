@@ -75,8 +75,12 @@ class LocalSingleWorker implements Worker {
 	
 	override getJsonCallTree(TestExecutionKey key) {
 		val latestCallTree = executorProvider.getTestFiles(new TestExecutionKey(key.suiteId, key.suiteRunId)).filter[name.endsWith('.yaml')].sortBy[name].last
-		testExecutionCallTree.readFile(key, latestCallTree)
-		return testExecutionCallTree.getNodeJson(key)
+		return if (latestCallTree !== null) {
+			testExecutionCallTree.readFile(key, latestCallTree)
+			testExecutionCallTree.getNodeJson(key)
+		} else { 
+			null // TODO throw exception instead!!
+		}
 	}
 	
 	override testJobExists(TestExecutionKey key) {

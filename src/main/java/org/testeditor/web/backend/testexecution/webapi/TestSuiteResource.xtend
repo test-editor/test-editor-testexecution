@@ -130,13 +130,10 @@ class TestSuiteResource {
 			}
 		} else {
 			// get the latest call tree of the given resource
-			val latestCallTree = executorProvider.getTestFiles(new TestExecutionKey(suiteId, suiteRunId)).filter[name.endsWith('.yaml')].sortBy[name].
-				reverse.head
+			val latestCallTree = manager.getJsonCallTree(new TestExecutionKey(suiteId, suiteRunId))
 			if (latestCallTree !== null) {
-				val mapper = new ObjectMapper(new YAMLFactory)
-				val jsonTree = mapper.readTree(latestCallTree)
 				response.resume(
-					Response.ok(jsonTree.toString).build
+					Response.ok(latestCallTree).build
 				)
 			} else {
 				response.resume(
