@@ -1,7 +1,5 @@
 package org.testeditor.web.backend.testexecution.webapi
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import java.io.FileNotFoundException
 import java.net.URI
 import java.net.URLEncoder
