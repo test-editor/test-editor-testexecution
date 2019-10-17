@@ -86,7 +86,7 @@ class TestSuiteResource {
 			val resultList = newLinkedList('''{ "type": "text", "content": ["«logLines.join('", "')»"]}''')
 	
 			if (!logOnly) {
-				val callTreeResultString = manager.getJsonCallTree(executionKey)
+				val callTreeResultString = manager.getJsonCallTree(executionKey).orElse('{}')
 				resultList += '''{ "type": "properties", "content": «callTreeResultString» }'''
 				resultList += screenshotFinder.getScreenshotPathsForTestStep(executionKey).map [
 					'''{ "type": "image", "content": "«it»" }'''
@@ -116,8 +116,8 @@ class TestSuiteResource {
 		@QueryParam("wait") String wait,
 		@Suspended AsyncResponse response
 	) {
+		val executionKey = new TestExecutionKey(suiteId, suiteRunId)
 		if (status !== null) {
-			val executionKey = new TestExecutionKey(suiteId, suiteRunId)
 			if (wait !== null) {
 				executor.execute [
 					waitForStatus(executionKey, response)
@@ -128,16 +128,9 @@ class TestSuiteResource {
 			}
 		} else {
 			// get the latest call tree of the given resource
-			val latestCallTree = manager.getJsonCallTree(new TestExecutionKey(suiteId, suiteRunId))
-			if (latestCallTree !== null) {
-				response.resume(
-					Response.ok(latestCallTree).build
-				)
-			} else {
-				response.resume(
-					Response.status(Status.NOT_FOUND).build
-				)
-			}
+			manager.getJsonCallTree(executionKey).map [
+				response.resume(Response.ok(it).build)
+			].orElse(response.resume(Response.status(Status.NOT_FOUND).build))
 		}
 	}
 

@@ -22,7 +22,7 @@ interface TestExecutionManager extends TestJobStore {
 @Singleton
 class LocalSingleWorkerExecutionManager implements TestExecutionManager {
 	@Inject extension WorkerProvider workerProvider
-	@Inject @Delegate(TestJobStore) extension WritableTestJobStore jobStore
+	@Inject extension WritableTestJobStore jobStore
 	
 	var Optional<TestJobInfo> currentJob = Optional.empty
 
@@ -39,4 +39,13 @@ class LocalSingleWorkerExecutionManager implements TestExecutionManager {
 		workers.head.assign(it)
 		currentJob = Optional.of(it)
 	}
+	
+	override testJobExists(TestExecutionKey key) {
+		jobStore.testJobExists(key) || workerProvider.testJobExists(key)
+	}
+	
+	override getJsonCallTree(TestExecutionKey key) {
+		jobStore.getJsonCallTree(key).or[workerProvider.getJsonCallTree(key)]
+	}
+	
 }

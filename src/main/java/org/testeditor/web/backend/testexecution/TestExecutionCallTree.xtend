@@ -15,7 +15,7 @@ class TestExecutionCallTree {
 	static val idKey = 'id'
 
 	def String getCompleteTestCallTreeJson(TestExecutionKey executionKey, ()=>Map<String,Object> yamlObjectProvider) {
-		val test = executionKey.testNode(yamlObjectProvider)
+		val test = yamlObjectProvider.apply
 		if (test !== null) {
 			return test.writeJson
 		} else {

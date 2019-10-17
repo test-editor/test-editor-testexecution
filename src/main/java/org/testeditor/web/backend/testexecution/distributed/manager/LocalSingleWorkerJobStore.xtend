@@ -38,7 +38,12 @@ class LocalSingleWorkerJobStore implements WritableTestJobStore {
 	}
 	
 	override getJsonCallTree(TestExecutionKey key) {
-		callTreeMap.get(key).map[callTreeHelper.getNodeJson(key)[it]].orElse('')
+		if (key.caseRunId.nullOrEmpty) {
+			callTreeMap.get(key).map[key.getCompleteTestCallTreeJson[it]]
+		} else {
+			callTreeMap.get(key.deriveWithSuiteRunId).map[key.getNodeJson[it]]
+		}
+		
 	}
 	
 	override store(TestJobInfo job) {
