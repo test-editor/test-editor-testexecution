@@ -17,7 +17,9 @@ import org.testeditor.web.backend.testexecution.util.serialization.YamlReader
 class LocalSingleWorkerJobStore implements WritableTestJobStore {
 	@Inject extension YamlReader
 	@Inject extension TestExecutionCallTree callTreeHelper
-	@Inject @Named('workspace') File workspace
+	@Inject @Named('workspace') Provider<File> workspaceProvider
+	
+	private def workspace() { workspaceProvider.get }
 	
 	@Inject Provider<TestExecutionConfiguration> config
 	val jobCache = CacheBuilder.newBuilder.maximumSize(1000).<TestExecutionKey, TestJobInfo>build[key|
