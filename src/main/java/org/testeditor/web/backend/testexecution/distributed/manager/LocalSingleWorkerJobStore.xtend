@@ -1,8 +1,11 @@
 package org.testeditor.web.backend.testexecution.distributed.manager
 
 import com.google.common.cache.CacheBuilder
+import com.google.common.cache.LoadingCache
 import java.io.File
 import java.util.List
+import java.util.Map
+import java.util.Optional
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
@@ -22,16 +25,32 @@ class LocalSingleWorkerJobStore implements WritableTestJobStore {
 	private def workspace() { workspaceProvider.get }
 	
 	@Inject Provider<TestExecutionConfiguration> config
-	val jobCache = CacheBuilder.newBuilder.maximumSize(1000).<TestExecutionKey, TestJobInfo>build[key|
-		callTreeMap.get(key)
-		/* TODO capabilities need to be stored in call tree yaml! */
-		.map[new TestJob(key, #{}, getOrDefault('resourcePaths',#[]) as List<String>)]
-		.orElse(TestJob.NONE)
-	]
 	
-	val callTreeMap = CacheBuilder.newBuilder.maximumSize(1000).build[TestExecutionKey key|
-		key.getLatestCallTree(workspace).map[readYaml]
-	]
+	var LoadingCache<TestExecutionKey, TestJobInfo> _jobCache = null
+	var LoadingCache<TestExecutionKey, Optional<Map<String, Object>>> _callTreeMap = null
+	
+	// late initialization of caches; we must not access config object too early!
+	private def jobCache() {
+		if (_jobCache === null) {
+			_jobCache = CacheBuilder.newBuilder.maximumSize(config.get.testJobCacheSize).<TestExecutionKey, TestJobInfo>build[key|
+				callTreeMap.get(key)
+				/* TODO capabilities need to be stored in call tree yaml! */
+				.map[new TestJob(key, #{}, getOrDefault('resourcePaths',#[]) as List<String>)]
+				.orElse(TestJob.NONE)
+			]			
+		}
+		return _jobCache
+	}
+	
+	private def callTreeMap() {
+		if (_callTreeMap === null) {
+			_callTreeMap = CacheBuilder.newBuilder.maximumSize(config.get.testJobCallTreeCacheSize).build[TestExecutionKey key|
+				key.getLatestCallTree(workspace).map[readYaml]
+			]
+		}
+		return _callTreeMap
+	}
+
 	
 	override testJobExists(TestExecutionKey key) {
 		jobCache.get(key.deriveWithSuiteRunId) != TestJob.NONE
