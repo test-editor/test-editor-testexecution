@@ -1,7 +1,5 @@
 package org.testeditor.web.backend.testexecution
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.google.inject.Module
 import java.util.ArrayList
 import java.util.List
@@ -19,8 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat
 
 class TestExecutionCallTreeTest extends AbstractTest {
 
-	static val objectMapper = new ObjectMapper(new YAMLFactory)
-
+	YamlReader yamlReader = new Yaml
+	
 	@Inject
 	TestExecutionCallTree testExecutionCallTreeUnderTest
 
@@ -102,12 +100,12 @@ class TestExecutionCallTreeTest extends AbstractTest {
 	
 	@Test
 	def void testJacksonYamlParseProvidesMapsAndArrayLists() {
-		val yamlObject = objectMapper.readValue('''
+		val yamlObject = yamlReader.readYaml('''
 			"testRuns":
 			- "source": "xyz.tcl"
 			  "testRunId" : "4711"
 			  "children":
-		''', Map);
+		''');
 
 		val map = yamlObject.get("testRuns").assertInstanceOf(ArrayList).assertSingleElement //
 		.assertInstanceOf(Map) //
@@ -118,10 +116,10 @@ class TestExecutionCallTreeTest extends AbstractTest {
 	@Test
 	def void testJsonNodeRetrievalReturnsCorrectNode() {
 		// given
-		testExecutionCallTreeUnderTest.readString(new TestExecutionKey('1', '2'), testRunCallTreeYaml)
+		val ()=>Map<String,Object> yamlProvider = [ yamlReader.readYaml(testRunCallTreeYaml) ]
 
 		// when
-		val jsonString = testExecutionCallTreeUnderTest.getNodeJson(new TestExecutionKey('1', '2', '5', 'ID16'))
+		val jsonString = testExecutionCallTreeUnderTest.getNodeJson(new TestExecutionKey('1', '2', '5', 'ID16'), yamlProvider)
 
 		// then
 		jsonString.matches('''.*"enter" *: *"23859940990735".*''').assertTrue
@@ -130,10 +128,10 @@ class TestExecutionCallTreeTest extends AbstractTest {
 	@Test
 	def void testJsonNodeRetrievalOfNodeWithChildrenReturnsWithoutChildren() {
 		// given
-		testExecutionCallTreeUnderTest.readString(new TestExecutionKey('1', '2'), testRunCallTreeYaml)
+		val ()=>Map<String,Object> yamlProvider = [ yamlReader.readYaml(testRunCallTreeYaml) ]
 
 		// when
-		val jsonString = testExecutionCallTreeUnderTest.getNodeJson(new TestExecutionKey('1', '2', '5', 'ID7'))
+		val jsonString = testExecutionCallTreeUnderTest.getNodeJson(new TestExecutionKey('1', '2', '5', 'ID7'), yamlProvider)
 
 		// then
 		jsonString.matches('''.*"children" *:.*''').assertFalse
@@ -145,10 +143,10 @@ class TestExecutionCallTreeTest extends AbstractTest {
 		// given
 		val testRunKey = new TestExecutionKey('1', '2', '5');
 		val rootCallTreeKey = testRunKey.deriveWithCallTreeId('IDROOT')
-		testExecutionCallTreeUnderTest.readString(testRunKey, testRunCallTreeYaml)
+		val ()=>Map<String,Object> yamlProvider = [ yamlReader.readYaml(testRunCallTreeYaml) ]
 
 		// when
-		val actualKeys = testExecutionCallTreeUnderTest.getDescendantsKeys(rootCallTreeKey)
+		val actualKeys = testExecutionCallTreeUnderTest.getDescendantsKeys(rootCallTreeKey, yamlProvider)
 
 		// then
 		assertThat(actualKeys).containsExactlyInAnyOrder(
@@ -162,10 +160,10 @@ class TestExecutionCallTreeTest extends AbstractTest {
 		// given
 		val testRunKey = new TestExecutionKey('1', '2', '5');
 		val rootCallTreeKey = testRunKey.deriveWithCallTreeId('ID3')
-		testExecutionCallTreeUnderTest.readString(testRunKey, testRunCallTreeYaml)
-
+		val ()=>Map<String,Object> yamlProvider = [ yamlReader.readYaml(testRunCallTreeYaml) ]
+		
 		// when
-		val actualKeys = testExecutionCallTreeUnderTest.getDescendantsKeys(rootCallTreeKey)
+		val actualKeys = testExecutionCallTreeUnderTest.getDescendantsKeys(rootCallTreeKey, yamlProvider)
 
 		// then
 		assertThat(actualKeys).containsExactlyInAnyOrder(
@@ -179,10 +177,10 @@ class TestExecutionCallTreeTest extends AbstractTest {
 		// given
 		val testRunKey = new TestExecutionKey('1', '2', '5');
 		val rootCallTreeKey = testRunKey.deriveWithCallTreeId('ID7')
-		testExecutionCallTreeUnderTest.readString(testRunKey, testRunCallTreeYaml)
+		val ()=>Map<String,Object> yamlProvider = [ yamlReader.readYaml(testRunCallTreeYaml) ]
 
 		// when
-		val actualKeys = testExecutionCallTreeUnderTest.getDescendantsKeys(rootCallTreeKey)
+		val actualKeys = testExecutionCallTreeUnderTest.getDescendantsKeys(rootCallTreeKey, yamlProvider)
 
 		// then
 		assertThat(actualKeys).isEmpty
@@ -193,10 +191,10 @@ class TestExecutionCallTreeTest extends AbstractTest {
 		// given
 		val testRunKey = new TestExecutionKey('1', '2', '5');
 		val rootCallTreeKey = testRunKey.deriveWithCallTreeId('NON-EXISTING-ID')
-		testExecutionCallTreeUnderTest.readString(testRunKey, testRunCallTreeYaml)
+		val ()=>Map<String,Object> yamlProvider = [ yamlReader.readYaml(testRunCallTreeYaml) ]
 
 		// when
-		val actualKeys = testExecutionCallTreeUnderTest.getDescendantsKeys(rootCallTreeKey)
+		val actualKeys = testExecutionCallTreeUnderTest.getDescendantsKeys(rootCallTreeKey, yamlProvider)
 
 		// then
 		assertThat(actualKeys).isEmpty

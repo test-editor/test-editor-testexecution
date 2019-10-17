@@ -36,11 +36,11 @@ class LocalSingleWorkerJobStore implements WritableTestJobStore {
 	}
 	
 	override getJsonCallTree(TestExecutionKey key) {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		callTreeMap.get(key).map[callTreeHelper.getNodeJson(key)[it]].orElse('')
 	}
 	
-	override store(TestExecutionKey key, TestJob job) {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+	override store(TestJobInfo job) {
+		jobCache.put(job.id, job)
 	}
 	
 }

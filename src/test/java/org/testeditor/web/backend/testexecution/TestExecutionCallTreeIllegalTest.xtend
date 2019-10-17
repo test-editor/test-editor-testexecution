@@ -14,12 +14,14 @@ import org.testeditor.web.backend.testexecution.util.serialization.YamlReader
 import org.testeditor.web.backend.testexecution.util.serialization.Yaml
 import org.mockito.InjectMocks
 import org.mockito.MockitoAnnotations
+import java.util.Map
 
 @RunWith(Parameterized)
 class TestExecutionCallTreeIllegalTest {
 	
+	val extension YamlReader = new Yaml
+	
 	@Spy JsonWriter jsonWriter = new Json
-	@Spy YamlReader yamlReader = new Yaml
 	@InjectMocks
 	var testExecutionCallTreeUnderTest = new TestExecutionCallTree // needs to be initialized otherwise test invocation fails!
 
@@ -32,40 +34,33 @@ class TestExecutionCallTreeIllegalTest {
 	def static Collection<Object[]> data() {
 		return #[
 			// null yaml
-			#['1-2', null, '1-2-0-ID7'],
+			#[null, '1-2-0-ID7'],
 			// yaml has not the expected structure
-			#['1-2', '''
+			#['''
 				illegalFormedYaml:
 				- "hello" : "ok"
 			'''.toString, '1-2-0-ID7'],
 			// yaml has not the expected structure
-			#['1-2', '''
+			#['''
 				testRuns:
 				- "hello" : "ok"
 			'''.toString, '1-2-0-ID7'],
 			// node retrieval with wrong test execution key
-			#['1-2', '''
-				testRuns:
-				- "testRunId": "0"
-				  "children": 
-				  - "id": "ID7"
-			'''.toString, '1-3-0-ID7'],
-			// node retrieval with wrong test execution key
-			#['1-2', '''
+			#['''
 				testRuns:
 				- "testRunId": "0"
 				  "children": 
 				  - "id": "ID7"
 			'''.toString, '1-2-0-ID8'],
 			// node key incomplete (needs all four ids)
-			#['1-2', '''
+			#['''
 				testRuns:
 				- "testRunId": "0"
 				  "children":
 				  - "id": "ID7"
 			'''.toString, '1-2-0'],
 			// node key incomplete (needs all four ids)
-			#['1-2', '''
+			#['''
 				testRuns:
 				- "testRunId": "0"
 				  "children":
@@ -74,21 +69,21 @@ class TestExecutionCallTreeIllegalTest {
 		]
 	}
 
-	var TestExecutionKey testSuiteRunKey
-	var String yaml
+	var ()=>Map<String, Object> yamlProvider
 	var TestExecutionKey nodeKey
 
-	new(String testSuiteRunKey, String yaml, String nodeKey) {
-		this.testSuiteRunKey = TestExecutionKey.valueOf(testSuiteRunKey)
-		this.yaml = yaml
+	new(String yaml, String nodeKey) {
+		this.yamlProvider = if (yaml === null) {
+			[null]
+		} else {
+			[yaml.readYaml]
+		}
 		this.nodeKey = TestExecutionKey.valueOf(nodeKey)
 	}
 
 	@Test(expected=IllegalArgumentException)
 	def void test() {
-		testExecutionCallTreeUnderTest.readString(this.testSuiteRunKey, this.yaml)
-
-		testExecutionCallTreeUnderTest.getNodeJson(this.nodeKey)
+		testExecutionCallTreeUnderTest.getNodeJson(this.nodeKey, yamlProvider)
 
 	// expected exception		
 	}

@@ -5,6 +5,7 @@ import java.time.Instant
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Provider
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.TestExecutionCallTree
@@ -16,10 +17,10 @@ import org.testeditor.web.backend.testexecution.common.TestStatus
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo
 import org.testeditor.web.backend.testexecution.distributed.common.Worker
 import org.testeditor.web.backend.testexecution.util.CallTreeYamlUtil
+import org.testeditor.web.backend.testexecution.util.serialization.YamlReader
 
 import static org.testeditor.web.backend.testexecution.TestExecutorProvider.CALL_TREE_YAML_FILE
 import static org.testeditor.web.backend.testexecution.TestExecutorProvider.LOGFILE_ENV_KEY
-import javax.inject.Named
 
 class LocalSingleWorker implements Worker {
 	static val logger = LoggerFactory.getLogger(LocalSingleWorker)
@@ -29,6 +30,7 @@ class LocalSingleWorker implements Worker {
 	@Inject Provider<TestExecutorProvider> _executorProvider // eager initialization causes injection trouble due to Dropwizard env not being set
 	@Inject extension TestLogWriter
 	@Inject extension CallTreeYamlUtil
+	@Inject extension YamlReader
 	@Inject @Named('workspace') Provider<File> workspace
 	
 	var Optional<TestJobInfo> currentJob = Optional.empty
@@ -78,8 +80,7 @@ class LocalSingleWorker implements Worker {
 	override getJsonCallTree(TestExecutionKey key) {
 		val latestCallTree = new TestExecutionKey(key.suiteId, key.suiteRunId).getTestFiles(workspace.get).filter[name.endsWith('.yaml')].sortBy[name].last
 		return if (latestCallTree !== null) {
-			testExecutionCallTree.readFile(key, latestCallTree)
-			testExecutionCallTree.getNodeJson(key)
+			testExecutionCallTree.getNodeJson(key)[latestCallTree.readYaml]
 		} else { 
 			null // TODO throw exception instead!!
 		}
