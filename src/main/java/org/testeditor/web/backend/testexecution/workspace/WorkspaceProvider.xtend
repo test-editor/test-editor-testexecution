@@ -18,9 +18,11 @@ class WorkspaceProvider implements Provider<File> {
 
 	static val logger = LoggerFactory.getLogger(WorkspaceProvider)
 
-	@Inject extension GitConfiguration
+	@Inject Provider<GitConfiguration> _gitConfiguration
 	@Inject extension GitProvider
 	@Inject Provider<User> userProvider
+	
+	private def localRepoFileRoot() { _gitConfiguration.get.localRepoFileRoot }
 
 	override get() {
 		return new File(localRepoFileRoot) => [
