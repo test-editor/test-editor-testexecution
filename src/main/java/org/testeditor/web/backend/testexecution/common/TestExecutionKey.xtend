@@ -126,6 +126,6 @@ class TestExecutionKey {
 	}
 	
 	def Optional<File> getLatestCallTree(File workspace) {
-		return Optional.of(workspace.testFiles.filter[name.endsWith('.yaml')].sortBy[name].last)
+		return Optional.ofNullable(workspace.testFiles.filter[name.endsWith('.yaml')].sortBy[name].last)
 	}
 }
