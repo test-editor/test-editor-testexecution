@@ -8,5 +8,5 @@ interface TestJobStore {
 }
 
 interface WritableTestJobStore extends TestJobStore {
-	def void store(TestExecutionKey key, TestJob job)
+	def void store(TestJobInfo job)
 }

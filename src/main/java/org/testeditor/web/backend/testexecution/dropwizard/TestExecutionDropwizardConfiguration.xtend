@@ -42,5 +42,11 @@ class TestExecutionDropwizardConfiguration extends DropwizardApplicationConfigur
 	
     @Accessors
     Boolean filterTestSubStepsFromLogs = false
+    
+    @Accessors
+    int testJobCacheSize = 1000
+    
+	@Accessors 
+	int testJobCallTreeCacheSize = 10
 
 }

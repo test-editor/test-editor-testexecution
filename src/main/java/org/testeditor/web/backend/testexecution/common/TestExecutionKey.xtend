@@ -6,6 +6,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.nio.file.FileSystems
 import java.nio.file.Path
+import java.util.Optional
 import java.util.regex.Pattern
 import org.eclipse.xtend.lib.annotations.Data
 import org.eclipse.xtend.lib.annotations.EqualsHashCode
@@ -57,6 +58,10 @@ class TestExecutionKey {
 			&& ((this.suiteRunId.nullOrEmpty && this.caseRunId.nullOrEmpty && this.callTreeId.nullOrEmpty) || this.suiteRunId == parent.suiteRunId)
 			&& ((this.caseRunId.nullOrEmpty && this.callTreeId.nullOrEmpty) || this.caseRunId == parent.caseRunId)
 			&& (this.callTreeId.nullOrEmpty || this.callTreeId == parent.callTreeId)
+	}
+	
+	def TestExecutionKey deriveWithSuiteRunId() {
+		return new TestExecutionKey(this.suiteId, this.suiteRunId, "", "")
 	}
 	
 	def TestExecutionKey deriveWithSuiteRunId(String suiteRunId) {
@@ -118,5 +123,9 @@ class TestExecutionKey {
 		val unfilteredtestFiles = testPath.toFile.listFiles
 		val testFiles = unfilteredtestFiles.filter[name.startsWith('''testrun.«this.toString».''')]
 		return testFiles
+	}
+	
+	def Optional<File> getLatestCallTree(File workspace) {
+		return Optional.of(workspace.testFiles.filter[name.endsWith('.yaml')].sortBy[name].last)
 	}
 }

@@ -22,28 +22,21 @@ interface TestExecutionManager extends TestJobStore {
 @Singleton
 class LocalSingleWorkerExecutionManager implements TestExecutionManager {
 	@Inject extension WorkerProvider workerProvider
-	@Inject @Delegate(TestJobStore) WritableTestJobStore jobStore
+	@Inject @Delegate(TestJobStore) extension WritableTestJobStore jobStore
 	
-	var Optional<TestExecutionKey> currentJob = Optional.empty
+	var Optional<TestJobInfo> currentJob = Optional.empty
 
 	override cancelJob(TestExecutionKey key) {
-		currentJob.filter[it == key].ifPresent[
+		currentJob.filter[id == key].ifPresent[
 			workers.head.cancel
+			setState(JobState.COMPLETED).store
 			currentJob = Optional.empty
-			jobLog.computeIfPresent(key)[__, job|job.setState(JobState.COMPLETED)]
 		]
 	}
 
 	override addJob(TestJob it) {
-		jobLog.put(id, it)
+		store
 		workers.head.assign(it)
-		currentJob = Optional.of(id)
+		currentJob = Optional.of(it)
 	}
-	
-	override boolean testJobExists(TestExecutionKey key) {
-		jobLog.computeIfAbsent(key)[
-			
-		] !== TestJob.NONE
-	}
-
 }
