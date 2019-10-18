@@ -25,12 +25,12 @@ import javax.ws.rs.core.UriBuilder
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.TestStatusMapper
 import org.testeditor.web.backend.testexecution.TestSuiteStatusInfo
+import org.testeditor.web.backend.testexecution.common.LogLevel
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.common.TestStatus
 import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 import org.testeditor.web.backend.testexecution.distributed.manager.TestExecutionManager
 import org.testeditor.web.backend.testexecution.loglines.LogFinder
-import org.testeditor.web.backend.testexecution.loglines.LogLevel
 import org.testeditor.web.backend.testexecution.screenshots.ScreenshotFinder
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND
