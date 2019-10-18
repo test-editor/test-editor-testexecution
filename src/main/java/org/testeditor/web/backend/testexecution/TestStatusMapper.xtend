@@ -1,13 +1,13 @@
 package org.testeditor.web.backend.testexecution
 
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
 import org.testeditor.web.backend.testexecution.common.TestExecutionConfiguration
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.common.TestStatus
+import org.testeditor.web.backend.testexecution.distributed.common.TestJobStatusMapper
 
 import static org.testeditor.web.backend.testexecution.common.TestStatus.*
 
@@ -37,25 +37,19 @@ import static org.testeditor.web.backend.testexecution.common.TestStatus.*
  * {@link Process Process} classes once they have terminated.
  */
 @Singleton
-class TestStatusMapper {
+class TestStatusMapper implements TestJobStatusMapper {
 	
 	@Inject Provider<TestExecutionConfiguration> configProvider
 
 	public static val TEST_STATUS_MAP_NAME = "testStatusMap"
-
-	var AtomicLong runningTestSuiteRunId = new AtomicLong(0)
 
 	val suiteStatusMap = new ConcurrentHashMap<TestExecutionKey, TestProcess>
 	
 	private def longPollingTimeoutSeconds() {
 		return configProvider.get.longPollingTimeoutSeconds
 	}
-	
-	def TestExecutionKey deriveFreshRunId(TestExecutionKey suiteKey) {
-		return suiteKey.deriveWithSuiteRunId(Long.toString(runningTestSuiteRunId.andIncrement))
-	}
 
-	def TestStatus getStatus(TestExecutionKey executionKey) {
+	override TestStatus getStatus(TestExecutionKey executionKey) {
 		if (suiteStatusMap.containsKey(executionKey)) {
 			return suiteStatusMap.get(executionKey).checkStatus
 		} else {
@@ -63,7 +57,7 @@ class TestStatusMapper {
 		}
 	}
 
-	def TestStatus waitForStatus(TestExecutionKey executionKey) {
+	override TestStatus waitForStatus(TestExecutionKey executionKey) {
 		if (suiteStatusMap.containsKey(executionKey)) {
 			return suiteStatusMap.get(executionKey).waitForStatus
 		} else {
@@ -84,15 +78,10 @@ class TestStatusMapper {
 		}
 	}
 
-	def Iterable<TestSuiteStatusInfo> getAllTestSuites() {
+	override getStatusAll() {
 		// iterating should be thread-safe, see e.g.
 		// https://stackoverflow.com/questions/3768554/is-iterating-concurrenthashmap-values-thread-safe
-		return this.suiteStatusMap.entrySet.map [ entry |
-			new TestSuiteStatusInfo => [
-				key = entry.key
-				status = entry.value.checkStatus.name
-			]
-		]
+		return suiteStatusMap.mapValues[checkStatus]
 	}
 	
 	def void terminateTestSuiteRun(TestExecutionKey testExecutionKey) {

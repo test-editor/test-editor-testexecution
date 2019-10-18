@@ -11,6 +11,7 @@ import org.mockito.Mock
 import org.testeditor.web.backend.testexecution.common.TestExecutionConfiguration
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.common.TestStatus
+import org.testeditor.web.backend.testexecution.common.TestSuiteStatusInfo
 import org.testeditor.web.backend.testexecution.webapi.TestSuiteResource
 
 import static org.assertj.core.api.Assertions.*
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.*
 import static org.testeditor.web.backend.testexecution.common.TestStatus.*
 
 import static extension org.mockito.MockitoAnnotations.initMocks
+import java.util.Map.Entry
 
 class TestStatusMapperTest {
 
@@ -234,7 +236,7 @@ class TestStatusMapperTest {
 	@Test
 	def void getAllInitiallyReturnsEmptyArray() {
 		// given + when
-		val actualStatuses = statusMapperUnderTest.allTestSuites
+		val actualStatuses = statusMapperUnderTest.statusAll
 
 		// then
 		assertThat(actualStatuses).isEmpty()
@@ -257,23 +259,14 @@ class TestStatusMapperTest {
 		statusMapperUnderTest.addTestSuiteRun(runningTestKey, runningProcess)
 
 		// when
-		val actualStatuses = statusMapperUnderTest.allTestSuites
+		val actualStatuses = statusMapperUnderTest.statusAll
 
 		// then
-		assertThat(actualStatuses).containsOnly(#[
-			new TestSuiteStatusInfo => [
-				key = failedTestKey
-				status = 'FAILED'
-			],
-			new TestSuiteStatusInfo => [
-				key = successfulTestKey
-				status = 'SUCCESS'
-			],
-			new TestSuiteStatusInfo => [
-				key = runningTestKey
-				status = 'RUNNING'
-			]
-		])
+		assertThat(actualStatuses).containsOnly(
+			entry(failedTestKey, TestStatus.FAILED),
+			entry(successfulTestKey, TestStatus.SUCCESS),
+			entry(runningTestKey, TestStatus.RUNNING)
+		)
 	}
 	
 	@Test

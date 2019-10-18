@@ -10,6 +10,9 @@ import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.Data
 import org.eclipse.xtend.lib.annotations.EqualsHashCode
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
+import org.testeditor.web.backend.testexecution.common.TestStatus
+
+import static org.testeditor.web.backend.testexecution.common.TestStatus.*
 
 interface TestJobInfo {
 	def TestExecutionKey getId()
@@ -23,8 +26,19 @@ interface TestJobInfo {
 		PENDING,
 		ASSIGNING,
 		ASSIGNED,
-		COMPLETED
+		COMPLETED_SUCCESSFULLY,
+		COMPLETED_WITH_ERROR,
+		COMPLETED_CANCELLED
 
+	}
+	
+	def TestStatus testStatus() {
+		return switch(state) {
+			case PENDING, case ASSIGNING: IDLE
+			case ASSIGNED: RUNNING
+			case COMPLETED_SUCCESSFULLY: SUCCESS
+			case COMPLETED_WITH_ERROR, case COMPLETED_CANCELLED: FAILED
+		}
 	}
 }
 
@@ -41,14 +55,14 @@ class TestJob implements TestJobInfo {
 	transient val JobState state
 
 	@JsonCreator
-	new(@JsonProperty('id') TestExecutionKey id, @JsonProperty('requiredCapabilities') Set<String> capabilities, @JsonProperty('resourcePaths') List<String> resourcePaths) {
-		this(id, new HashSet(capabilities), new ArrayList(resourcePaths), JobState.PENDING)
+	new(@JsonProperty('id') TestExecutionKey id, @JsonProperty('requiredCapabilities') Set<String> capabilities, @JsonProperty('resourcePaths') Iterable<String> resourcePaths) {
+		this(id, new HashSet(capabilities), resourcePaths, JobState.PENDING)
 	}
 	
-	private new(TestExecutionKey id, Set<String> capabilities, List<String> resourcePaths, JobState state) {
+	private new(TestExecutionKey id, Set<String> capabilities, Iterable<String> resourcePaths, JobState state) {
 		this.id = id
 		this.requiredCapabilities = new HashSet(capabilities)
-		this.resourcePaths = new ArrayList(resourcePaths)
+		this.resourcePaths = new ArrayList => [addAll(resourcePaths)]
 		this.state = state
 	}
 	

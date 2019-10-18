@@ -2,7 +2,7 @@ package org.testeditor.web.backend.testexecution.dropwizard
 
 import com.google.inject.AbstractModule
 import org.testeditor.web.backend.testexecution.distributed.common.Worker
-import org.testeditor.web.backend.testexecution.distributed.common.WritableTestJobStore
+import org.testeditor.web.backend.testexecution.distributed.common.WritableStatusAwareTestJobStore
 import org.testeditor.web.backend.testexecution.distributed.manager.LocalSingleWorkerExecutionManager
 import org.testeditor.web.backend.testexecution.distributed.manager.LocalSingleWorkerJobStore
 import org.testeditor.web.backend.testexecution.distributed.manager.LocalSingleWorkerManager
@@ -16,7 +16,7 @@ class LocalSingleWorkerModule extends AbstractModule {
 			bind(TestExecutionManager).to(LocalSingleWorkerExecutionManager)
 			bind(WorkerProvider).to(LocalSingleWorkerManager)
 			bind(Worker).to(LocalSingleWorker)
-			bind(WritableTestJobStore).to(LocalSingleWorkerJobStore)
+			bind(WritableStatusAwareTestJobStore).to(LocalSingleWorkerJobStore)
 		]
 	}
 }
