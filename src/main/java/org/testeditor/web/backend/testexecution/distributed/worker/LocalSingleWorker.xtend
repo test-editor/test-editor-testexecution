@@ -8,10 +8,10 @@ import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
 import org.slf4j.LoggerFactory
-import org.testeditor.web.backend.testexecution.TestExecutionCallTree
 import org.testeditor.web.backend.testexecution.TestExecutorProvider
 import org.testeditor.web.backend.testexecution.TestLogWriter
 import org.testeditor.web.backend.testexecution.TestStatusMapper
+import org.testeditor.web.backend.testexecution.calltrees.TestExecutionCallTree
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.common.TestStatus
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo
