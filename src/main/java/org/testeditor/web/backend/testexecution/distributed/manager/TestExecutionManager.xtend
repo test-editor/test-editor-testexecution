@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
+import org.testeditor.web.backend.testexecution.common.TestStatus
 import org.testeditor.web.backend.testexecution.distributed.common.StatusAwareTestJobStore
 import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo
@@ -39,7 +40,7 @@ class LocalSingleWorkerExecutionManager implements TestExecutionManager {
 	override addJob(Iterable<String> testFiles, Set<String> requiredCapabilities) {
 		return (new TestJob(new TestExecutionKey("0").deriveFreshRunId, emptySet, testFiles) => [
 			store
-			workers.head.assign(it)
+			workers.head.assign(it).thenAccept[status|updateStatus(status)]
 			currentJob = Optional.of(it)			
 		]).id
 	}
@@ -66,6 +67,14 @@ class LocalSingleWorkerExecutionManager implements TestExecutionManager {
 	
 	override getStatusAll() {
 		return jobStore.statusAll + workerProvider.statusAll
+	}
+	
+	private def updateStatus(TestJobInfo job, TestStatus status) {
+		switch(status) {
+			case FAILED: job.setState(JobState.COMPLETED_WITH_ERROR)
+			case SUCCESS: job.setState(JobState.COMPLETED_SUCCESSFULLY)
+			default: job // TODO error / exception handling?
+		}.store
 	}
 	
 }

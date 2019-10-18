@@ -50,7 +50,11 @@ class LocalSingleWorker implements Worker {
 		statusMapper.addTestSuiteRun(id, testProcess)[status|callTreeFile.writeCallTreeYamlSuffix(status)]
 		testProcess.logToStandardOutAndIntoFile(new File(logFile))
 		
-		return CompletableFuture.completedFuture(true)
+		return testProcess.toHandle.onExit.thenApply[
+			checkStatus => [
+				println('''### test process exited with status «it» ###''')
+			]
+		]
 	}
 
 	override checkStatus() {

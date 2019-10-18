@@ -19,9 +19,12 @@ class LocalSingleWorkerManager implements WorkerProvider {
 	}
 
 	override assign(WorkerInfo worker, TestJob job) {
-		if (worker === this.worker) {
-			this.worker.startJob(job).toCompletableFuture.get
-			currentJob = job
+		return if (worker === this.worker) {
+			this.worker.startJob(job) => [
+				currentJob = job
+			]
+		} else {
+			//TODO throw exception
 		}
 	}
 
