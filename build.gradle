@@ -63,18 +63,20 @@ dependencies {
     implementation "org.testeditor.web:org.testeditor.web.dropwizard:$versions.testEditorDropwizard"
     implementation "commons-io:commons-io:2.6"
     implementation "org.apache.commons:commons-text:1.4"
-	implementation "org.testeditor.web:org.testeditor.web.dropwizard:$versions.testEditorDropwizard"
-	implementation 'org.eclipse.jgit:org.eclipse.jgit:5.1.2.201810061102-r'
+    implementation "org.testeditor.web:org.testeditor.web.dropwizard:$versions.testEditorDropwizard"
+    implementation "org.eclipse.jgit:org.eclipse.jgit:5.1.2.201810061102-r"
+    implementation "org.glassfish.jersey.ext.rx:jersey-rx-client-java8:2.25.1"
+    implementation "io.dropwizard:dropwizard-client:$versions.dropwizard"
 
     testImplementation "junit:junit:4.12"
     testImplementation "io.dropwizard:dropwizard-testing:$versions.dropwizard"
     testImplementation "org.assertj:assertj-core:3.12.0"
     testImplementation "org.mockito:mockito-core:3.1.0"
     testImplementation "org.eclipse.xtext:org.eclipse.xtext.testing:$versions.xtext"
-	testImplementation "org.testeditor.web:org.testeditor.web.dropwizard.testing:$versions.testEditorDropwizard"
-	testImplementation 'org.eclipse.jgit:org.eclipse.jgit.junit:5.1.2.201810061102-r'
+    testImplementation "org.testeditor.web:org.testeditor.web.dropwizard.testing:$versions.testEditorDropwizard"
+    testImplementation 'org.eclipse.jgit:org.eclipse.jgit.junit:5.1.2.201810061102-r'
 
-	annotationProcessor 'com.github.moditect.deptective:deptective-javac-plugin:master-SNAPSHOT'
+    annotationProcessor 'com.github.moditect.deptective:deptective-javac-plugin:master-SNAPSHOT'
 }
 
 mainClassName = 'org.testeditor.web.backend.testexecution.dropwizard.TestExecutionApplication'
