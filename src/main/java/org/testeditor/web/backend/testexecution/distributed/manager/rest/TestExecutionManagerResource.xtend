@@ -10,7 +10,7 @@ import javax.inject.Inject
 import org.testeditor.web.backend.testexecution.distributed.manager.TestExecutionManager
 import org.testeditor.web.backend.testexecution.distributed.manager.WorkerProvider
 
-class TextExecutionManagerResource implements WorkerManagerAPI<Response, InputStream>{
+class TestExecutionManagerResource implements WorkerManagerAPI<Response, InputStream>{
 	@Inject TestExecutionManager manager
 	@Inject extension WorkerProvider workerProvider
 	
