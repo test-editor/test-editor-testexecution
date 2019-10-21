@@ -1,4 +1,4 @@
-package org.testeditor.web.backend.testexecution.util
+package org.testeditor.web.backend.testexecution.distributed.common
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm

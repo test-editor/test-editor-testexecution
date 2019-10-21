@@ -17,9 +17,9 @@ import org.eclipse.xtend.lib.annotations.EqualsHashCode
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.common.TestStatus
+import org.testeditor.web.backend.testexecution.distributed.common.RestClient
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo
 import org.testeditor.web.backend.testexecution.distributed.common.Worker
-import org.testeditor.web.backend.testexecution.util.RestClient
 
 import static javax.ws.rs.core.Response.Status.CREATED
 
