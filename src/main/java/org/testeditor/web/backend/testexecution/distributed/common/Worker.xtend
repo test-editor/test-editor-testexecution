@@ -12,6 +12,16 @@ interface WorkerInfo {
 
 	def Set<String> getProvidedCapabilities()
 
+	static val NONE = new WorkerInfo {
+		val uri = new URI('')
+		val providedCapabilities = <String>emptySet
+		
+		override getUri() { uri }
+		
+		override getProvidedCapabilities() { providedCapabilities }
+		
+	}
+
 }
 
 interface Worker extends RunningTest, WorkerInfo, TestJobStore {

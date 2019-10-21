@@ -3,6 +3,7 @@ package org.testeditor.web.backend.testexecution.distributed.manager
 import javax.inject.Inject
 import org.eclipse.xtend.lib.annotations.Delegate
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
+import org.testeditor.web.backend.testexecution.common.TestStatus
 import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobStore
@@ -16,6 +17,14 @@ class LocalSingleWorkerManager implements WorkerProvider {
 
 	override getWorkers() {
 		return #[worker]
+	}
+	
+	override idleWorkers() {
+		return #[worker].filter[checkStatus !== TestStatus.RUNNING].filter(WorkerInfo)
+	}
+	
+	override workerForJob(TestJobInfo job) {
+		return if (currentJob?.id == job.id) { worker } else { WorkerInfo.NONE }
 	}
 
 	override assign(WorkerInfo worker, TestJob job) {
