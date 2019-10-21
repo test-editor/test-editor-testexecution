@@ -27,7 +27,7 @@ import org.testeditor.web.backend.testexecution.common.LogLevel
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.common.TestStatus
 import org.testeditor.web.backend.testexecution.common.TestSuiteStatusInfo
-import org.testeditor.web.backend.testexecution.distributed.manager.TestExecutionManager
+import org.testeditor.web.backend.testexecution.distributed.common.TestExecutionManager
 import org.testeditor.web.backend.testexecution.loglines.LogFinder
 import org.testeditor.web.backend.testexecution.screenshots.ScreenshotFinder
 

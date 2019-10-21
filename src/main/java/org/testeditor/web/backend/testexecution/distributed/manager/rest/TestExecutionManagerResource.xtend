@@ -1,13 +1,13 @@
 package org.testeditor.web.backend.testexecution.distributed.manager.rest
 
-import org.testeditor.web.backend.testexecution.distributed.common.WorkerManagerAPI
-import javax.ws.rs.core.Response
-import org.testeditor.web.backend.testexecution.distributed.common.Worker
-import org.testeditor.web.backend.testexecution.common.TestExecutionKey
-import org.testeditor.web.backend.testexecution.common.TestStatus
 import java.io.InputStream
 import javax.inject.Inject
-import org.testeditor.web.backend.testexecution.distributed.manager.TestExecutionManager
+import javax.ws.rs.core.Response
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
+import org.testeditor.web.backend.testexecution.common.TestStatus
+import org.testeditor.web.backend.testexecution.distributed.common.TestExecutionManager
+import org.testeditor.web.backend.testexecution.distributed.common.Worker
+import org.testeditor.web.backend.testexecution.distributed.common.WorkerManagerAPI
 import org.testeditor.web.backend.testexecution.distributed.manager.WorkerProvider
 
 class TestExecutionManagerResource implements WorkerManagerAPI<Response, InputStream>{
