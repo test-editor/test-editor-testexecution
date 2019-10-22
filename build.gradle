@@ -38,9 +38,9 @@ repositories {
 }
 
 ext.versions = [
-    dropwizard: '1.3.7',
+    dropwizard: '1.3.16',
     xtext: '2.18.0',
-    testEditorDropwizard: '0.19.3'
+    testEditorDropwizard: '0.19.4'
 ]
 
 ext.configPath = "./"
