@@ -13,7 +13,7 @@ interface WorkerInfo {
 
 }
 
-interface Worker extends RunningTest, WorkerInfo {
+interface Worker extends RunningTest, WorkerInfo, TestJobStore {
 
 	def CompletionStage<Boolean> startJob(TestJobInfo job)
 

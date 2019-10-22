@@ -6,6 +6,7 @@ import com.jcraft.jsch.JSchException
 import com.jcraft.jsch.Session
 import java.io.File
 import javax.inject.Inject
+import javax.inject.Provider
 import org.eclipse.jgit.api.CreateBranchCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.GitCommand
@@ -28,7 +29,9 @@ class GitProvider {
 		initialize(workspace)
 	]
 
-	@Inject GitConfiguration config
+	@Inject Provider<GitConfiguration> _config
+	
+	private def config() { _config.get }
 
 	/**
 	 * @return the potentially cached {@link Git} instance for the current workspace.

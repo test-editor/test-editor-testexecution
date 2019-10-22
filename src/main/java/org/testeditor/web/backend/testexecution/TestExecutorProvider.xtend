@@ -4,14 +4,12 @@ import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
-import java.time.Instant
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.HashMap
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
-import org.apache.commons.text.StringEscapeUtils
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.common.TestExecutionConfiguration
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
@@ -163,31 +161,6 @@ class TestExecutorProvider {
 		]
 
 		return processBuilder
-	}
-
-	def Iterable<File> getTestFiles(String testCase) {
-		val testClass = testCase.testClass
-		val testPath = workspaceProvider.get.toPath.resolve(LOG_FOLDER)
-		val unfilteredtestFiles = testPath.toFile.listFiles
-		val testFiles = unfilteredtestFiles.filter[name.startsWith('''testrun-«testClass»-''')]
-		return testFiles
-	}
-
-	def Iterable<File> getTestFiles(TestExecutionKey executionKey) {
-		val testPath = workspaceProvider.get.toPath.resolve(LOG_FOLDER)
-		val unfilteredtestFiles = testPath.toFile.listFiles
-		val testFiles = unfilteredtestFiles.filter[name.startsWith('''testrun.«executionKey.toString».''')]
-		return testFiles
-	}
-
-	def String yamlFileHeader(TestExecutionKey executionKey, Instant instant, Iterable<String> resourcePaths) {
-		return '''
-			"started": "«StringEscapeUtils.escapeJava(instant.toString)»"
-			"testSuiteId": "«StringEscapeUtils.escapeJava(executionKey.suiteId)»"
-			"testSuiteRunId": "«StringEscapeUtils.escapeJava(executionKey.suiteRunId)»"
-			"resourcePaths": [ «resourcePaths.map['"'+StringEscapeUtils.escapeJava(it)+'"'].join(", ")» ]
-			"testRuns":
-		'''
 	}
 
 	private def String getTestClass(String testCase) {

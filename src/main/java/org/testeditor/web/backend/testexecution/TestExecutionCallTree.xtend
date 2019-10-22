@@ -1,41 +1,21 @@
 package org.testeditor.web.backend.testexecution
 
-import java.io.File
 import java.util.ArrayList
 import java.util.List
 import java.util.Map
 import javax.inject.Inject
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.util.serialization.JsonWriter
-import org.testeditor.web.backend.testexecution.util.serialization.YamlReader
 
 class TestExecutionCallTree {
 
-	@Inject extension YamlReader
 	@Inject extension JsonWriter
 
 	static val childrenKey = 'children'
 	static val idKey = 'id'
 
-	var TestExecutionKey executionKey
-	var Map<String, Object> yamlObject
-
-	def void readFile(TestExecutionKey executionKey, File yaml) {
-		yamlObject = yaml.readYaml
-		this.executionKey = executionKey
-	}
-
-	def void readString(TestExecutionKey executionKey, String yaml) {
-		if (yaml.nullOrEmpty) {
-			throw new IllegalArgumentException('Yaml string must not be null nor empty')
-		} else {
-			yamlObject = yaml.readYaml
-			this.executionKey = executionKey
-		}
-	}
-
-	def String getCompleteTestCallTreeJson(TestExecutionKey executionKey) {
-		val test = executionKey.testNode
+	def String getCompleteTestCallTreeJson(TestExecutionKey executionKey, ()=>Map<String,Object> yamlObjectProvider) {
+		val test = yamlObjectProvider.apply
 		if (test !== null) {
 			return test.writeJson
 		} else {
@@ -43,8 +23,8 @@ class TestExecutionCallTree {
 		}
 	}
 
-	def String getNodeJson(TestExecutionKey executionKey) {
-		val test = executionKey.testNode
+	def String getNodeJson(TestExecutionKey executionKey, ()=>Map<String,Object> yamlObjectProvider) {
+		val test = executionKey.testNode(yamlObjectProvider)
 		val node = test.typedMapGetArray(childrenKey)?.findNode(executionKey.callTreeId)
 		if (node !== null) {
 			return node.writeToJsonHidingChildren
@@ -53,34 +33,32 @@ class TestExecutionCallTree {
 		}
 	}
 
-	def Iterable<TestExecutionKey> getDescendantsKeys(TestExecutionKey key) {
-		val node = key.testNode.typedMapGetArray(childrenKey)?.findNode(key.callTreeId)
+	def Iterable<TestExecutionKey> getDescendantsKeys(TestExecutionKey key, ()=>Map<String,Object> yamlObjectProvider) {
+		val node = key.testNode(yamlObjectProvider).typedMapGetArray(childrenKey)?.findNode(key.callTreeId)
 		return if (node !== null && !node.empty) {
-			node.descendantsKeys
+			node.descendantsKeys(key)
 		} else {
 			#[]
 		}
 	}
 
-	private def Iterable<TestExecutionKey> getDescendantsKeys(Map<String, Object> node) {
+	private def Iterable<TestExecutionKey> descendantsKeys(Map<String, Object> node, TestExecutionKey executionKey) {
 		val keys = newLinkedList()
 		if (node.get(childrenKey) !== null) {
 			node.<Map<String, Object>>typedMapGetArray(childrenKey).forEach [
 				keys += executionKey.deriveWithCallTreeId(get(idKey) as String)
-				keys += descendantsKeys
+				keys += descendantsKeys(executionKey)
 			]
 		}
 		return keys
 	}
 
-	private def Map<String, Object> getTestNode(TestExecutionKey executionKey) {
-		if (!(this.executionKey.suiteId.equals(executionKey.suiteId) && this.executionKey.suiteRunId.equals(executionKey.suiteRunId))) {
-			throw new IllegalArgumentException('''passed executionKey = '«executionKey»' does match test run execution key = '«this.executionKey»' ''')
-		} else if (executionKey.caseRunId.nullOrEmpty) {
+	private def Map<String, Object> testNode(TestExecutionKey executionKey, ()=>Map<String,Object> yamlObjectProvider) {
+		if (executionKey.caseRunId.nullOrEmpty) {
 			throw new IllegalArgumentException('''passed executionKey = '«executionKey»' must provide a caseRunId.''')
 		}
 
-		val testRuns = yamlObject.typedMapGetArray("testRuns").filter(Map)
+		val testRuns = yamlObjectProvider.apply.typedMapGetArray("testRuns").filter(Map)
 		val test = testRuns.findFirst [ test |
 			executionKey.caseRunId.equals(test.get("testRunId"))
 		]

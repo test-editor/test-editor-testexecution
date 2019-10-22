@@ -8,6 +8,21 @@ interface TestExecutionConfiguration {
 	def int getLongPollingTimeoutSeconds()
 	
 	/**
+	 * Maximum number of already executed test jobs to be kept in memory.
+	 * 
+	 * This only keeps basic test execution information, like which tests belong to the job, and what the execution status was, in memory.
+	 * On a cache miss, the information will be restored from the test execution's call tree yaml file.
+	 */
+	def int getTestJobCacheSize()
+	/**
+	 * Maximum number of complete call trees of already executed test jobs to be kept in memory.
+	 * 
+	 * This comprises the full details contained in test execution call trees. 
+	 * It does not include log data or screenshots.
+	 */
+	def int getTestJobCallTreeCacheSize()
+	
+	/**
      * Whether to skip over log entries produced by subordinate test steps.
      * 
      * When requesting the log lines for a particular test step via the

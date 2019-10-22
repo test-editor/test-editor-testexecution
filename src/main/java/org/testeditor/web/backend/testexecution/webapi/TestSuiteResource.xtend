@@ -1,7 +1,5 @@
 package org.testeditor.web.backend.testexecution.webapi
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import java.io.FileNotFoundException
 import java.net.URI
 import java.net.URLEncoder
@@ -25,8 +23,6 @@ import javax.ws.rs.core.Response
 import javax.ws.rs.core.Response.Status
 import javax.ws.rs.core.UriBuilder
 import org.slf4j.LoggerFactory
-import org.testeditor.web.backend.testexecution.TestExecutionCallTree
-import org.testeditor.web.backend.testexecution.TestExecutorProvider
 import org.testeditor.web.backend.testexecution.TestStatusMapper
 import org.testeditor.web.backend.testexecution.TestSuiteStatusInfo
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
@@ -48,10 +44,8 @@ class TestSuiteResource {
 	public static val LONG_POLLING_TIMEOUT_SECONDS = 5
 	static val logger = LoggerFactory.getLogger(TestSuiteResource)
 
-	@Inject TestExecutorProvider executorProvider
 	@Inject TestStatusMapper statusMapper
 	@Inject Executor executor
-	@Inject TestExecutionCallTree testExecutionCallTree
 	@Inject ScreenshotFinder screenshotFinder
 	@Inject LogFinder logFinder
 	@Inject TestExecutionManager manager
@@ -69,8 +63,7 @@ class TestSuiteResource {
 	) {
 		var response = Response.status(Status.NOT_FOUND).build
 		var executionKey = new TestExecutionKey(suiteId, suiteRunId)
-		val latestCallTree = executorProvider.getTestFiles(executionKey).filter[name.endsWith('.yaml')].sortBy[name].last
-		if (latestCallTree !== null) {
+		if (manager.testJobExists(executionKey)) {
 			if (!caseRunId.nullOrEmpty) {
 				executionKey = executionKey.deriveWithCaseRunId(caseRunId)
 				if (!callTreeId.nullOrEmpty) {
@@ -87,25 +80,25 @@ class TestSuiteResource {
 				warning = '''No log file for test execution key '«executionKey.toString»'.'''
 				logger.warn(warning, e)
 			}
-
+	
 			val resultList = newLinkedList('''{ "type": "text", "content": ["«logLines.join('", "')»"]}''')
-
+	
 			if (!logOnly) {
-				testExecutionCallTree.readFile(executionKey, latestCallTree)
-				val callTreeResultString = testExecutionCallTree.getNodeJson(executionKey)
+				val callTreeResultString = manager.getJsonCallTree(executionKey).orElse('{}')
 				resultList += '''{ "type": "properties", "content": «callTreeResultString» }'''
 				resultList += screenshotFinder.getScreenshotPathsForTestStep(executionKey).map [
 					'''{ "type": "image", "content": "«it»" }'''
 				]
 			}
 			val jsonResultString = '[' + resultList.join(',') + ']'
-
+	
 			val responseBuilder = Response.ok(jsonResultString)
 			response = if (warning.nullOrEmpty) {
 				responseBuilder.build
 			} else {
 				responseBuilder.header('Warning', '''299 «warning»''').build
 			}
+			
 		}
 
 		return response
@@ -121,8 +114,8 @@ class TestSuiteResource {
 		@QueryParam("wait") String wait,
 		@Suspended AsyncResponse response
 	) {
+		val executionKey = new TestExecutionKey(suiteId, suiteRunId)
 		if (status !== null) {
-			val executionKey = new TestExecutionKey(suiteId, suiteRunId)
 			if (wait !== null) {
 				executor.execute [
 					waitForStatus(executionKey, response)
@@ -133,19 +126,9 @@ class TestSuiteResource {
 			}
 		} else {
 			// get the latest call tree of the given resource
-			val latestCallTree = executorProvider.getTestFiles(new TestExecutionKey(suiteId, suiteRunId)).filter[name.endsWith('.yaml')].sortBy[name].
-				reverse.head
-			if (latestCallTree !== null) {
-				val mapper = new ObjectMapper(new YAMLFactory)
-				val jsonTree = mapper.readTree(latestCallTree)
-				response.resume(
-					Response.ok(jsonTree.toString).build
-				)
-			} else {
-				response.resume(
-					Response.status(Status.NOT_FOUND).build
-				)
-			}
+			manager.getJsonCallTree(executionKey).map [
+				response.resume(Response.ok(it).build)
+			].orElse(response.resume(Response.status(Status.NOT_FOUND).build))
 		}
 	}
 

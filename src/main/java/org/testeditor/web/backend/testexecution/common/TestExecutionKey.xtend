@@ -6,6 +6,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.nio.file.FileSystems
 import java.nio.file.Path
+import java.util.Optional
 import java.util.regex.Pattern
 import org.eclipse.xtend.lib.annotations.Data
 import org.eclipse.xtend.lib.annotations.EqualsHashCode
@@ -17,6 +18,7 @@ import static extension java.nio.file.Files.list
 @Data
 class TestExecutionKey {
 	static val logger = LoggerFactory.getLogger(TestExecutionKey)
+	static val LOG_FOLDER = 'logs' // TODO replace w/ app config field!!
 
 	static val PATTERN = Pattern.compile('([^-\\s]+)(-([^-\\s]*)(-([^-\\s]*)(-([^-\\s]*))?)?)?')
 	
@@ -56,6 +58,10 @@ class TestExecutionKey {
 			&& ((this.suiteRunId.nullOrEmpty && this.caseRunId.nullOrEmpty && this.callTreeId.nullOrEmpty) || this.suiteRunId == parent.suiteRunId)
 			&& ((this.caseRunId.nullOrEmpty && this.callTreeId.nullOrEmpty) || this.caseRunId == parent.caseRunId)
 			&& (this.callTreeId.nullOrEmpty || this.callTreeId == parent.callTreeId)
+	}
+	
+	def TestExecutionKey deriveWithSuiteRunId() {
+		return new TestExecutionKey(this.suiteId, this.suiteRunId, "", "")
 	}
 	
 	def TestExecutionKey deriveWithSuiteRunId(String suiteRunId) {
@@ -110,5 +116,16 @@ class TestExecutionKey {
 		logger.debug('retrieved log file "{}" for test execution key "{}".', logFile.fileName, keyName)
 
 		return logFile
+	}
+	
+	def Iterable<File> getTestFiles(File workspace) {
+		val testPath = workspace.toPath.resolve(LOG_FOLDER)
+		val unfilteredtestFiles = testPath.toFile.listFiles
+		val testFiles = unfilteredtestFiles.filter[name.startsWith('''testrun.«this.toString».''')]
+		return testFiles
+	}
+	
+	def Optional<File> getLatestCallTree(File workspace) {
+		return Optional.ofNullable(workspace.testFiles.filter[name.endsWith('.yaml')].sortBy[name].last)
 	}
 }
