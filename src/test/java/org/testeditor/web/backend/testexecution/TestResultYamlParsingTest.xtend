@@ -39,7 +39,7 @@ class TestResultYamlParsingTest {
 			 in 'reader', line 1, column 1:
 			    "started": "2019-05-22T11:22:53. ... 
 			    ^
-			expected <block end>, but found BlockMappingStart
+			expected <block end>, but found '<block mapping start>'
 			 in 'reader', line 169, column 11:
 			              "exception": "java.net.ConnectEx ... 
 			              ^
