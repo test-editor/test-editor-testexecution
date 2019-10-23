@@ -1,4 +1,4 @@
-package org.testeditor.web.backend.testexecution
+package org.testeditor.web.backend.testexecution.common
 
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.EqualsHashCode
@@ -10,5 +10,7 @@ class TestSuiteStatusInfo {
 
 	var TestExecutionKey key
 	var String status
+	
+	override toString() '''"«key»" -> «status»'''
 
 }

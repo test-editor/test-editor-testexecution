@@ -14,10 +14,10 @@ import org.testeditor.web.backend.testexecution.common.TestExecutionConfiguratio
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo
-import org.testeditor.web.backend.testexecution.distributed.common.WritableTestJobStore
+import org.testeditor.web.backend.testexecution.distributed.common.WritableStatusAwareTestJobStore
 import org.testeditor.web.backend.testexecution.util.serialization.YamlReader
 
-class LocalSingleWorkerJobStore implements WritableTestJobStore {
+class LocalSingleWorkerJobStore implements WritableStatusAwareTestJobStore {
 	@Inject extension YamlReader
 	@Inject extension TestExecutionCallTree callTreeHelper
 	@Inject @Named('workspace') Provider<File> workspaceProvider
@@ -67,6 +67,18 @@ class LocalSingleWorkerJobStore implements WritableTestJobStore {
 	
 	override store(TestJobInfo job) {
 		jobCache.put(job.id, job)
+	}
+	
+	override getStatus(TestExecutionKey key) {
+		return jobCache.get(key.deriveWithSuiteRunId).testStatus
+	}
+	
+	override waitForStatus(TestExecutionKey key) {
+		return key.getStatus
+	}
+	
+	override getStatusAll() {
+		return jobCache.asMap.mapValues[testStatus]
 	}
 	
 }

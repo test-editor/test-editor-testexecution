@@ -23,14 +23,12 @@ import javax.ws.rs.core.Response
 import javax.ws.rs.core.Response.Status
 import javax.ws.rs.core.UriBuilder
 import org.slf4j.LoggerFactory
-import org.testeditor.web.backend.testexecution.TestStatusMapper
-import org.testeditor.web.backend.testexecution.TestSuiteStatusInfo
+import org.testeditor.web.backend.testexecution.common.LogLevel
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.common.TestStatus
-import org.testeditor.web.backend.testexecution.distributed.common.TestJob
+import org.testeditor.web.backend.testexecution.common.TestSuiteStatusInfo
 import org.testeditor.web.backend.testexecution.distributed.manager.TestExecutionManager
 import org.testeditor.web.backend.testexecution.loglines.LogFinder
-import org.testeditor.web.backend.testexecution.loglines.LogLevel
 import org.testeditor.web.backend.testexecution.screenshots.ScreenshotFinder
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND
@@ -44,7 +42,6 @@ class TestSuiteResource {
 	public static val LONG_POLLING_TIMEOUT_SECONDS = 5
 	static val logger = LoggerFactory.getLogger(TestSuiteResource)
 
-	@Inject TestStatusMapper statusMapper
 	@Inject Executor executor
 	@Inject ScreenshotFinder screenshotFinder
 	@Inject LogFinder logFinder
@@ -121,7 +118,7 @@ class TestSuiteResource {
 					waitForStatus(executionKey, response)
 				]
 			} else {
-				val suiteStatus = statusMapper.getStatus(executionKey)
+				val suiteStatus = manager.getStatus(executionKey)
 				response.resume(Response.ok(suiteStatus.name).build)
 			}
 		} else {
@@ -140,7 +137,7 @@ class TestSuiteResource {
 		@PathParam("suiteRunId") String suiteRunId
 	) {
 		val executionKey = new TestExecutionKey(suiteId, suiteRunId)
-		return if (statusMapper.getStatus(executionKey) === TestStatus.RUNNING) {
+		return if (manager.getStatus(executionKey) === TestStatus.RUNNING) {
 			manager.cancelJob(executionKey)
 			Response.ok.build
 		} else {
@@ -151,9 +148,7 @@ class TestSuiteResource {
 	@POST
 	@Path("launch-new")
 	def Response launchNewSuiteWith(List<String> resourcePaths) {
-		val suiteKey = new TestExecutionKey("0") // default suite
-		val executionKey = statusMapper.deriveFreshRunId(suiteKey)
-		manager.addJob(new TestJob(executionKey, emptySet, resourcePaths))
+		val executionKey = manager.addJob(resourcePaths, emptySet)
 		val uri = new URI(UriBuilder.fromResource(TestSuiteResource).build.toString +
 			'''/«URLEncoder.encode(executionKey.suiteId, "UTF-8")»/«URLEncoder.encode(executionKey.suiteRunId,"UTF-8")»''')
 		return Response.created(uri).build
@@ -163,7 +158,12 @@ class TestSuiteResource {
 	@Path("status")
 	@Produces(MediaType.APPLICATION_JSON)
 	def Iterable<TestSuiteStatusInfo> getStatusAll() {
-		return statusMapper.allTestSuites
+		return manager.getStatusAll.entrySet.map [ entry |
+			new TestSuiteStatusInfo => [
+				key = entry.key
+				status = entry.value.name
+			]
+		]
 	}
 
 	private def void waitForStatus(TestExecutionKey executionKey, AsyncResponse response) {
@@ -173,7 +173,7 @@ class TestSuiteResource {
 		]
 
 		try {
-			val status = statusMapper.waitForStatus(executionKey)
+			val status = manager.waitForStatus(executionKey)
 			response.resume(Response.ok(status.name).build)
 		} catch (InterruptedException ex) {
 		} // timeout handler takes care of response

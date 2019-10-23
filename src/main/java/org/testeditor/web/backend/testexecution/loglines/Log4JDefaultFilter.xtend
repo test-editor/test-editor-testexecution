@@ -1,8 +1,9 @@
 package org.testeditor.web.backend.testexecution.loglines
 
 import java.util.regex.Pattern
+import org.testeditor.web.backend.testexecution.common.LogLevel
 
-import static org.testeditor.web.backend.testexecution.loglines.LogLevel.*
+import static org.testeditor.web.backend.testexecution.common.LogLevel.*
 
 class Log4JDefaultFilter implements LogFilter {
 

@@ -930,7 +930,8 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 			JGitTestUtil.write(it, '''
 				#!/bin/sh
 				echo "called" >> calledCount.txt
-				called=`cat calledCount.txt | wc -l`
+				# misuse xargs to trim whitespace from the line count output
+				called=`cat calledCount.txt | wc -l | xargs`
 				echo "called $called times"
 				if [ "$called" = "3" ]; then
 				  echo "lastcall" > finished.txt
