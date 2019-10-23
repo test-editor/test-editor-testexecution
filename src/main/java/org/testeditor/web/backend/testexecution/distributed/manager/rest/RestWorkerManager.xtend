@@ -1,35 +1,33 @@
 package org.testeditor.web.backend.testexecution.distributed.manager.rest
 
+import java.util.Optional
 import javax.inject.Singleton
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
+import org.testeditor.web.backend.testexecution.common.TestStatus
 import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo
-import org.testeditor.web.backend.testexecution.distributed.common.Worker
-import org.testeditor.web.backend.testexecution.distributed.common.WorkerInfo
-import org.testeditor.web.backend.testexecution.distributed.manager.WorkerProvider
-import java.util.Optional
-import org.testeditor.web.backend.testexecution.common.TestStatus
+import org.testeditor.web.backend.testexecution.distributed.manager.NoSuchWorkerException
+import org.testeditor.web.backend.testexecution.distributed.manager.WritableWorkerProvider
 
 @Singleton
-class RestWorkerManager implements WorkerProvider {
+class RestWorkerManager implements WritableWorkerProvider<RestWorkerClient> {
 	
-	val workers = <Worker, TestJobInfo>newHashMap
+	val workers = <RestWorkerClient, TestJobInfo>newHashMap
 	
 	override getWorkers() {
 		return newHashSet => [ addAll(workers.keySet)]
 	}
 	
 	override idleWorkers() {
-		return workers.filter[worker, job|job == TestJob.NONE].keySet.filter(WorkerInfo)
+		return workers.filter[worker, job|job == TestJob.NONE].keySet
 	}
 	
 	override workerForJob(TestJobInfo job) {
 		return workers.keySet.findFirst[workers.get(it) == job]
 	}
 	
-	override assign(WorkerInfo workerInfo, TestJob job) {
-		return if (workers.get(workerInfo) === TestJob.NONE) {
-			val worker = workerInfo as Worker
+	override assign(RestWorkerClient worker, TestJob job) {
+		return if (workers.get(worker) === TestJob.NONE) {
 			worker.startJob(job) => [
 				thenRunAsync[workers.replace(worker, TestJob.NONE)]
 			]
@@ -38,11 +36,11 @@ class RestWorkerManager implements WorkerProvider {
 		}
 	}
 	
-	override cancel(WorkerInfo workerInfo) {
-		if (workers.containsKey(workerInfo)) {
-			(workerInfo as Worker).cancel
+	override cancel(RestWorkerClient worker) {
+		if (workers.containsKey(worker)) {
+			worker.cancel
 		} else {
-			//TODO throw exception
+			throw new NoSuchWorkerException(worker.uri)
 		}
 	}
 	
@@ -68,6 +66,10 @@ class RestWorkerManager implements WorkerProvider {
 	
 	private def getWorker(TestExecutionKey key) {
 		return Optional.ofNullable(workers.filter[__, job| job.id == key].keySet.head)
+	}
+		
+	override addWorker(RestWorkerClient worker) {
+		workers.put(worker, TestJob.NONE)
 	}
 	
 }

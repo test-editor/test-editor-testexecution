@@ -1,34 +1,49 @@
 package org.testeditor.web.backend.testexecution.distributed.manager.rest
 
-import java.io.InputStream
 import javax.inject.Inject
+import javax.ws.rs.POST
+import javax.ws.rs.PUT
+import javax.ws.rs.Path
+import javax.ws.rs.core.Context
 import javax.ws.rs.core.Response
+import javax.ws.rs.core.UriInfo
+import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.common.TestStatus
-import org.testeditor.web.backend.testexecution.distributed.common.TestExecutionManager
-import org.testeditor.web.backend.testexecution.distributed.common.Worker
-import org.testeditor.web.backend.testexecution.distributed.common.WorkerManagerAPI
-import org.testeditor.web.backend.testexecution.distributed.manager.WorkerProvider
+import org.testeditor.web.backend.testexecution.distributed.manager.WritableWorkerProvider
+import org.testeditor.web.backend.testexecution.util.UriAppender
 
-class TestExecutionManagerResource implements WorkerManagerAPI<Response, InputStream>{
-	@Inject TestExecutionManager manager
-	@Inject extension WorkerProvider workerProvider
+import static java.net.URLEncoder.encode
+import static java.nio.charset.StandardCharsets.UTF_8
+
+@Path('/testexecution/manager/workers')
+class TestExecutionManagerResource {
+	static val logger = LoggerFactory.getLogger(TestExecutionManagerResource)
+
+	@Inject
+	extension WritableWorkerProvider<RestWorkerClient> workerProvider
 	
-	override registerWorker(Worker worker) {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+	@Inject
+	extension UriAppender uriAppender
+
+	@Context
+	UriInfo uriInfo
+
+	@POST
+	def registerWorker(RestWorkerClient worker) {
+		logger.info('''received request to register worker at "«worker.uri»"''')
+
+		worker.addWorker
+		val location = uriInfo.append(encode(worker.uri.toString, UTF_8))
+		return Response.created(location).build
 	}
-	
-	override unregisterWorker(String id) {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
-	}
-	
-	override upload(String workerId, TestExecutionKey jobId, String fileName, InputStream content) {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
-	}
-	
-	override updateStatus(String workerId, TestExecutionKey jobId, TestStatus status) {
+
+	@Path('/{workerId}/{jobId}')
+	@PUT
+	def updateStatus(String workerId, TestExecutionKey jobId, TestStatus status) {
+		workerProvider.
 		workers.filter(RestWorkerClient).findFirst[uri == workerId]?.updateStatus(jobId, status)
 		return Response.ok.build
 	}
-	
+
 }
