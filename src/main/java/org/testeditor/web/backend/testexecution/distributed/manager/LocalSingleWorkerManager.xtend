@@ -24,7 +24,7 @@ class LocalSingleWorkerManager implements WorkerProvider {
 				currentJob = job
 			]
 		} else {
-			//TODO throw exception
+			throw new NoSuchWorkerException(worker.uri)
 		}
 	}
 
