@@ -33,7 +33,7 @@ class DefaultExecutionManager implements TestExecutionManager {
 	override addJob(Iterable<String> testFiles, Set<String> requiredCapabilities) {
 		return (new TestJob(new TestExecutionKey("0").deriveFreshRunId, emptySet, testFiles) => [
 			store
-			idleWorkers.head.assign(it).thenAccept[status|updateStatus(status)]
+			idleWorkers.head?.assign(it)?.thenAccept[status|updateStatus(status)]
 			currentJob.put(id, it)	
 		]).id
 	}
