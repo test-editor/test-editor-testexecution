@@ -38,6 +38,7 @@ abstract class AbstractManagerWorkerIntegrationTest {
 
 	protected def List<ConfigOverride> getConfigs() {
 		return #[
+			config('logging.level', 'INFO'),
 			config('server.applicationConnectors[0].port', serverPort),
 			config('localRepoFileRoot', [managerWorkspace.root.path]),
 			config('remoteRepoUrl', [setupRemoteGitRepository])

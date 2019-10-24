@@ -18,8 +18,6 @@ import org.testeditor.web.backend.testexecution.distributed.common.JerseyBasedRe
 import org.testeditor.web.backend.testexecution.distributed.common.RestClient
 import org.testeditor.web.backend.testexecution.loglines.Log4JDefaultFilter
 import org.testeditor.web.backend.testexecution.loglines.LogFilter
-import org.testeditor.web.backend.testexecution.loglines.LogFinder
-import org.testeditor.web.backend.testexecution.loglines.ScanningLogFinder
 import org.testeditor.web.backend.testexecution.screenshots.ScreenshotFinder
 import org.testeditor.web.backend.testexecution.screenshots.SubStepAggregatingScreenshotFinder
 import org.testeditor.web.backend.testexecution.util.HierarchicalLineSkipper
@@ -38,7 +36,6 @@ class TestExecutionModule extends AbstractModule {
 		binder => [
 			bind(Executor).toInstance(ForkJoinPool.commonPool)
 			bind(ScreenshotFinder).to(SubStepAggregatingScreenshotFinder)
-			bind(LogFinder).to(ScanningLogFinder)
 			bind(HierarchicalLineSkipper).to(RecursiveHierarchicalLineSkipper)
 			bind(LogFilter).to(Log4JDefaultFilter)
 			bind(File).annotatedWith(named("workspace")).toProvider(WorkspaceProvider)

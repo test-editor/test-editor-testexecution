@@ -1,12 +1,16 @@
 package org.testeditor.web.backend.testexecution.distributed.worker.rest
 
+import java.io.File
+import java.nio.file.Files
 import java.util.Map
 import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Singleton
 import javax.ws.rs.DELETE
 import javax.ws.rs.GET
 import javax.ws.rs.POST
 import javax.ws.rs.Path
+import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
@@ -14,6 +18,7 @@ import javax.ws.rs.core.Response
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.common.TestStatus
 import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 import org.testeditor.web.backend.testexecution.distributed.common.Worker
@@ -26,6 +31,10 @@ import static org.testeditor.web.backend.testexecution.distributed.worker.rest.W
 @Path('/worker')
 @Singleton
 class WorkerResource implements WorkerAPI<Response>, WorkerStateContext {
+
+	static val logger = LoggerFactory.getLogger(WorkerResource)
+
+	@Inject @Named('workspace') File workspace
 
 	val Map<WorkerStateEnum, WorkerState> states
 	var WorkerState state
@@ -43,8 +52,6 @@ class WorkerResource implements WorkerAPI<Response>, WorkerStateContext {
 		this.state = states.get(state)
 		this.state.onEntry
 	}
-
-	static val logger = LoggerFactory.getLogger(WorkerResource)
 
 	override Logger getLogger() { return logger }
 
@@ -73,10 +80,21 @@ class WorkerResource implements WorkerAPI<Response>, WorkerStateContext {
 		return state.cancelTestJob
 	}
 
+	@GET
+	@Path("logs/{suiteId}/{suiteRunId}")
+	@Produces(MediaType.TEXT_PLAIN)
+	def synchronized Response getLog(@PathParam("suiteId") String suiteId, @PathParam("suiteRunId") String suiteRunId) {
+
+		val key = new TestExecutionKey(suiteId, suiteRunId)
+		logger.info('''sending log file for job id "«key»"''')
+		return Response.ok(Files.newInputStream(key.getLogFile(workspace))).build
+	}
+
 	override transitionTo(WorkerStateEnum state, ()=>Void action) {
 		setState(state)
 		action.apply
 	}
+
 }
 
 enum WorkerStateEnum {
@@ -103,11 +121,11 @@ interface WorkerStateContext {
 }
 
 abstract class BaseWorkerState implements WorkerState {
-	
+
 	override isRegistered() {
 		return Response.ok(true).build
 	}
-	
+
 }
 
 @FinalFieldsConstructor
@@ -133,6 +151,7 @@ class IdleWorker extends BaseWorkerState {
 	override getTestJobState(Boolean wait) {
 		return Response.ok(delegate.checkStatus.name).build
 	}
+
 }
 
 @FinalFieldsConstructor

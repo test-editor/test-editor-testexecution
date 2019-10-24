@@ -22,8 +22,8 @@ class LocalSingleWorkerManager implements WorkerProvider {
 		return #[worker].filter[checkStatus !== TestStatus.RUNNING].map[uri.toString]
 	}
 	
-	override workerForJob(TestJobInfo job) {
-		return if (currentJob?.id == job.id) { worker.id } else { WorkerInfo.NONE.id }
+	override workerForJob(TestExecutionKey jobId) {
+		return if (currentJob?.id == jobId) { worker.id } else { WorkerInfo.NONE.id }
 	}
 
 	override assign(String workerId, TestJobInfo job) {

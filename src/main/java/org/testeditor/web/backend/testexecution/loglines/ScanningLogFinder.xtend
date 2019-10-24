@@ -23,9 +23,11 @@ class ScanningLogFinder implements LogFinder {
 	static val ILLEGAL_TEST_EXECUTION_KEY_MESSAGE = "Provided test execution key must contain a test suite id and a test suite run id. (Key was: '%s'.)"
 
 	@Inject @Named("workspace") Provider<File> workspaceProvider
-	@Inject extension TestExecutionConfiguration
+	@Inject Provider<TestExecutionConfiguration> config
 	@Inject extension HierarchicalLineSkipper
 	@Inject extension LogFilter
+
+	private def boolean filterTestSubStepsFromLogs() { return config.get.filterTestSubStepsFromLogs }
 
 	private def getLogLineSelector(TestExecutionKey key) {
 		return if (key.caseRunId.nullOrEmpty) {

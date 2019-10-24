@@ -104,13 +104,14 @@ class TestExecutionKey {
 	def Path getLogFile(File workspace) {
 		val keyName = this.toString
 		logger.debug('getting log file for test execution key "{}".', keyName)
-
-		val matcher = FileSystems.^default.getPathMatcher('''glob:testrun.«this.suiteId»-«this.suiteRunId»--.*.log''')
-		val logFile = workspace.toPath.resolve('logs').list //
+		
+		val logDir = workspace.toPath.resolve('logs')
+		val matcher = FileSystems.^default.getPathMatcher('''glob:testrun.«this.suiteId»-«this.suiteRunId»--*.log''')
+		val logFile = logDir.list //
 		.filter[matcher.matches(fileName)] //
 		.findFirst //
 		.orElseThrow [
-			new FileNotFoundException('''No log file for test execution key '«keyName»' found.''')
+			new FileNotFoundException('''No log file for test execution key '«keyName»' found in log directory '«logDir»'.''')
 		]
 
 		logger.debug('retrieved log file "{}" for test execution key "{}".', logFile.fileName, keyName)

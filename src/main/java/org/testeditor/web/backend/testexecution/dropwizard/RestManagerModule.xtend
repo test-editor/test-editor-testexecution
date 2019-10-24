@@ -10,6 +10,10 @@ import org.testeditor.web.backend.testexecution.distributed.manager.WorkerProvid
 import org.testeditor.web.backend.testexecution.distributed.manager.WritableWorkerProvider
 import org.testeditor.web.backend.testexecution.distributed.manager.rest.RestWorkerClient
 import org.testeditor.web.backend.testexecution.distributed.manager.rest.RestWorkerManager
+import org.testeditor.web.backend.testexecution.loglines.LogFinder
+import org.testeditor.web.backend.testexecution.loglines.ScanningLogFinder
+
+import static com.google.inject.name.Names.named
 
 class RestManagerModule extends AbstractModule {
 
@@ -20,6 +24,8 @@ class RestManagerModule extends AbstractModule {
 			bind(WorkerProvider).to(RestWorkerManager)
 			bind(WritableStatusAwareTestJobStore).to(LocalSingleWorkerJobStore)
 			bind(new TypeLiteral<WritableWorkerProvider<RestWorkerClient>>(){}).to(RestWorkerManager)
+			bind(LogFinder).annotatedWith(named('localLogFinder')).to(ScanningLogFinder)
+			bind(LogFinder).annotatedWith(named('mainLogFinder')).to(RestWorkerManager)
 		]
 
 	}

@@ -9,10 +9,15 @@ import org.testeditor.web.backend.testexecution.distributed.manager.LocalSingleW
 import org.testeditor.web.backend.testexecution.distributed.manager.LocalSingleWorkerManager
 import org.testeditor.web.backend.testexecution.distributed.manager.WorkerProvider
 import org.testeditor.web.backend.testexecution.distributed.worker.LocalSingleWorker
+import org.testeditor.web.backend.testexecution.loglines.LogFinder
+import org.testeditor.web.backend.testexecution.loglines.ScanningLogFinder
+
+import static com.google.inject.name.Names.named
 
 class LocalSingleWorkerModule extends AbstractModule {
 	override protected configure() {
 		binder => [
+			bind(LogFinder).annotatedWith(named('mainLogFinder')).to(ScanningLogFinder)
 			bind(TestExecutionManager).to(DefaultExecutionManager)
 			bind(WorkerProvider).to(LocalSingleWorkerManager)
 			bind(Worker).to(LocalSingleWorker)

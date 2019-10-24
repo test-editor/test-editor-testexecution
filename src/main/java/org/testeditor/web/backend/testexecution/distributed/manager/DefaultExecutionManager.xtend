@@ -25,7 +25,7 @@ class DefaultExecutionManager implements TestExecutionManager {
 
 	override cancelJob(TestExecutionKey key) {
 		currentJob.remove(key) => [
-			workerForJob.cancel
+			workerForJob(id).cancel
 			setState(JobState.COMPLETED_CANCELLED).store
 		]
 	}
@@ -47,11 +47,11 @@ class DefaultExecutionManager implements TestExecutionManager {
 	}
 	
 	override getStatus(TestExecutionKey key) {
-		return workerProvider.testJobExists(key) ? workerProvider.getStatus(key) : jobStore.getStatus(key) 
+		return if (workerProvider.testJobExists(key)) { workerProvider.getStatus(key) } else { jobStore.getStatus(key) } 
 	}
 	
 	override waitForStatus(TestExecutionKey key) {
-		return workerProvider.testJobExists(key) ? workerProvider.waitForStatus(key) : jobStore.waitForStatus(key)
+		return if (workerProvider.testJobExists(key)) { workerProvider.waitForStatus(key) } else { jobStore.waitForStatus(key) }
 	}
 	
 	private def TestExecutionKey deriveFreshRunId(TestExecutionKey suiteKey) {

@@ -7,6 +7,7 @@ import java.util.List
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import javax.inject.Named
 import javax.ws.rs.Consumes
 import javax.ws.rs.DELETE
 import javax.ws.rs.DefaultValue
@@ -44,7 +45,7 @@ class TestSuiteResource {
 
 	@Inject Executor executor
 	@Inject ScreenshotFinder screenshotFinder
-	@Inject LogFinder logFinder
+	@Inject @Named('mainLogFinder') LogFinder logFinder
 	@Inject TestExecutionManager manager
 
 	@GET

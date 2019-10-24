@@ -3,6 +3,8 @@ package org.testeditor.web.backend.testexecution.distributed.manager.rest
 import com.fasterxml.jackson.annotation.JacksonInject
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
+import java.io.File
+import java.io.InputStream
 import java.net.URI
 import java.util.Set
 import java.util.concurrent.CompletionStage
@@ -12,6 +14,7 @@ import java.util.concurrent.SynchronousQueue
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriBuilder
+import org.apache.commons.io.FileUtils
 import org.eclipse.xtend.lib.annotations.Data
 import org.eclipse.xtend.lib.annotations.EqualsHashCode
 import org.slf4j.LoggerFactory
@@ -20,8 +23,6 @@ import org.testeditor.web.backend.testexecution.common.TestStatus
 import org.testeditor.web.backend.testexecution.distributed.common.RestClient
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo
 import org.testeditor.web.backend.testexecution.distributed.common.Worker
-
-import static javax.ws.rs.core.Response.Status.CREATED
 
 @Data
 @EqualsHashCode
@@ -125,6 +126,15 @@ class RestWorkerClient implements Worker {
 
 	override getJsonCallTree(TestExecutionKey key) {
 		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+	}
+
+	def downloadLogFile(TestExecutionKey key, File destDir) {
+		val uri = UriBuilder.fromUri(uri).path('logs').path(key.suiteId).path(key.suiteRunId).build
+		val logStream = uri.getAsync(MediaType.TEXT_PLAIN_TYPE).toCompletableFuture.get.readEntity(InputStream)
+		return new File(destDir, '''testrun.«key.suiteId»-«key.suiteRunId»--.log''') => [ destFile |
+			FileUtils.copyInputStreamToFile(logStream, destFile)
+			logger.info('''saved log file for test job id "«key»" to file "«destFile.absolutePath»"''')
+		]
 	}
 
 }
