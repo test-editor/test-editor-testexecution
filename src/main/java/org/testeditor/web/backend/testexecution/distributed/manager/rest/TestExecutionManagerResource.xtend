@@ -1,9 +1,11 @@
 package org.testeditor.web.backend.testexecution.distributed.manager.rest
 
 import javax.inject.Inject
+import javax.ws.rs.Encoded
 import javax.ws.rs.POST
 import javax.ws.rs.PUT
 import javax.ws.rs.Path
+import javax.ws.rs.PathParam
 import javax.ws.rs.core.Context
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriInfo
@@ -22,7 +24,7 @@ class TestExecutionManagerResource {
 
 	@Inject
 	extension WritableWorkerProvider<RestWorkerClient> workerProvider
-	
+
 	@Inject
 	extension UriAppender uriAppender
 
@@ -40,9 +42,9 @@ class TestExecutionManagerResource {
 
 	@Path('/{workerId}/{jobId}')
 	@PUT
-	def updateStatus(String workerId, TestExecutionKey jobId, TestStatus status) {
-		workerProvider.
-		workers.filter(RestWorkerClient).findFirst[uri == workerId]?.updateStatus(jobId, status)
+	def updateStatus(@PathParam(value='workerId') @Encoded String workerId,
+		@PathParam(value='jobId') TestExecutionKey jobId, TestStatus status) {
+		workerProvider.workers.filter(RestWorkerClient).findFirst[uri == workerId]?.updateStatus(jobId, status)
 		return Response.ok.build
 	}
 
