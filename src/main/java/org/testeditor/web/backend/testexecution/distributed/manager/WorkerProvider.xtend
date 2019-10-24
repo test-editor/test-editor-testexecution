@@ -7,19 +7,19 @@ import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo
 import org.testeditor.web.backend.testexecution.distributed.common.WorkerInfo
 
-interface WorkerProvider<T extends WorkerInfo> extends StatusAwareTestJobStore {
+interface WorkerProvider extends StatusAwareTestJobStore {
 	
-	def Iterable<T> getWorkers()
+	def Iterable<String> getWorkers()
 	
-	def Iterable<T> idleWorkers()
+	def Iterable<String> idleWorkers()
 	
-	def T workerForJob(TestJobInfo job)
+	def String workerForJob(TestJobInfo job)
 
-	def CompletionStage<TestStatus> assign(T worker, TestJob job)
+	def CompletionStage<TestStatus> assign(String workerId, TestJobInfo job)
 
-	def void cancel(T worker)
+	def void cancel(String workerId)
 }
 
-interface WritableWorkerProvider<T extends WorkerInfo> extends WorkerProvider<T> {
+interface WritableWorkerProvider<T extends WorkerInfo> extends WorkerProvider {
 	def void addWorker(T worker)
 }

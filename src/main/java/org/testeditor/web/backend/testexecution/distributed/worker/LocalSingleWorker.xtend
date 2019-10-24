@@ -21,9 +21,11 @@ import org.testeditor.web.backend.testexecution.util.serialization.YamlReader
 
 import static org.testeditor.web.backend.testexecution.TestExecutorProvider.CALL_TREE_YAML_FILE
 import static org.testeditor.web.backend.testexecution.TestExecutorProvider.LOGFILE_ENV_KEY
+import java.net.URI
 
 class LocalSingleWorker implements Worker {
 	static val logger = LoggerFactory.getLogger(LocalSingleWorker)
+	static val uri = new URI('''urn:worker:«LocalSingleWorker.name»''')
 
 	@Inject extension TestExecutionCallTree testExecutionCallTree
 	@Inject extension TestStatusMapper statusMapper
@@ -37,17 +39,17 @@ class LocalSingleWorker implements Worker {
 	
 	private def TestExecutorProvider executorProvider() { _executorProvider.get }
 
-	override startJob(TestJobInfo it) {
-		currentJob = Optional.of(it)
-		val builder = executorProvider.testExecutionBuilder(id, resourcePaths, '') // commit id unknown
+	override startJob(TestJobInfo job) {
+		currentJob = Optional.of(job)
+		val builder = executorProvider.testExecutionBuilder(job.id, job.resourcePaths, '') // commit id unknown
 		val logFile = builder.environment.get(LOGFILE_ENV_KEY)
 		val callTreeFileName = builder.environment.get(CALL_TREE_YAML_FILE)
 		logger.
-			info('''Starting test for resourcePaths='«resourcePaths.join(',')»' logging into logFile='«logFile»', callTreeFile='«callTreeFileName»'.''')
+			info('''Starting test for resourcePaths='«job.resourcePaths.join(',')»' logging into logFile='«logFile»', callTreeFile='«callTreeFileName»'.''')
 		val callTreeFile = new File(callTreeFileName)
-		callTreeFile.writeCallTreeYamlPrefix(id, Instant.now, resourcePaths)
+		callTreeFile.writeCallTreeYamlPrefix(job.id, Instant.now, job.resourcePaths)
 		val testProcess = builder.start
-		statusMapper.addTestSuiteRun(id, testProcess)[status|callTreeFile.writeCallTreeYamlSuffix(status)]
+		statusMapper.addTestSuiteRun(job.id, testProcess)[status|callTreeFile.writeCallTreeYamlSuffix(status)]
 		testProcess.logToStandardOutAndIntoFile(new File(logFile))
 		
 		return testProcess.toHandle.onExit.thenApply[
@@ -58,23 +60,23 @@ class LocalSingleWorker implements Worker {
 	}
 
 	override checkStatus() {
-		currentJob.map[id.getStatus].orElse(TestStatus.IDLE)
+		currentJob.map[getId.getStatus].orElse(TestStatus.IDLE)
 	}
 
 	override waitForStatus() {
-		currentJob.map[id.waitForStatus].orElse(TestStatus.IDLE)
+		currentJob.map[getId.waitForStatus].orElse(TestStatus.IDLE)
 	}
 
 	override kill() {
 		currentJob.ifPresent[
-			if (id.getStatus === TestStatus.RUNNING) {
-				id.terminateTestSuiteRun
+			if (getId.getStatus === TestStatus.RUNNING) {
+				getId.terminateTestSuiteRun
 			}
 		]
 	}
 
 	override getUri() {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		uri
 	}
 
 	override getProvidedCapabilities() {
@@ -89,7 +91,7 @@ class LocalSingleWorker implements Worker {
 	}
 	
 	override testJobExists(TestExecutionKey key) {
-		currentJob.map[id.equals(key)].orElse(false)
+		currentJob.map[getId.equals(key)].orElse(false)
 	}
 	
 	private def fullOrSubNodeTree(File callTreeFile, TestExecutionKey key) {

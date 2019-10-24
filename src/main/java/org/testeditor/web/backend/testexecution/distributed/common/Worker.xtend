@@ -11,6 +11,8 @@ interface WorkerInfo {
 	def URI getUri()
 
 	def Set<String> getProvidedCapabilities()
+	
+	def String id() '''«uri.toString»'''
 
 	static val NONE = new WorkerInfo {
 		val uri = new URI('')

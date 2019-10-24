@@ -34,8 +34,8 @@ abstract class TestExecutionManagerException extends IllegalStateException {
 
 	class NoSuchWorkerException extends WorkerException {
 
-		new(URI missingWorkerUri) {
-			super(missingWorkerUri.toString, '''no worker with id "«missingWorkerUri»"''')
+		new(String workerId) {
+			super(workerId, '''no worker with id "«workerId»"''')
 		}
 
 	}

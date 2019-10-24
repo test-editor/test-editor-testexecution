@@ -4,7 +4,6 @@ import javax.inject.Inject
 import org.eclipse.xtend.lib.annotations.Delegate
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.common.TestStatus
-import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobStore
 import org.testeditor.web.backend.testexecution.distributed.common.Worker
@@ -16,29 +15,29 @@ class LocalSingleWorkerManager implements WorkerProvider {
 	var TestJobInfo currentJob = null
 
 	override getWorkers() {
-		return #[worker]
+		return #[worker.id]
 	}
 	
 	override idleWorkers() {
-		return #[worker].filter[checkStatus !== TestStatus.RUNNING].filter(WorkerInfo)
+		return #[worker].filter[checkStatus !== TestStatus.RUNNING].map[uri.toString]
 	}
 	
 	override workerForJob(TestJobInfo job) {
-		return if (currentJob?.id == job.id) { worker } else { WorkerInfo.NONE }
+		return if (currentJob?.id == job.id) { worker.id } else { WorkerInfo.NONE.id }
 	}
 
-	override assign(WorkerInfo worker, TestJob job) {
-		return if (worker === this.worker) {
+	override assign(String workerId, TestJobInfo job) {
+		return if (workerId == this.worker.id) {
 			this.worker.startJob(job) => [
 				currentJob = job
 			]
 		} else {
-			throw new NoSuchWorkerException(worker.uri)
+			throw new NoSuchWorkerException(workerId)
 		}
 	}
 
-	override cancel(WorkerInfo worker) {
-		if (worker === this.worker) {
+	override cancel(String workerId) {
+		if (workerId == this.worker.id) {
 			this.worker.kill
 			currentJob = null
 		}
