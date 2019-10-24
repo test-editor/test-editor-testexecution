@@ -7,7 +7,7 @@ import org.junit.runner.RunWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
-import org.testeditor.web.backend.testexecution.TestExecutionCallTree
+import org.testeditor.web.backend.testexecution.calltrees.TestExecutionCallTree
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.util.serialization.YamlReader
 

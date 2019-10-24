@@ -13,6 +13,7 @@
 				"GitAccess",
 				"Guice",
 				"IO",
+				"TestArtifactManagement",
 				"TestEditorDropwizard",
 				"TestExecutionManager",
 				"TestExecutionWorker",
@@ -56,7 +57,8 @@
 			],
 			"reads": [
 				"CommonAPI",
-				"Commons"
+				"Commons",
+				"TestArtifactManagement"
 			]
 		},
 		{
@@ -75,16 +77,23 @@
 		{
 			"name": "TestProcessExecution",
 			"contains": [
-				"org.testeditor.web.backend.testexecution",
+				"org.testeditor.web.backend.testexecution"
+			],
+			"reads": [
+				"Commons",
+				"IO"
+			]
+		},
+		{
+			"name": "TestArtifactManagement",
+			"contains": [
+				"org.testeditor.web.backend.testexecution.calltrees",
 				"org.testeditor.web.backend.testexecution.loglines",
 				"org.testeditor.web.backend.testexecution.screenshots"
 			],
 			"reads": [
-				"GitAccess",
 				"Commons",
 				"IO",
-				"TestEditorDropwizard",
-				"ApacheCommonsText",
 				"ApacheCommonsLang"
 			]
 		},
@@ -123,6 +132,7 @@
 				"org.testeditor.web.backend.testexecution.util.serialization"
 			],
 			"reads": [
+				"ApacheCommonsText",
 				"IO",
 				"Jackson"
 			]

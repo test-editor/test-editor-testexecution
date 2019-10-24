@@ -4,7 +4,7 @@ import java.io.File
 import java.util.Optional
 import javax.inject.Inject
 import javax.inject.Named
-import org.testeditor.web.backend.testexecution.TestExecutionCallTree
+import org.testeditor.web.backend.testexecution.calltrees.TestExecutionCallTree
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.util.serialization.YamlReader
 
