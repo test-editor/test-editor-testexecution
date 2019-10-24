@@ -102,7 +102,7 @@ class RestWorkerClient implements Worker {
 			logger.error('''exception occurred while trying to assign job "«job?.id»" to worker at "«uri»"''', it)
 			Response.serverError.entity('exception thrown on client side').build
 		].thenApplyAsync [
-			return (status === CREATED.statusCode) => [ success |
+			return (200 <= status && status < 300) => [ success |
 				if (!success) {
 					logger.
 						warn('''job "«job?.id»" was rejected by worker at "«uri»" with status code «status»: «readEntity(String)»''')
