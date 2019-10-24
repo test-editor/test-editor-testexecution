@@ -54,7 +54,7 @@ class LocalSingleWorker implements Worker {
 		
 		return testProcess.toHandle.onExit.thenApply[
 			checkStatus => [
-				println('''### test process exited with status «it» ###''')
+				logger.info('''test process exited with status "«it»"''')
 			]
 		]
 	}
