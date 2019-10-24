@@ -31,7 +31,7 @@ class ManagerApplication extends DropwizardApplication<TestExecutionDropwizardCo
 
 	override protected collectModules(List<Module> modules) {
 		super.collectModules(modules)
-		modules += new RestManagerModule
+		modules += #[ new TestExecutionModule, new RestManagerModule ]
 	}
 
 	override run(TestExecutionDropwizardConfiguration configuration, Environment environment) throws Exception {

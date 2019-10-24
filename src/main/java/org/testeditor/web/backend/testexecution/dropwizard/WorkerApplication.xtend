@@ -35,7 +35,7 @@ class WorkerApplication extends DropwizardApplication<TestExecutionWorkerDropwiz
 
 	override protected collectModules(List<Module> modules) {
 		super.collectModules(modules)
-		modules += new RestWorkerModule
+		modules += #[new TestExecutionModule, new RestWorkerModule]
 	}
 
 	override run(TestExecutionWorkerDropwizardConfiguration configuration, Environment environment) throws Exception {

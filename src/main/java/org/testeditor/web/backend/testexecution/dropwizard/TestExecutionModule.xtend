@@ -2,11 +2,20 @@ package org.testeditor.web.backend.testexecution.dropwizard
 
 import com.google.inject.AbstractModule
 import com.google.inject.Provides
+import io.dropwizard.client.JerseyClientBuilder
+import io.dropwizard.setup.Environment
 import java.io.File
 import java.util.concurrent.Executor
 import java.util.concurrent.ForkJoinPool
+import org.glassfish.jersey.client.ClientProperties
+import org.glassfish.jersey.client.RequestEntityProcessing
+import org.glassfish.jersey.client.rx.RxClient
+import org.glassfish.jersey.client.rx.java8.RxCompletionStageInvoker
+import org.glassfish.jersey.logging.LoggingFeature
 import org.testeditor.web.backend.testexecution.common.GitConfiguration
 import org.testeditor.web.backend.testexecution.common.TestExecutionConfiguration
+import org.testeditor.web.backend.testexecution.distributed.common.JerseyBasedRestClient
+import org.testeditor.web.backend.testexecution.distributed.common.RestClient
 import org.testeditor.web.backend.testexecution.loglines.Log4JDefaultFilter
 import org.testeditor.web.backend.testexecution.loglines.LogFilter
 import org.testeditor.web.backend.testexecution.loglines.LogFinder
@@ -24,6 +33,7 @@ import org.testeditor.web.backend.testexecution.workspace.WorkspaceProvider
 import static com.google.inject.name.Names.named
 
 class TestExecutionModule extends AbstractModule {
+
 	override protected configure() {
 		binder => [
 			bind(Executor).toInstance(ForkJoinPool.commonPool)
@@ -36,6 +46,8 @@ class TestExecutionModule extends AbstractModule {
 			bind(GitConfiguration).to(TestExecutionDropwizardConfiguration)
 			bind(JsonWriter).to(Json)
 			bind(YamlReader).to(Yaml)
+			bind(RestClient).to(JerseyBasedRestClient)
+			bind(ForkJoinPool).annotatedWith(named("httpClientExecutor")).toInstance(new ForkJoinPool)			
 		]
 	}
 
@@ -47,5 +59,21 @@ class TestExecutionModule extends AbstractModule {
 	@Provides
 	def ProcessBuilder provideProcessBuilder() {
 		return new ProcessBuilder
+	}
+	
+
+	var RxClient<RxCompletionStageInvoker> rxClient = null
+	
+	@Provides
+	def RxClient<RxCompletionStageInvoker> provideRxClient(TestExecutionDropwizardConfiguration configuration,
+		Environment environment) {
+		if (rxClient === null) {
+			rxClient = new JerseyClientBuilder(environment) //
+			.using(configuration.jerseyClientConfiguration) //
+			.withProperty(ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.CHUNKED).withProperty(
+				LoggingFeature.LOGGING_FEATURE_VERBOSITY_CLIENT, LoggingFeature.Verbosity.PAYLOAD_TEXT) //
+			.buildRx(TestExecutionApplication.simpleName, RxCompletionStageInvoker)
+		}
+		return rxClient
 	}
 }
