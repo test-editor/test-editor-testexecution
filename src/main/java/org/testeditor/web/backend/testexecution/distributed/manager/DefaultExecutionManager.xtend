@@ -1,6 +1,5 @@
 package org.testeditor.web.backend.testexecution.distributed.manager
 
-import java.util.Optional
 import java.util.Set
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
@@ -8,43 +7,34 @@ import javax.inject.Singleton
 import org.slf4j.LoggerFactory
 import org.testeditor.web.backend.testexecution.common.TestExecutionKey
 import org.testeditor.web.backend.testexecution.common.TestStatus
-import org.testeditor.web.backend.testexecution.distributed.common.StatusAwareTestJobStore
+import org.testeditor.web.backend.testexecution.distributed.common.TestExecutionManager
 import org.testeditor.web.backend.testexecution.distributed.common.TestJob
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo
 import org.testeditor.web.backend.testexecution.distributed.common.TestJobInfo.JobState
 import org.testeditor.web.backend.testexecution.distributed.common.WritableStatusAwareTestJobStore
 
-interface TestExecutionManager extends StatusAwareTestJobStore {
-
-	def void cancelJob(TestExecutionKey key)
-
-	def TestExecutionKey addJob(Iterable<String> testFiles, Set<String> requiredCapabilities)
-
-}
-
 @Singleton
-class LocalSingleWorkerExecutionManager implements TestExecutionManager {
-	static val logger = LoggerFactory.getLogger(LocalSingleWorkerExecutionManager)
+class DefaultExecutionManager implements TestExecutionManager {
+	static val logger = LoggerFactory.getLogger(DefaultExecutionManager)
 	
 	@Inject extension WorkerProvider workerProvider
 	@Inject extension WritableStatusAwareTestJobStore jobStore
 	
 	var AtomicLong runningTestSuiteRunId = new AtomicLong(0)
-	var Optional<TestJobInfo> currentJob = Optional.empty
+	val currentJob = <TestExecutionKey, TestJobInfo>newHashMap
 
 	override cancelJob(TestExecutionKey key) {
-		currentJob.filter[id == key].ifPresent[
-			workers.head.cancel
+		currentJob.remove(key) => [
+			workerForJob.cancel
 			setState(JobState.COMPLETED_CANCELLED).store
-			currentJob = Optional.empty
 		]
 	}
 
 	override addJob(Iterable<String> testFiles, Set<String> requiredCapabilities) {
 		return (new TestJob(new TestExecutionKey("0").deriveFreshRunId, emptySet, testFiles) => [
 			store
-			workers.head.assign(it).thenAccept[status|updateStatus(status)]
-			currentJob = Optional.of(it)			
+			idleWorkers.head?.assign(it)?.thenAccept[status|updateStatus(status)]
+			currentJob.put(id, it)	
 		]).id
 	}
 	

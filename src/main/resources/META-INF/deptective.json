@@ -45,32 +45,37 @@
 				"org.testeditor.web.backend.testexecution.distributed.common"
 			],
 			"reads": [
+				"Auth0",
 				"Commons",
 				"Jackson",
+				"JAX-RS",
+				"Jersey Client",
 				"Network"
 			]
 		},
 		{
 			"name": "TestExecutionManager",
 			"contains": [
-				"org.testeditor.web.backend.testexecution.distributed.manager"
+				"org.testeditor.web.backend.testexecution.distributed.manager*"
 			],
 			"reads": [
 				"CommonAPI",
 				"Commons",
+				"JAX-RS",
 				"TestArtifactManagement"
 			]
 		},
 		{
 			"name": "TestExecutionWorker",
 			"contains": [
-				"org.testeditor.web.backend.testexecution.distributed.worker"
+				"org.testeditor.web.backend.testexecution.distributed.worker*"
 			],
 			"reads": [
 				"CommonAPI",
 				"TestProcessExecution",
 				"Commons",
 				"IO",
+				"JAX-RS",
 				"Network"
 			]
 		},
@@ -162,11 +167,13 @@
 		{
 			"name": "JAX-RS",
 			"contains": [
-				"javax.ws.rs",
-				"javax.ws.rs.container",
-				"javax.ws.rs.core",
-				"javax.ws.rs.ext",
-				"javax.ws.rs.container.ext"
+				"javax.ws.rs*"
+			]
+		},
+		{
+			"name": "Jersey Client",
+			"contains": [
+				"org.glassfish.jersey.client*"
 			]
 		},
 		{
@@ -187,6 +194,12 @@
 			"name": "ApacheCommonsText",
 			"contains": [
 				"org.apache.commons.text"
+			]
+		},
+		{
+			"name": "Auth0",
+			"contains": [
+				"com.auth0*"
 			]
 		},
 		{
