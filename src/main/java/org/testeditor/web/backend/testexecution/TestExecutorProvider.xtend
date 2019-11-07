@@ -222,7 +222,7 @@ class TestExecutorProvider {
 	
 	private def String[] withEnclosingCommands(String gradleTestCommandLine) {
 		if (System.getenv('TRAVIS').isNullOrEmpty) {
-			return #[whichNice, '-n', '10', whichXvfbrun, '-d', '-e', 'xvfb.error.log', '--server-args=-screen 0 1920x1080x16', whichSh, '-c',
+			return #[whichNice, '-n', '10', whichXvfbrun, '-e', 'xvfb.error.log', '--server-args=-screen 0 1920x1080x16', whichSh, '-c',
 				gradleTestCommandLine]
 		} else {
 			return #[whichSh, '-c', gradleTestCommandLine]
