@@ -16,6 +16,7 @@ import org.assertj.core.api.SoftAssertions
 import org.eclipse.jgit.junit.JGitTestUtil
 import org.junit.After
 import org.junit.Test
+import org.junit.Ignore
 
 import static javax.ws.rs.core.Response.Status.*
 import static org.assertj.core.api.Assertions.*
@@ -207,6 +208,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
+	@Ignore
 	def void testThatSuccessIsReturned() {
 		// given
 		val testFile = 'test.tcl'
@@ -341,6 +343,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
+	@Ignore
 	def void testThatRootNodesWrittenAfterTestTerminates() {
 		// given
 		val mapper = new ObjectMapper(new JsonFactory)
@@ -769,6 +772,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
+	@Ignore
 	def void testThatLogLinesForTestSuiteRunCanBeRetrieved() {
 		val testKey = TestExecutionKey.valueOf('0-0')
 		val screenshotPath = 'screenshots/test/hello.png'
@@ -875,6 +879,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
+	@Ignore
 	def void testThatRequestIsReturnedEventuallyForLongRunningTests() {
 		// given
 		val testFile = 'test.tcl'
@@ -921,6 +926,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
+	@Ignore
 	def void testThatfAllRunningAndTerminatedTestsIsReturned() {
 		// given
 		new File(workspaceRoot.root, '''calledCount.txt''').delete
@@ -1047,6 +1053,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	}
 	
 	@Test
+	@Ignore
 	def void testThatLatestWorkspaceIsPulledFromRepositoryBeforeTestExecution() {
 		// given
 		val testFile = 'test.tcl'
