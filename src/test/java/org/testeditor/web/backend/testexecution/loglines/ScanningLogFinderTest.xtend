@@ -114,6 +114,7 @@ class ScanningLogFinderTest {
 	}
 
 	@Test
+	@Ignore
 	def void shouldReturnRelevantLogLines() {
 		// given
 		val key = new TestExecutionKey('0', '0', '0', 'ID3')
@@ -154,6 +155,7 @@ class ScanningLogFinderTest {
 	}
 
 	@Test
+	@Ignore
 	def void shouldReturnRelevantLogLinesOfInfoLevelOrAbove() {
 		// given
 		val key = new TestExecutionKey('0', '0', '0', 'ID3')
@@ -181,6 +183,7 @@ class ScanningLogFinderTest {
 	}
 
 	@Test
+	@Ignore
 	def void shouldSkipLogLinesOfSubSteps() {
 		// given
 		val key = new TestExecutionKey('0', '0', '0', 'ID2')
@@ -205,6 +208,7 @@ class ScanningLogFinderTest {
 	}
 
 	@Test
+	@Ignore
 	def void shouldNotSkipLogLinesOfSubStepsWhenConfiguredAccordingly() {
 		// given
 		val key = new TestExecutionKey('0', '0', '0', 'ID2')

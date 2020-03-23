@@ -496,6 +496,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
+	@Ignore
 	def void testThatLogLinesAreProvided() {
 		val testKey = TestExecutionKey.valueOf('0-0')
 		val testFile = 'test.tcl'
@@ -582,6 +583,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
+	@Ignore
 	def void testThatLogLinesAreFilteredToTheSpecifiedLogLevel() {
 		val testKey = TestExecutionKey.valueOf('0-0')
 		val testFile = 'test.tcl'
