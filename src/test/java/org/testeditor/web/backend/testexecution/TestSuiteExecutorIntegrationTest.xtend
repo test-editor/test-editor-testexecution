@@ -681,6 +681,7 @@ class TestSuiteExecutorIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
+	@Ignore
 	def void testThatOnlyLogLinesAreProvided() {
 		val testKey = TestExecutionKey.valueOf('0-0')
 		val screenshotPath = 'screenshots/test/hello.png'

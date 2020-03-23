@@ -16,6 +16,7 @@ import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionConfiguration
 import org.testeditor.web.backend.testexecution.util.HierarchicalLineSkipper
 import org.testeditor.web.backend.testexecution.util.RecursiveHierarchicalLineSkipper
+import org.junit.Ignore
 
 import static java.nio.charset.StandardCharsets.UTF_8
 import static org.assertj.core.api.Assertions.assertThat
