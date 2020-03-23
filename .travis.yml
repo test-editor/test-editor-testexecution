@@ -1,5 +1,6 @@
 language: nix
 nix: 2.3.3
+
 sudo: required
 services:
 - docker
