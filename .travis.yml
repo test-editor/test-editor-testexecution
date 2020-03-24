@@ -11,7 +11,7 @@ cache:
   - "./.owasp-dependency-check-db"
 before_install:
 - java -version
-- apt-get install ca-certificates-java
+- sudo apt-get install ca-certificates-java
 - stat /etc/ssl/certs/ca-certificates.crt
 - stat /etc/ssl/certs/java/cacerts
 - sudo mkdir -p /etc/nix
