@@ -17,7 +17,9 @@ before_cache:
 - mkdir -p $HOME/nix.store
 - nix copy --to file://$HOME/nix.store -f default.nix buildInputs
 script:
-- nix-shell --command "./gradlew assemble check install"
+- nix-shell --command "./gradlew assemble"
+- nix-shell --command "./gradlew check"
+- nix-shell --command "./gradlew install"
 - nix-shell --command "timeout 300 ./.travis-cat_owasp_depcheck_reports.sh || true"
 - nix-shell --command "./gradlew docker"
 - if [[ ( "$TRAVIS_PULL_REQUEST" = "false" ) && (( "$TRAVIS_BRANCH" = "master" ) || ( "$TRAVIS_TAG" != "" )) ]]; then export TE_DEPLOY=true; fi
