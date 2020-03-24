@@ -40,8 +40,9 @@ class ScanningLogFinder implements LogFinder {
 				testCaseSelector
 			} else {
 				new PatternBasedLogLineSelector(key, workspaceProvider.get, //
-						REGEX_ENTER,
-						REGEX_LEAVE)
+				'''@[A-Z_]+:ENTER:[0-9a-f]+:«key.callTreeId»''', //
+				'''@[A-Z_]+:LEAVE:[0-9a-f]+:«key.callTreeId»''', //
+				testCaseSelector)
 			}
 		}
 	}
