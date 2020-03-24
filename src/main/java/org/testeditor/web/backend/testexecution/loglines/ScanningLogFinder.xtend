@@ -19,6 +19,8 @@ class ScanningLogFinder implements LogFinder {
 
 	static val MARKER_REGEX = Pattern.compile('''@[A-Z_]+:(ENTER|LEAVE):(([0-9a-f]+:.+)|(\w+\.\w+\.\w+))''')
 	static val ENTER_REGEX = Pattern.compile('''@[A-Z_]+:ENTER:([0-9a-f]+:)?(.+)''')
+	static val REGEX_ENTER = '''@[A-Z_]+:ENTER:([0-9a-f]+:)?(.+)'''
+	static val REGEX_LEAVE = '''@[A-Z_]+:LEAVE:([0-9a-f]+:)?(.+)'''
 	static val ILLEGAL_TEST_EXECUTION_KEY_MESSAGE = "Provided test execution key must contain a test suite id and a test suite run id. (Key was: '%s'.)"
 
 	@Inject @Named("workspace") Provider<File> workspaceProvider
@@ -38,9 +40,8 @@ class ScanningLogFinder implements LogFinder {
 				testCaseSelector
 			} else {
 				new PatternBasedLogLineSelector(key, workspaceProvider.get, //
-				'''@[A-Z_]+:ENTER:[0-9a-f]+:«key.callTreeId»''', //
-				'''@[A-Z_]+:LEAVE:[0-9a-f]+:«key.callTreeId»''', //
-				testCaseSelector)
+				REGEX_ENTER, //
+				REGEX_LEAVE)
 			}
 		}
 	}
