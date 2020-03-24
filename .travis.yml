@@ -10,6 +10,7 @@ cache:
   - "$HOME/.gradle/wrapper/"
   - "./.owasp-dependency-check-db"
 before_install:
+- export _JAVA_OPTIONS="-Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts"
 - java -version
 - sudo apt-get install ca-certificates-java
 - stat /etc/ssl/certs/ca-certificates.crt
