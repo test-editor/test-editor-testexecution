@@ -17,6 +17,8 @@ before_cache:
 - mkdir -p $HOME/nix.store
 - nix copy --to file://$HOME/nix.store -f default.nix buildInputs
 script:
+- nix-shell --command "curl --head -v https://jcenter.bintray.com/org/reflections/reflections/0.9.10/reflections-0.9.10.jar"
+- nix-shell --command "curl --head -v https://repo.jfrog.org/artifactory/libs-release-bintray/org/reflections/reflections/0.9.10/reflections-0.9.10.jar?referrer"
 - nix-shell --command "./gradlew clean"
 - nix-shell --command "./gradlew assemble"
 - nix-shell --command "./gradlew check"
