@@ -10,6 +10,8 @@ cache:
   - "$HOME/.gradle/wrapper/"
   - "./.owasp-dependency-check-db"
 before_install:
+- java -version
+- stat /etc/ssl/certs/ca-certificates.crt
 - sudo mkdir -p /etc/nix
 - echo "substituters = https://cache.nixos.org/ file://$HOME/nix.store" | sudo tee -a /etc/nix/nix.conf > /dev/null
 - echo 'require-sigs = false' | sudo tee -a /etc/nix/nix.conf > /dev/null
