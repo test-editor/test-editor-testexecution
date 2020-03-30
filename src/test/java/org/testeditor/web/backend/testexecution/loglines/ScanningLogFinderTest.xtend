@@ -16,7 +16,6 @@ import org.testeditor.web.backend.testexecution.TestExecutionKey
 import org.testeditor.web.backend.testexecution.dropwizard.TestExecutionConfiguration
 import org.testeditor.web.backend.testexecution.util.HierarchicalLineSkipper
 import org.testeditor.web.backend.testexecution.util.RecursiveHierarchicalLineSkipper
-import org.junit.Ignore
 
 import static java.nio.charset.StandardCharsets.UTF_8
 import static org.assertj.core.api.Assertions.assertThat
@@ -115,7 +114,6 @@ class ScanningLogFinderTest {
 	}
 
 	@Test
-	@Ignore
 	def void shouldReturnRelevantLogLines() {
 		// given
 		val key = new TestExecutionKey('0', '0', '0', 'ID3')
@@ -156,7 +154,6 @@ class ScanningLogFinderTest {
 	}
 
 	@Test
-	@Ignore
 	def void shouldReturnRelevantLogLinesOfInfoLevelOrAbove() {
 		// given
 		val key = new TestExecutionKey('0', '0', '0', 'ID3')
@@ -184,7 +181,6 @@ class ScanningLogFinderTest {
 	}
 
 	@Test
-	@Ignore
 	def void shouldSkipLogLinesOfSubSteps() {
 		// given
 		val key = new TestExecutionKey('0', '0', '0', 'ID2')
@@ -209,7 +205,6 @@ class ScanningLogFinderTest {
 	}
 
 	@Test
-	@Ignore
 	def void shouldNotSkipLogLinesOfSubStepsWhenConfiguredAccordingly() {
 		// given
 		val key = new TestExecutionKey('0', '0', '0', 'ID2')
