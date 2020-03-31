@@ -33,8 +33,9 @@ RUN apt-get update
 RUN apt-get install -y apt-utils
 
 RUN apt-get install -y --no-install-recommends \
-		openssh-client \
+		openssh-client \     
                 libdbus-glib-1-2 \
+                bzip2 \  
                 ffmpeg \
                 tmux \
                 wget \
