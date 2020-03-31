@@ -1,4 +1,4 @@
-FROM openjdk:10-jdk
+FROM adoptopenjdk/openjdk13:x86_64-debianslim-jdk-13.0.2_8-slim
 
 # This image needs four environment variables upon execution:
 # * TARGET_REPO
@@ -26,19 +26,28 @@ COPY testeditor/ \
      gradle.properties \
      ${PROG_DIR}/
 
-RUN \
-    apt-get update && apt-get install -y --no-install-recommends \
-		openssh-client \
+ENV DEBIAN_FRONTEND noninteractive 
+
+RUN apt-get update
+
+RUN apt-get install -y apt-utils
+
+RUN apt-get install -y --no-install-recommends \
+		openssh-client \     
                 libdbus-glib-1-2 \
+                bzip2 \  
                 ffmpeg \
                 tmux \
+                wget \
+                ca-certificates \ 
                 xvfb \
                 xauth \
                 xfonts-base \
-	&& rm -rf /var/lib/apt/lists/* && \
+    && update-ca-certificates \ 
+    && rm -rf /var/lib/apt/lists/* && \
     \
     echo "Installing firefox $FIREFOX_VERSION" && \
-    wget --no-verbose -O /tmp/firefox-$FIREFOX_VERSION.tar.bz2 $FIREFOX_SOURCE_URL && \
+    wget --ca-directory=/etc/ssl/certs -O /tmp/firefox-$FIREFOX_VERSION.tar.bz2 $FIREFOX_SOURCE_URL && \
     mkdir /tmp/firefox-$FIREFOX_VERSION && \
     tar -xvf /tmp/firefox-$FIREFOX_VERSION.tar.bz2 -C /tmp/firefox-$FIREFOX_VERSION && \
     ln -s /tmp/firefox-$FIREFOX_VERSION/firefox/firefox /usr/local/sbin/firefox && \
