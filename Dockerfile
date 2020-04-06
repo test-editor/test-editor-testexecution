@@ -1,4 +1,4 @@
-FROM adoptopenjdk/openjdk13:x86_64-debianslim-jdk-13.0.2_8-slim
+FROM openjdk:10-jdk
 
 # This image needs four environment variables upon execution:
 # * TARGET_REPO
